@@ -3,6 +3,7 @@ import { getCollection } from "astro:content";
 import Layout from "@rpgm/tools-press-theme/components/Layout.astro";
 import EntryCard from "@rpgm/tools-press-theme/components/EntryCard.astro";
 import Flourish from "@rpgm/tools-press-theme/ornaments/Flourish.astro";
+import ProductSeal from "@rpgm/tools-press-theme/ornaments/ProductSeal.astro";
 import SiteHead from "../components/SiteHead.astro";
 import { SITE_TITLE, SITE_TAGLINE, SITE_DESCRIPTION, NAV_LINKS } from "../consts";
 import { summarize } from "../lib/summarize";
@@ -32,8 +33,10 @@ const releases = allReleases.sort(
   <ul class="release-list">
     {
       releases.map((release) => (
-        <li>
+        <li class="release-list__item">
+          {release.data.emoji && <ProductSeal emoji={release.data.emoji} size={36} color="var(--rpgm-border-strong)" />}
           <EntryCard
+            class="release-list__card"
             title={`${release.data.repoDisplayName} ${release.data.version}`}
             href={`/releases/${release.id}/`}
             date={release.data.publishedAt}
@@ -52,5 +55,16 @@ const releases = allReleases.sort(
     padding: 0;
     display: grid;
     gap: var(--rpgm-space-5);
+  }
+
+  .release-list__item {
+    display: flex;
+    align-items: center;
+    gap: var(--rpgm-space-4);
+  }
+
+  .release-list__card {
+    flex: 1;
+    min-width: 0;
   }
 </style>

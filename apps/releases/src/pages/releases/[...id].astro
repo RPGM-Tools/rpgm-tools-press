@@ -4,8 +4,10 @@ import Layout from "@rpgm/tools-press-theme/components/Layout.astro";
 import Prose from "@rpgm/tools-press-theme/components/Prose.astro";
 import Giscus from "@rpgm/tools-press-theme/components/Giscus.astro";
 import Flourish from "@rpgm/tools-press-theme/ornaments/Flourish.astro";
+import ProductSeal from "@rpgm/tools-press-theme/ornaments/ProductSeal.astro";
 import SiteHead from "../../components/SiteHead.astro";
-import { SITE_TITLE, NAV_LINKS, GISCUS } from "../../consts";
+import DownloadList from "../../components/DownloadList.astro";
+import { SITE_TITLE, NAV_LINKS, GISCUS, MAIN_GAME_REPO, PLAY_NOW_URL } from "../../consts";
 
 export async function getStaticPaths() {
   const releases = await getCollection("releases");
@@ -23,6 +25,9 @@ const dateLabel = release.data.publishedAt.toLocaleDateString("en-US", {
   month: "long",
   day: "numeric",
 });
+
+const repoUrl = `https://github.com/${release.data.repo}`;
+const isMod = release.data.kind === "mod";
 ---
 
 <Layout
@@ -38,20 +43,25 @@ const dateLabel = release.data.publishedAt.toLocaleDateString("en-US", {
   </Fragment>
 
   <article>
-    <p class="rpgm-eyebrow">
-      {dateLabel}
-      {release.data.prerelease ? " - prerelease" : ""}
-      {release.data.channel ? ` - ${release.data.channel}` : ""}
-    </p>
-    <h1>{release.data.repoDisplayName} {release.data.version}</h1>
-    {release.data.name && <p class="release-name">{release.data.name}</p>}
-    <p>
-      <a href={release.data.url}>View this release on GitHub</a>
-    </p>
+    <p class="rpgm-eyebrow">{dateLabel}</p>
+    <h1 class="release-title">
+      {release.data.emoji && <ProductSeal emoji={release.data.emoji} size={40} color="var(--rpgm-accent)" />}
+      <span>{release.data.repoDisplayName} {release.data.version}</span>
+    </h1>
     <Flourish size={16} color="var(--rpgm-border-strong)" />
+
     <Prose>
       <Content />
     </Prose>
+
+    <DownloadList assets={release.data.assets} />
+
+    <ul class="release-links">
+      <li><a href={PLAY_NOW_URL}>Play Neo Angband now</a></li>
+      <li><a href={release.data.url}>View this release on GitHub</a></li>
+      <li><a href={repoUrl}>{release.data.repoDisplayName} on GitHub</a></li>
+      {isMod && <li><a href={`https://github.com/${MAIN_GAME_REPO}`}>Neo Angband (the main game) on GitHub</a></li>}
+    </ul>
   </article>
 
   {GISCUS.ready && (
@@ -67,9 +77,18 @@ const dateLabel = release.data.publishedAt.toLocaleDateString("en-US", {
 </Layout>
 
 <style>
-  .release-name {
-    color: var(--rpgm-text-muted);
-    font-size: var(--rpgm-text-lg);
-    margin: 0 0 var(--rpgm-space-4);
+  .release-title {
+    display: flex;
+    align-items: center;
+    gap: var(--rpgm-space-3);
+  }
+
+  .release-links {
+    list-style: none;
+    margin: var(--rpgm-space-6) 0 0;
+    padding: var(--rpgm-space-4) 0 0;
+    border-top: 1px solid var(--rpgm-border);
+    display: grid;
+    gap: var(--rpgm-space-2);
   }
 </style>

@@ -34,6 +34,22 @@ Full-text search runs client-side via [Pagefind](https://pagefind.app),
 indexed as a postbuild step (`astro build && pagefind --site dist`) and
 mounted lazily from the header's search trigger only once it's opened.
 
+## Release notes sync
+
+`.github/scripts/sync-releases.mjs` populates `apps/releases/src/content/releases`
+on a schedule and on push - it is not a live read at request time, so a new
+release can take up to the sync interval to appear. Only stable, non-prerelease
+versions are synced: for a repo with real GitHub Releases (currently the core
+game), that means `prerelease: false`; for a repo with no formal Releases at
+all (currently every mod, where a version tag IS the release), that means a
+strict `vX.Y.Z` tag. Either way, the notes shown are that version's own section
+of `CHANGELOG.md` at that tag, not a GitHub Release's `body` - the sync script
+never hand-edits `CHANGELOG.md` in the source repos, it only reads from them.
+
+Each tracked repo in `apps/releases/repos.json` carries a `kind` (`core` or
+`mod`) and an `emoji`, mirrored from that repo's own `discord-announce.mjs`
+`REPO_CONFIG` so the same mark identifies a product on both Discord and here.
+
 ## Structure
 
 ```

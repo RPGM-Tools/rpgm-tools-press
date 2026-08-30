@@ -1,0 +1,70 @@
+---
+import { formatBytes } from "../lib/formatBytes";
+
+interface Asset {
+  name: string;
+  url: string;
+  sizeBytes: number;
+}
+
+interface Props {
+  assets: Asset[];
+}
+
+const { assets } = Astro.props;
+---
+
+{
+  assets.length > 0 && (
+    <section class="downloads">
+      <h2>Downloads</h2>
+      <ul>
+        {assets.map((asset) => (
+          <li>
+            <a href={asset.url}>{asset.name}</a>
+            <span class="downloads__size">{formatBytes(asset.sizeBytes)}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}
+
+<style>
+  .downloads {
+    margin: var(--rpgm-space-6) 0;
+  }
+
+  .downloads h2 {
+    font-size: var(--rpgm-text-lg);
+  }
+
+  .downloads ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--rpgm-space-2);
+  }
+
+  .downloads li {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--rpgm-space-4);
+    border: 1px solid var(--rpgm-border);
+    border-radius: var(--rpgm-radius-md);
+    padding: var(--rpgm-space-3) var(--rpgm-space-4);
+  }
+
+  .downloads a {
+    color: var(--rpgm-accent);
+    word-break: break-all;
+  }
+
+  .downloads__size {
+    flex-shrink: 0;
+    color: var(--rpgm-text-muted);
+    font-size: var(--rpgm-text-xs);
+  }
+</style>

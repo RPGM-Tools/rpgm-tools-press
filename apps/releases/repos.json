@@ -1,9 +1,9 @@
 [
-  { "owner": "neostryder", "repo": "neo-angband", "displayName": "Neo Angband", "kind": "core" },
-  { "owner": "neostryder", "repo": "neo-angband-mod-borg", "displayName": "Neo Angband: Borg", "kind": "mod" },
-  { "owner": "neostryder", "repo": "neo-angband-mod-bug-fixes", "displayName": "Neo Angband: Bug Fixes", "kind": "mod" },
-  { "owner": "neostryder", "repo": "neo-angband-mod-feature-restoration", "displayName": "Neo Angband: Feature Restoration", "kind": "mod" },
-  { "owner": "neostryder", "repo": "neo-angband-mod-forge", "displayName": "Neo Angband: ModForge", "kind": "mod" },
-  { "owner": "neostryder", "repo": "neo-angband-mod-linoleum", "displayName": "Neo Angband: Linoleum", "kind": "mod" },
-  { "owner": "neostryder", "repo": "neo-angband-mod-qol", "displayName": "Neo Angband: QoL", "kind": "mod" }
+  { "owner": "neostryder", "repo": "neo-angband", "displayName": "Neo Angband", "kind": "core", "emoji": "🗡️" },
+  { "owner": "neostryder", "repo": "neo-angband-mod-borg", "displayName": "Neo Angband: Borg", "kind": "mod", "emoji": "🤖" },
+  { "owner": "neostryder", "repo": "neo-angband-mod-bug-fixes", "displayName": "Neo Angband: Bug Fixes", "kind": "mod", "emoji": "🩹" },
+  { "owner": "neostryder", "repo": "neo-angband-mod-feature-restoration", "displayName": "Neo Angband: Feature Restoration", "kind": "mod", "emoji": "🕛" },
+  { "owner": "neostryder", "repo": "neo-angband-mod-forge", "displayName": "Neo Angband: ModForge", "kind": "mod", "emoji": "🧰" },
+  { "owner": "neostryder", "repo": "neo-angband-mod-linoleum", "displayName": "Neo Angband: Linoleum", "kind": "mod", "emoji": "🎨" },
+  { "owner": "neostryder", "repo": "neo-angband-mod-qol", "displayName": "Neo Angband: QoL", "kind": "mod", "emoji": "🛠️" }
 ]

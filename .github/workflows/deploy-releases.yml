@@ -68,7 +68,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter releases build
         env:
-          PUBLIC_CF_BEACON_TOKEN: ${{ secrets.CF_BEACON_TOKEN }}
+          PUBLIC_CF_BEACON_TOKEN: ${{ secrets.CF_BEACON_TOKEN_RELEASES }}
       - uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}

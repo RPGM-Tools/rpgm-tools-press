@@ -12,7 +12,7 @@ export const NAV_LINKS = [
 // Filled in once that category exists on RPGM-Tools/rpgm-tools-press - a
 // placeholder categoryId would make giscus render a visible error instead
 // of nothing, so `ready` gates whether pages render the widget at all.
-const GISCUS_CATEGORY_ID = "TODO-create-Blog-Comments-category";
+const GISCUS_CATEGORY_ID = "DIC_kwDOUIeO4s4DEfbA";
 export const GISCUS = {
   repo: "RPGM-Tools/rpgm-tools-press" as const,
   repoId: "R_kgDOUIeO4g",

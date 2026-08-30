@@ -1,0 +1,48 @@
+---
+/**
+ * A wax-seal ring (same motif as SealGlyph) with a product's own emoji
+ * centered inside it instead of the generic star glyph - used to give each
+ * repo a recognizable mark, mirroring the emoji already used for it in the
+ * Discord announcements.
+ */
+interface Props {
+  emoji: string;
+  color?: string;
+  size?: number | string;
+  class?: string;
+}
+
+const { emoji, color = "currentColor", size = 40, class: className } = Astro.props;
+const px = typeof size === "number" ? `${size}px` : size;
+---
+
+<span class:list={["rpgm-product-seal", className]} style={`--rpgm-product-seal-size: ${px}`}>
+  <svg viewBox="0 0 48 48" width="100%" height="100%" fill="none" stroke={color} role="presentation" aria-hidden="true">
+    <circle cx="24" cy="24" r="21" stroke-width="1.6" />
+    <circle cx="24" cy="24" r="16" stroke-width="1" stroke-dasharray="2 3" />
+  </svg>
+  <span class="rpgm-product-seal__emoji" aria-hidden="true">{emoji}</span>
+</span>
+
+<style>
+  .rpgm-product-seal {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--rpgm-product-seal-size);
+    height: var(--rpgm-product-seal-size);
+    flex-shrink: 0;
+  }
+
+  .rpgm-product-seal svg {
+    position: absolute;
+    inset: 0;
+  }
+
+  .rpgm-product-seal__emoji {
+    position: relative;
+    font-size: calc(var(--rpgm-product-seal-size) * 0.46);
+    line-height: 1;
+  }
+</style>

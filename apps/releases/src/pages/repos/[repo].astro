@@ -2,6 +2,7 @@
 import { getCollection } from "astro:content";
 import Layout from "@rpgm/tools-press-theme/components/Layout.astro";
 import EntryCard from "@rpgm/tools-press-theme/components/EntryCard.astro";
+import ProductSeal from "@rpgm/tools-press-theme/ornaments/ProductSeal.astro";
 import SiteHead from "../../components/SiteHead.astro";
 import { SITE_TITLE, NAV_LINKS } from "../../consts";
 import { summarize } from "../../lib/summarize";
@@ -38,7 +39,10 @@ const { tracked, releases } = Astro.props;
   </Fragment>
 
   <p class="rpgm-eyebrow">Repository</p>
-  <h1>{tracked.displayName}</h1>
+  <h1 class="repo-title">
+    {tracked.emoji && <ProductSeal emoji={tracked.emoji} size={40} color="var(--rpgm-accent)" />}
+    <span>{tracked.displayName}</span>
+  </h1>
 
   {
     releases.length === 0 ? (
@@ -61,6 +65,12 @@ const { tracked, releases } = Astro.props;
 </Layout>
 
 <style>
+  .repo-title {
+    display: flex;
+    align-items: center;
+    gap: var(--rpgm-space-3);
+  }
+
   .release-list {
     list-style: none;
     margin: var(--rpgm-space-6) 0 0;
