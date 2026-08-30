@@ -5,7 +5,7 @@ import Prose from "@rpgm/tools-press-theme/components/Prose.astro";
 import Giscus from "@rpgm/tools-press-theme/components/Giscus.astro";
 import Flourish from "@rpgm/tools-press-theme/ornaments/Flourish.astro";
 import SiteHead from "../../components/SiteHead.astro";
-import { SITE_TITLE, NAV_LINKS, GISCUS } from "../../consts";
+import { SITE_TITLE, SITE_LOGO, NAV_LINKS, GISCUS } from "../../consts";
 
 export async function getStaticPaths() {
   const posts = await getCollection("posts", ({ data }) => !data.draft);
@@ -29,6 +29,7 @@ const dateLabel = post.data.pubDate.toLocaleDateString("en-US", {
   title={post.data.title}
   description={post.data.description}
   siteTitle={SITE_TITLE}
+  logoSrc={SITE_LOGO}
   navLinks={NAV_LINKS}
   rssTitle={SITE_TITLE}
   rssHref="/rss.xml"

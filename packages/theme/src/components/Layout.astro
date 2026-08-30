@@ -14,6 +14,8 @@ export interface Props {
   siteTitle: string;
   /** Short tagline shown under the site title in the header. */
   tagline?: string;
+  /** This site's own logo image, passed through to Header. Falls back to the generic SealGlyph ornament when omitted. */
+  logoSrc?: string;
   /** Primary nav links, passed through to Header/Nav. */
   navLinks: NavLink[];
   /** Footer links (defaults to navLinks if omitted). */
@@ -37,6 +39,7 @@ const {
   description,
   siteTitle,
   tagline,
+  logoSrc,
   navLinks,
   footerLinks,
   rssTitle,
@@ -89,7 +92,7 @@ const pageTitle = title.includes(siteTitle) ? title : `${title} | ${siteTitle}`;
     }
   </head>
   <body>
-    <Header siteTitle={siteTitle} tagline={tagline} links={navLinks} />
+    <Header siteTitle={siteTitle} tagline={tagline} logoSrc={logoSrc} links={navLinks} />
     <main class="rpgm-main" data-pagefind-body>
       <slot />
     </main>

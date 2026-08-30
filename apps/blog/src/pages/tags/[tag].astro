@@ -3,7 +3,7 @@ import { getCollection } from "astro:content";
 import Layout from "@rpgm/tools-press-theme/components/Layout.astro";
 import EntryCard from "@rpgm/tools-press-theme/components/EntryCard.astro";
 import SiteHead from "../../components/SiteHead.astro";
-import { SITE_TITLE, NAV_LINKS } from "../../consts";
+import { SITE_TITLE, SITE_LOGO, NAV_LINKS } from "../../consts";
 
 export async function getStaticPaths() {
   const posts = await getCollection("posts", ({ data }) => !data.draft);
@@ -27,6 +27,7 @@ const { tag, posts } = Astro.props;
   title={`Posts tagged "${tag}"`}
   description={`All posts tagged "${tag}" on ${SITE_TITLE}.`}
   siteTitle={SITE_TITLE}
+  logoSrc={SITE_LOGO}
   navLinks={NAV_LINKS}
   rssTitle={SITE_TITLE}
   rssHref="/rss.xml"

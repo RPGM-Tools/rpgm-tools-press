@@ -26,6 +26,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   syncs, and not requested at all for a tag that already has one, since a
   git tag's content never changes. Falls back to the previous first-line
   truncation when no key is configured or a call fails.
+- Each release card now carries a thin left-edge accent stripe in that
+  repo's own color, mirrored from the same repo's `discord-announce.mjs`
+  color so one identity carries across Discord and the site. The hover
+  glow stays the site's single consistent gold, not recolored per repo.
+- Both sites now show their own logo in the header and as a favicon (The
+  Ledger, Relics & Reckonings), and a larger RPGM Tools emblem plus a
+  "Copyright RPGM Tools, LLC" line in the shared footer, linking to
+  rpgm.tools.
 
 ### Changed
 

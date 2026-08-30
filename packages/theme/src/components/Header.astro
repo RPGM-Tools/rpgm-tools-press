@@ -7,15 +7,21 @@ interface Props {
   siteTitle: string;
   tagline?: string;
   links: NavLink[];
+  /** This site's own logo image. Falls back to the generic SealGlyph ornament when omitted. */
+  logoSrc?: string;
 }
 
-const { siteTitle, tagline, links } = Astro.props;
+const { siteTitle, tagline, links, logoSrc } = Astro.props;
 ---
 
 <header class="rpgm-header">
   <div class="rpgm-header__inner">
     <a href="/" class="rpgm-header__brand">
-      <SealGlyph size={30} class="rpgm-header__seal" />
+      {logoSrc ? (
+        <img src={logoSrc} alt="" width="30" height="30" class="rpgm-header__seal" />
+      ) : (
+        <SealGlyph size={30} class="rpgm-header__seal" />
+      )}
       <span class="rpgm-header__title-block">
         <span class="rpgm-header__title">{siteTitle}</span>
         {tagline && <span class="rpgm-header__tagline">{tagline}</span>}
@@ -62,6 +68,11 @@ const { siteTitle, tagline, links } = Astro.props;
     color: var(--rpgm-accent);
     flex-shrink: 0;
     transition: color var(--rpgm-transition-fast);
+  }
+
+  img.rpgm-header__seal {
+    border-radius: var(--rpgm-radius-sm);
+    object-fit: contain;
   }
 
   .rpgm-header__title-block {

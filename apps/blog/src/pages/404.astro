@@ -2,10 +2,11 @@
 import Layout from "@rpgm/tools-press-theme/components/Layout.astro";
 import SealGlyph from "@rpgm/tools-press-theme/ornaments/SealGlyph.astro";
 import SiteHead from "../components/SiteHead.astro";
-import { SITE_TITLE, NAV_LINKS } from "../consts";
+import { SITE_TITLE, SITE_LOGO, NAV_LINKS } from "../consts";
 ---
 
-<Layout title="Page Not Found" siteTitle={SITE_TITLE} navLinks={NAV_LINKS}>
+<Layout title="Page Not Found" siteTitle={SITE_TITLE}
+  logoSrc={SITE_LOGO} navLinks={NAV_LINKS}>
   <Fragment slot="head">
     <SiteHead />
   </Fragment>

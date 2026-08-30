@@ -11,9 +11,11 @@ interface Props {
   description?: string;
   tags?: string[];
   class?: string;
+  /** Per-repo/product accent color (any CSS color), shown as a thin left-edge stripe. Omit for no stripe. */
+  accentColor?: string;
 }
 
-const { title, href, date, description, tags = [], class: className } = Astro.props;
+const { title, href, date, description, tags = [], class: className, accentColor } = Astro.props;
 
 let dateLabel: string | undefined;
 if (date instanceof Date) {
@@ -23,7 +25,10 @@ if (date instanceof Date) {
 }
 ---
 
-<article class:list={["rpgm-entry-card", className]}>
+<article
+  class:list={["rpgm-entry-card", className]}
+  style={accentColor ? `--rpgm-entry-accent: ${accentColor}` : undefined}
+>
   <a href={href} class="rpgm-entry-card__link">
     <h3 class="rpgm-entry-card__title">{title}</h3>
     {dateLabel && <p class="rpgm-entry-card__date">{dateLabel}</p>}
@@ -42,11 +47,29 @@ if (date instanceof Date) {
 
 <style>
   .rpgm-entry-card {
+    position: relative;
     background: var(--rpgm-surface);
     border: 1px solid var(--rpgm-border);
     border-radius: var(--rpgm-radius-lg);
     box-shadow: var(--rpgm-shadow-elevated);
     transition: box-shadow var(--rpgm-transition-glow), border-color var(--rpgm-transition-glow), transform var(--rpgm-transition-fast);
+  }
+
+  /*
+   * A per-product identity mark, not a mood: a thin rounded stripe on the
+   * resting card, not a background tint (which would fight the card's own
+   * text contrast and the tags' own coloring). The hover glow below stays
+   * the site's one consistent gold, deliberately not recolored per repo -
+   * two competing "pick a color" signals on the same element would read as
+   * noise, not branding.
+   */
+  .rpgm-entry-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 4px;
+    border-radius: var(--rpgm-radius-lg) 0 0 var(--rpgm-radius-lg);
+    background: var(--rpgm-entry-accent, transparent);
   }
 
   .rpgm-entry-card:hover,
@@ -58,7 +81,7 @@ if (date instanceof Date) {
 
   .rpgm-entry-card__link {
     display: block;
-    padding: var(--rpgm-space-5);
+    padding: var(--rpgm-space-5) var(--rpgm-space-5) var(--rpgm-space-5) calc(var(--rpgm-space-5) + 4px);
     text-decoration: none;
     color: inherit;
   }

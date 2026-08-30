@@ -1,9 +1,9 @@
 [
-  { "owner": "neostryder", "repo": "neo-angband", "displayName": "Neo Angband", "kind": "core", "emoji": "🗡️" },
-  { "owner": "neostryder", "repo": "neo-angband-mod-borg", "displayName": "Neo Angband: Borg", "kind": "mod", "emoji": "🤖" },
-  { "owner": "neostryder", "repo": "neo-angband-mod-bug-fixes", "displayName": "Neo Angband: Bug Fixes", "kind": "mod", "emoji": "🩹" },
-  { "owner": "neostryder", "repo": "neo-angband-mod-feature-restoration", "displayName": "Neo Angband: Feature Restoration", "kind": "mod", "emoji": "🕛" },
-  { "owner": "neostryder", "repo": "neo-angband-mod-forge", "displayName": "Neo Angband: ModForge", "kind": "mod", "emoji": "🧰" },
-  { "owner": "neostryder", "repo": "neo-angband-mod-linoleum", "displayName": "Neo Angband: Linoleum", "kind": "mod", "emoji": "🎨" },
-  { "owner": "neostryder", "repo": "neo-angband-mod-qol", "displayName": "Neo Angband: QoL", "kind": "mod", "emoji": "🛠️" }
+  { "owner": "neostryder", "repo": "neo-angband", "displayName": "Neo Angband", "kind": "core", "emoji": "🗡️", "color": "#8b1a1a" },
+  { "owner": "neostryder", "repo": "neo-angband-mod-borg", "displayName": "Neo Angband: Borg", "kind": "mod", "emoji": "🤖", "color": "#1f8ecd" },
+  { "owner": "neostryder", "repo": "neo-angband-mod-bug-fixes", "displayName": "Neo Angband: Bug Fixes", "kind": "mod", "emoji": "🩹", "color": "#e07b00" },
+  { "owner": "neostryder", "repo": "neo-angband-mod-feature-restoration", "displayName": "Neo Angband: Feature Restoration", "kind": "mod", "emoji": "🕛", "color": "#8e44ad" },
+  { "owner": "neostryder", "repo": "neo-angband-mod-forge", "displayName": "Neo Angband: ModForge", "kind": "mod", "emoji": "🧰", "color": "#607d8b" },
+  { "owner": "neostryder", "repo": "neo-angband-mod-linoleum", "displayName": "Neo Angband: Linoleum", "kind": "mod", "emoji": "🎨", "color": "#27ae60" },
+  { "owner": "neostryder", "repo": "neo-angband-mod-qol", "displayName": "Neo Angband: QoL", "kind": "mod", "emoji": "🛠️", "color": "#2f80c4" }
 ]

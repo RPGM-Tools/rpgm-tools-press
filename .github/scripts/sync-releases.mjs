@@ -263,6 +263,7 @@ function buildMarkdown(tracked, entry) {
   ];
   if (tracked.kind) lines.push(`kind: ${yamlString(tracked.kind)}`);
   if (tracked.emoji) lines.push(`emoji: ${yamlString(tracked.emoji)}`);
+  if (tracked.color) lines.push(`color: ${yamlString(tracked.color)}`);
   if (entry.summary) lines.push(`summary: ${yamlString(entry.summary)}`);
   if (entry.assets.length > 0) {
     lines.push(`assets: ${JSON.stringify(entry.assets)}`);

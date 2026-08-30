@@ -15,7 +15,7 @@ const year = new Date().getFullYear();
   <div class="rpgm-footer__inner">
     <Flourish class="rpgm-footer__flourish" color="var(--rpgm-border-strong)" size={18} />
     <div class="rpgm-footer__row">
-      <p class="rpgm-footer__copy">&copy; {year} {siteTitle}. Published by RPGM Tools.</p>
+      <p class="rpgm-footer__copy">&copy; {year} {siteTitle}.</p>
       {
         links.length > 0 && (
           <ul class="rpgm-footer__links">
@@ -28,6 +28,10 @@ const year = new Date().getFullYear();
         )
       }
     </div>
+    <a href="https://rpgm.tools" class="rpgm-footer__brand">
+      <img src="/rpgm-tools-logo.webp" alt="RPGM Tools" width="48" height="48" class="rpgm-footer__brand-logo" />
+      <span class="rpgm-footer__brand-copy">&copy; {year} RPGM Tools, LLC.</span>
+    </a>
   </div>
 </footer>
 
@@ -80,5 +84,32 @@ const year = new Date().getFullYear();
   .rpgm-footer__links a:hover,
   .rpgm-footer__links a:focus-visible {
     color: var(--rpgm-accent);
+  }
+
+  .rpgm-footer__brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--rpgm-space-3);
+    margin-top: var(--rpgm-space-6);
+    padding-top: var(--rpgm-space-5);
+    border-top: 1px solid var(--rpgm-border);
+    text-decoration: none;
+    color: var(--rpgm-text-muted);
+    transition: color var(--rpgm-transition-fast);
+  }
+
+  .rpgm-footer__brand:hover,
+  .rpgm-footer__brand:focus-visible {
+    color: var(--rpgm-accent);
+  }
+
+  .rpgm-footer__brand-logo {
+    border-radius: var(--rpgm-radius-sm);
+    object-fit: contain;
+  }
+
+  .rpgm-footer__brand-copy {
+    font-size: var(--rpgm-text-sm);
   }
 </style>

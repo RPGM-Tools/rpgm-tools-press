@@ -4,7 +4,7 @@ import Layout from "@rpgm/tools-press-theme/components/Layout.astro";
 import EntryCard from "@rpgm/tools-press-theme/components/EntryCard.astro";
 import ProductSeal from "@rpgm/tools-press-theme/ornaments/ProductSeal.astro";
 import SiteHead from "../../components/SiteHead.astro";
-import { SITE_TITLE, NAV_LINKS } from "../../consts";
+import { SITE_TITLE, SITE_LOGO, NAV_LINKS } from "../../consts";
 import { summarize } from "../../lib/summarize";
 import repos from "../../../repos.json";
 
@@ -30,6 +30,7 @@ const { tracked, releases } = Astro.props;
   title={tracked.displayName}
   description={`Releases for ${tracked.displayName}.`}
   siteTitle={SITE_TITLE}
+  logoSrc={SITE_LOGO}
   navLinks={NAV_LINKS}
   rssTitle={SITE_TITLE}
   rssHref="/rss.xml"
@@ -56,6 +57,7 @@ const { tracked, releases } = Astro.props;
               href={`/releases/${release.id}/`}
               date={release.data.publishedAt}
               description={release.data.summary ?? summarize(release.body)}
+              accentColor={tracked.color}
             />
           </li>
         ))}

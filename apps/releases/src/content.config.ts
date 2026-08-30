@@ -18,6 +18,8 @@ const releases = defineCollection({
     url: z.string(),
     kind: z.enum(["core", "mod", "tool"]).optional(),
     emoji: z.string().optional(),
+    /** Per-repo accent color (hex), mirrored from that repo's own discord-announce.mjs REPO_CONFIG so the same identity carries across Discord and the site. */
+    color: z.string().optional(),
     /** AI-synthesized 1-2 sentence blurb for list views; falls back to summarize(body) when absent (e.g. the AI call failed at sync time). */
     summary: z.string().optional(),
     assets: z
