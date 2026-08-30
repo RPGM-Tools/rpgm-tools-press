@@ -49,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   each site instead of showing Pagefind's generic light-mode default, and
   blog posts are filterable by tag and category from within it.
 - Footer now also links to the site's RSS feed and its own source repo.
+- An About page on the blog, linked from the nav, with a real author bio.
 
 ### Changed
 

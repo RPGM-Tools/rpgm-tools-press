@@ -11,7 +11,11 @@ export const SITE_DESCRIPTION = SITE_TAGLINE;
 export const NAV_LINKS = [
   { label: "Home", href: "/" },
   { label: "Archive", href: "/archive" },
+  { label: "About", href: "/about" },
 ];
+
+export const AUTHOR_GITHUB = "https://github.com/neostryder";
+export const RPGM_TOOLS_URL = "https://rpgm.tools";
 
 /**
  * Per-category label + color, shown as a solid-tinted chip on post cards
