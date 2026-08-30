@@ -38,17 +38,29 @@ mounted lazily from the header's search trigger only once it's opened.
 
 `.github/scripts/sync-releases.mjs` populates `apps/releases/src/content/releases`
 on a schedule and on push - it is not a live read at request time, so a new
-release can take up to the sync interval to appear. Only stable, non-prerelease
-versions are synced: for a repo with real GitHub Releases (currently the core
-game), that means `prerelease: false`; for a repo with no formal Releases at
-all (currently every mod, where a version tag IS the release), that means a
-strict `vX.Y.Z` tag. Either way, the notes shown are that version's own section
-of `CHANGELOG.md` at that tag, not a GitHub Release's `body` - the sync script
-never hand-edits `CHANGELOG.md` in the source repos, it only reads from them.
+release can take up to the sync interval to appear. Only a strict `vX.Y.Z` tag
+is synced, whether it comes from a real GitHub Release (currently the core
+game) or, for a repo with no formal Releases at all (currently every mod,
+where a version tag IS the release), from the repo's tags directly. GitHub's
+own `prerelease` flag is deliberately not used as the filter - it also marks
+every pre-1.0 version true, and that history is real, not noise. Either way,
+the notes shown are that version's own section of `CHANGELOG.md` at that tag,
+not a GitHub Release's `body` - the sync script never hand-edits `CHANGELOG.md`
+in the source repos, it only reads from them. Sort order on the site uses each
+entry's real publish/commit timestamp, not the changelog heading's day-only
+date, so same-day releases still land in the order they were actually
+published.
 
 Each tracked repo in `apps/releases/repos.json` carries a `kind` (`core` or
 `mod`) and an `emoji`, mirrored from that repo's own `discord-announce.mjs`
 `REPO_CONFIG` so the same mark identifies a product on both Discord and here.
+
+A release-listing card's blurb comes from a short AI-synthesized summary of
+that version's changelog section (MiniMax-M3, requires `MINIMAX_API_KEY`),
+generated once when the entry is first synced and stored in its frontmatter
+- a tag's content never changes, so later syncs reuse the stored summary
+rather than paying for a fresh call. Without a key, or if a call fails, a
+card falls back to a plain first-line truncation of the changelog instead.
 
 ## Structure
 

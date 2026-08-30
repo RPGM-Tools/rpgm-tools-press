@@ -10,7 +10,7 @@ import { summarize } from "../lib/summarize";
 
 const allReleases = await getCollection("releases");
 const releases = allReleases.sort(
-  (a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf(),
+  (a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf() || a.id.localeCompare(b.id),
 );
 ---
 
@@ -34,13 +34,13 @@ const releases = allReleases.sort(
     {
       releases.map((release) => (
         <li class="release-list__item">
-          {release.data.emoji && <ProductSeal emoji={release.data.emoji} size={36} color="var(--rpgm-border-strong)" />}
+          {release.data.emoji && <ProductSeal emoji={release.data.emoji} size={48} color="var(--rpgm-border-strong)" />}
           <EntryCard
             class="release-list__card"
             title={`${release.data.repoDisplayName} ${release.data.version}`}
             href={`/releases/${release.id}/`}
             date={release.data.publishedAt}
-            description={summarize(release.body)}
+            description={release.data.summary ?? summarize(release.body)}
           />
         </li>
       ))
@@ -63,7 +63,14 @@ const releases = allReleases.sort(
     gap: var(--rpgm-space-4);
   }
 
-  .release-list__card {
+  /*
+   * :global() because this class lives on EntryCard's own root element,
+   * which carries EntryCard.astro's scope attribute, not this file's - a
+   * scoped selector here would compile with the wrong data-astro-cid and
+   * never match, leaving the card unstretched (width shrunk to its title's
+   * own content width instead of filling the row).
+   */
+  :global(.release-list__card) {
     flex: 1;
     min-width: 0;
   }

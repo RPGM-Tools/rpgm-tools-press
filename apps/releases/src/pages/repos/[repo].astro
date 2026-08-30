@@ -15,7 +15,7 @@ export async function getStaticPaths() {
     const fullName = `${tracked.owner}/${tracked.repo}`;
     const filtered = allReleases
       .filter((release) => release.data.repo === fullName)
-      .sort((a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf());
+      .sort((a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf() || a.id.localeCompare(b.id));
     return {
       params: { repo: tracked.repo },
       props: { tracked, releases: filtered },
@@ -55,7 +55,7 @@ const { tracked, releases } = Astro.props;
               title={release.data.version}
               href={`/releases/${release.id}/`}
               date={release.data.publishedAt}
-              description={summarize(release.body)}
+              description={release.data.summary ?? summarize(release.body)}
             />
           </li>
         ))}

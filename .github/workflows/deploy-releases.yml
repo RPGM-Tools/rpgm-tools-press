@@ -33,6 +33,7 @@ jobs:
         id: sync
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
         run: |
           node .github/scripts/sync-releases.mjs
           if [ -n "$(git status --porcelain apps/releases/src/content/releases)" ]; then

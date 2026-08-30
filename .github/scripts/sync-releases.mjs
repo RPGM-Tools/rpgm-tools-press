@@ -15,17 +15,19 @@
  * unauthenticated rate limit - fine for local/manual runs, a real token
  * should be supplied in CI.
  *
- * Only real, stable, non-prerelease versions are synced - GitHub's own
- * `prerelease` flag on a genuine Release, and a strict `vX.Y.Z` tag pattern
- * for a repo with no formal Releases at all, both exclude rolling/edge
- * builds and anything not meant as a real version.
+ * Only a strict `vX.Y.Z` tag is synced, for every repo alike - GitHub's own
+ * `prerelease` flag is NOT used as the filter, because it marks every
+ * pre-1.0 version true as well as genuine rolling/edge builds (tagged
+ * `vX.Y.Z-edge.N`), and pre-1.0 history is real release history, not noise.
+ * The tag pattern alone already excludes edge builds and anything not
+ * meant as a real version.
  *
  * A repo that has ANY formal GitHub Releases (currently just the core game)
  * is read from the Releases API, so its ~1,400 inherited upstream Angband
  * tags never enter the picture. A repo with NO formal Releases (currently
  * every mod - a version tag IS the release for them, see each mod's own
- * discord-announce.yml) is read from its tags instead, filtered to a
- * strict vX.Y.Z pattern.
+ * discord-announce.yml) is read from its tags instead. Either source is
+ * then filtered to the same strict vX.Y.Z pattern.
  *
  * Either way, the actual release-notes content comes from that version's
  * own section of CHANGELOG.md at that tag - never a GitHub Release's own
@@ -36,7 +38,13 @@
  * Idempotency: each release's generated frontmatter+body is compared
  * against what's already on disk before writing, so re-running with no
  * new releases produces zero file changes. Stale files (a tag that no
- * longer qualifies - e.g. it was a prerelease) are deleted.
+ * longer qualifies - e.g. it was an edge build) are deleted.
+ *
+ * Each entry also gets a short AI-synthesized summary (MiniMax-M3, needs
+ * MINIMAX_API_KEY) of its changelog section for list-view cards - generated
+ * once and cached in frontmatter, since a tag's own content never changes.
+ * Missing key or a failed call just skips the field; the page falls back to
+ * a plain truncation at render time (see apps/releases/src/lib/summarize.ts).
  */
 
 import { mkdir, readdir, readFile, unlink, writeFile } from "node:fs/promises";
@@ -161,6 +169,83 @@ function sanitizeForFilename(tag) {
   return tag.replace(/[\\/:*?"<>|]/g, "-");
 }
 
+const MINIMAX_API_KEY = process.env.MINIMAX_API_KEY;
+const MINIMAX_ENDPOINT = "https://api.minimax.io/v1/chat/completions";
+
+/**
+ * A short (<=2 sentence) AI-synthesized summary of a release's changelog
+ * section, for the one-line blurb on a release-listing card - the previous
+ * approach (the raw first bullet, truncated) was often a fragment of one
+ * detail rather than an overview of the release. Returns null (never
+ * throws) on a missing key, a failed call, or an empty response, so a
+ * caller can fall back to the old truncation - one bad/rate-limited call
+ * degrades one card, not the whole sync run.
+ */
+async function summarizeWithAI(changelogBody, { repoDisplayName, version }) {
+  if (!MINIMAX_API_KEY || !changelogBody) return null;
+
+  const prompt = [
+    `Summarize the following changelog section for "${repoDisplayName} ${version}" in at most two short sentences, plain prose, no markdown formatting.`,
+    "Write for someone browsing a list of release notes across several repositories - focus on what a player or user would actually notice.",
+    "",
+    changelogBody,
+  ].join("\n");
+
+  try {
+    const res = await fetch(MINIMAX_ENDPOINT, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${MINIMAX_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "MiniMax-M3",
+        messages: [{ role: "user", content: prompt }],
+        // Generous headroom: MiniMax-M3 is a reasoning model that spends
+        // part of this budget on its own <think> trace before the answer,
+        // and a long changelog section needs more of it to reason through.
+        max_completion_tokens: 900,
+      }),
+    });
+    if (!res.ok) {
+      console.warn(`MiniMax summarize failed (${res.status}) for ${repoDisplayName} ${version}, falling back to truncation`);
+      return null;
+    }
+    const json = await res.json();
+    const raw = json.choices?.[0]?.message?.content ?? "";
+    // If a <think> tag opens but max_completion_tokens ran out before it
+    // closed, the response was cut off mid-reasoning with no real answer
+    // at all - treat that as a failure rather than let raw chain-of-thought
+    // leak through as the "summary".
+    if (/<think>/i.test(raw) && !/<\/think>/i.test(raw)) {
+      console.warn(`MiniMax summarize truncated mid-reasoning for ${repoDisplayName} ${version}, falling back to truncation`);
+      return null;
+    }
+    const text = raw.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+    return text.length > 0 ? text : null;
+  } catch (err) {
+    console.warn(`MiniMax summarize errored for ${repoDisplayName} ${version}: ${err.message}, falling back to truncation`);
+    return null;
+  }
+}
+
+/** The `summary:` frontmatter value already on disk for this entry, if any - reused as-is rather than re-calling the AI summarizer for a tag whose content can never change (it's an immutable git ref). */
+async function existingSummary(filePath) {
+  let content;
+  try {
+    content = await readFile(filePath, "utf8");
+  } catch {
+    return null;
+  }
+  const match = content.match(/^summary:\s*(".*")\s*$/m);
+  if (!match) return null;
+  try {
+    return JSON.parse(match[1]);
+  } catch {
+    return null;
+  }
+}
+
 /** YAML double-quoted scalar - JSON string escaping is a valid subset. */
 function yamlString(value) {
   return JSON.stringify(value);
@@ -178,6 +263,7 @@ function buildMarkdown(tracked, entry) {
   ];
   if (tracked.kind) lines.push(`kind: ${yamlString(tracked.kind)}`);
   if (tracked.emoji) lines.push(`emoji: ${yamlString(tracked.emoji)}`);
+  if (entry.summary) lines.push(`summary: ${yamlString(entry.summary)}`);
   if (entry.assets.length > 0) {
     lines.push(`assets: ${JSON.stringify(entry.assets)}`);
   }
@@ -230,7 +316,12 @@ async function buildEntryForTag(tracked, tag, { fallbackBody, fallbackPublishedA
   const body = section?.body || fallbackBody;
   if (!body) return null;
 
-  const publishedAt = section?.date ?? fallbackPublishedAt ?? (await fetchRefDate(tracked.owner, tracked.repo, tag));
+  // Prefer a real timestamp (release publish time, or the tag's commit time)
+  // over the changelog heading's own date, which is day-precision only - two
+  // releases on the same calendar day would otherwise get an identical
+  // publishedAt and sort against each other in whatever order the content
+  // loader happened to read files off disk, not official publish order.
+  const publishedAt = fallbackPublishedAt ?? (await fetchRefDate(tracked.owner, tracked.repo, tag)) ?? section?.date;
 
   return {
     tag,
@@ -267,7 +358,7 @@ async function main() {
       const allReleases = await fetchAllReleases(tracked.owner, tracked.repo);
 
       if (allReleases.length > 0) {
-        const stable = allReleases.filter((r) => !r.prerelease);
+        const stable = allReleases.filter((r) => STABLE_TAG_PATTERN.test(r.tag_name));
         for (const release of stable) {
           const fallbackBody = release.body && release.body.trim().length > 0 ? release.body.replace(/\r\n?/g, "\n") : null;
           const entry = await buildEntryForTag(tracked, release.tag_name, {
@@ -314,6 +405,10 @@ async function main() {
 
     for (const entry of entries) {
       const filePath = path.join(folder, `${sanitizeForFilename(entry.tag)}.md`);
+      // Reuse an already-synced entry's summary as-is (its source tag is an
+      // immutable git ref, so the changelog section it was built from can
+      // never change) - only a genuinely new entry pays for an AI call.
+      entry.summary = (await existingSummary(filePath)) ?? (await summarizeWithAI(entry.body, { repoDisplayName: tracked.displayName, version: entry.tag }));
       const content = buildMarkdown(tracked, entry);
       try {
         const result = await writeIfChanged(filePath, content);
