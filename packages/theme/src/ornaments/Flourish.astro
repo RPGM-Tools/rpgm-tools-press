@@ -3,14 +3,23 @@
  * Decorative divider - a simple hand-drawn-looking line-art flourish.
  * currentColor-based so it inherits text color from its container;
  * wrap it in an element with `color: var(--rpgm-accent)` (etc) to tint it.
+ *
+ * maxWidth is a real prop, not a class a call site is expected to supply -
+ * `preserveAspectRatio="none"` deliberately lets the line segments stretch
+ * to fill their box, but the curl in the middle stops being a curl past a
+ * certain width and starts reading as a smear. A class passed in from a
+ * parent page can't reach this element's actual CSS anyway (it renders
+ * with THIS component's own Astro scope attribute, not the caller's - the
+ * same reason EntryCard takes accentColor as a prop rather than a class).
  */
 interface Props {
   color?: string;
   size?: number | string;
+  maxWidth?: string;
   class?: string;
 }
 
-const { color = "currentColor", size = 24, class: className } = Astro.props;
+const { color = "currentColor", size = 24, maxWidth = "20rem", class: className } = Astro.props;
 const height = typeof size === "number" ? `${size}px` : size;
 ---
 
@@ -19,6 +28,7 @@ const height = typeof size === "number" ? `${size}px` : size;
   viewBox="0 0 240 24"
   height={height}
   width="100%"
+  style={`max-width: ${maxWidth}; display: block; margin: 0 auto;`}
   preserveAspectRatio="none"
   fill="none"
   stroke={color}

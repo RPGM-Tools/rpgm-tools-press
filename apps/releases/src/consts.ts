@@ -5,7 +5,10 @@ export const SITE_TAGLINE =
   "Release notes from across the workshop's public repos, gathered in one place.";
 export const SITE_DESCRIPTION = SITE_TAGLINE;
 
-export const NAV_LINKS = [{ label: "Home", href: "/" }];
+export const NAV_LINKS = [
+  { label: "Home", href: "/" },
+  { label: "Repositories", href: "/repos" },
+];
 
 export const MAIN_GAME_REPO = "neostryder/neo-angband";
 export const PLAY_NOW_URL = "https://angband.rpgm.world/";

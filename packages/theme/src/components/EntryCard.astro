@@ -161,11 +161,19 @@ if (date instanceof Date) {
    * that follow it - a card's category is a single classification, its
    * tags are open-ended keywords, and the color makes that difference
    * legible at a glance across a whole listing.
+   *
+   * Text stays the theme's own high-contrast foreground token, not the
+   * raw category color: several category colors (graphite, dark red) are
+   * themselves dark, and using one as small text directly on a dark card
+   * with only a faint tint behind it measured well under WCAG AA. The
+   * category color still carries the identity, just via the border and
+   * background tint - decorative roles with a 3:1 minimum, not the 4.5:1
+   * a foreground text color needs.
    */
   .rpgm-entry-card__tags-category {
     font-size: var(--rpgm-text-xs);
     font-weight: 600;
-    color: var(--rpgm-entry-category-color);
+    color: var(--rpgm-text);
     background: color-mix(in srgb, var(--rpgm-entry-category-color) 16%, transparent);
     border: 1px solid color-mix(in srgb, var(--rpgm-entry-category-color) 55%, transparent);
     border-radius: var(--rpgm-radius-full);

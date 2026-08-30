@@ -77,10 +77,11 @@ published.
 Each tracked repo in `apps/releases/repos.json` carries a `kind` (`core` or
 `mod`), an `emoji`, and a `color`, all mirrored from that repo's own
 `discord-announce.mjs` `REPO_CONFIG` so the same identity marks a product on
-both Discord and here. `color` renders as a thin left-edge accent stripe on
-that repo's release cards - a resting-state identity mark, not a mood; the
-hover glow stays the site's one consistent gold rather than being recolored
-per repo.
+both Discord and here. `color` renders as a thin accent tick per entry in the
+release list (`LedgerRow`, a ruled register rather than the blog's card
+list - a deliberately different visual language for a changelog aggregator
+vs. a personal blog) and as a repo's mark on `/repos`, which lists every
+tracked repo and links to its own `/repos/<repo>` page.
 
 A release-listing card's blurb comes from a short AI-synthesized summary of
 that version's changelog section (MiniMax-M3, requires `MINIMAX_API_KEY`),

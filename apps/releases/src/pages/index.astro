@@ -1,17 +1,23 @@
 ---
 import { getCollection } from "astro:content";
 import Layout from "@rpgm/tools-press-theme/components/Layout.astro";
-import EntryCard from "@rpgm/tools-press-theme/components/EntryCard.astro";
+import LedgerRow from "@rpgm/tools-press-theme/components/LedgerRow.astro";
 import Flourish from "@rpgm/tools-press-theme/ornaments/Flourish.astro";
-import ProductSeal from "@rpgm/tools-press-theme/ornaments/ProductSeal.astro";
 import SiteHead from "../components/SiteHead.astro";
 import { SITE_TITLE, SITE_TAGLINE, SITE_DESCRIPTION, SITE_LOGO, NAV_LINKS, REPO_URL } from "../consts";
 import { summarize } from "../lib/summarize";
+import repos from "../../repos.json";
 
 const allReleases = await getCollection("releases");
 const releases = allReleases.sort(
   (a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf() || a.id.localeCompare(b.id),
 );
+
+const syncedAt = new Date().toLocaleDateString("en-US", {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
 ---
 
 <Layout
@@ -31,50 +37,36 @@ const releases = allReleases.sort(
 
   <p class="rpgm-eyebrow">Latest releases</p>
   <Flourish size={16} color="var(--rpgm-border-strong)" />
+  <p class="ledger-receipt">
+    {releases.length} entries across {repos.length} repositories - last synchronized {syncedAt}.
+  </p>
 
-  <ul class="release-list">
+  <div class="ledger-register">
     {
       releases.map((release) => (
-        <li class="release-list__item">
-          {release.data.emoji && <ProductSeal emoji={release.data.emoji} size={48} color="var(--rpgm-border-strong)" />}
-          <EntryCard
-            class="release-list__card"
-            title={`${release.data.repoDisplayName} ${release.data.version}`}
-            href={`/releases/${release.id}/`}
-            date={release.data.publishedAt}
-            description={release.data.summary ?? summarize(release.body)}
-            accentColor={release.data.color}
-          />
-        </li>
+        <LedgerRow
+          title={`${release.data.repoDisplayName} ${release.data.version}`}
+          href={`/releases/${release.id}/`}
+          date={release.data.publishedAt}
+          description={release.data.summary ?? summarize(release.body)}
+          accentColor={release.data.color}
+          emoji={release.data.emoji}
+        />
       ))
     }
-  </ul>
+  </div>
 </Layout>
 
 <style>
-  .release-list {
-    list-style: none;
-    margin: var(--rpgm-space-6) 0 0;
-    padding: 0;
-    display: grid;
-    gap: var(--rpgm-space-5);
+  .ledger-receipt {
+    margin: 0 0 var(--rpgm-space-5);
+    font-family: var(--rpgm-font-mono);
+    font-size: var(--rpgm-text-xs);
+    color: var(--rpgm-text-muted);
+    text-align: center;
   }
 
-  .release-list__item {
-    display: flex;
-    align-items: center;
-    gap: var(--rpgm-space-4);
-  }
-
-  /*
-   * :global() because this class lives on EntryCard's own root element,
-   * which carries EntryCard.astro's scope attribute, not this file's - a
-   * scoped selector here would compile with the wrong data-astro-cid and
-   * never match, leaving the card unstretched (width shrunk to its title's
-   * own content width instead of filling the row).
-   */
-  :global(.release-list__card) {
-    flex: 1;
-    min-width: 0;
+  .ledger-register {
+    margin-top: var(--rpgm-space-2);
   }
 </style>

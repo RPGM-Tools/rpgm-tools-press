@@ -1,0 +1,68 @@
+---
+import Layout from "@rpgm/tools-press-theme/components/Layout.astro";
+import ProductSeal from "@rpgm/tools-press-theme/ornaments/ProductSeal.astro";
+import SiteHead from "../../components/SiteHead.astro";
+import { SITE_TITLE, SITE_LOGO, NAV_LINKS, REPO_URL } from "../../consts";
+import repos from "../../../repos.json";
+---
+
+<Layout
+  title="Repositories"
+  description={`Every repository ${SITE_TITLE} tracks.`}
+  siteTitle={SITE_TITLE}
+  logoSrc={SITE_LOGO}
+  navLinks={NAV_LINKS}
+  rssTitle={SITE_TITLE}
+  rssHref="/rss.xml"
+  githubHref={REPO_URL}
+>
+  <Fragment slot="head">
+    <SiteHead />
+  </Fragment>
+
+  <p class="rpgm-eyebrow">Repositories</p>
+  <h1>Every tracked repository</h1>
+
+  <ul class="repo-list">
+    {
+      repos.map((repo) => (
+        <li>
+          <a href={`/repos/${repo.repo}/`} class="repo-list__item" style={`--rpgm-ledger-accent: ${repo.color}`}>
+            {repo.emoji && <ProductSeal emoji={repo.emoji} size={28} color="var(--rpgm-ledger-accent)" />}
+            <span>{repo.displayName}</span>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</Layout>
+
+<style>
+  .repo-list {
+    list-style: none;
+    margin: var(--rpgm-space-6) 0 0;
+    padding: 0;
+    display: grid;
+    gap: var(--rpgm-space-2);
+  }
+
+  .repo-list__item {
+    display: flex;
+    align-items: center;
+    gap: var(--rpgm-space-3);
+    padding: var(--rpgm-space-3) var(--rpgm-space-4);
+    border: 1px solid var(--rpgm-border);
+    border-radius: var(--rpgm-radius-md);
+    text-decoration: none;
+    color: var(--rpgm-text);
+    font-family: var(--rpgm-font-display);
+    font-weight: 600;
+    transition: border-color var(--rpgm-transition-fast), color var(--rpgm-transition-fast);
+  }
+
+  .repo-list__item:hover,
+  .repo-list__item:focus-visible {
+    color: var(--rpgm-accent);
+    border-color: var(--rpgm-ledger-accent, var(--rpgm-border-strong));
+  }
+</style>

@@ -67,6 +67,45 @@
   }
 
   /*
+   * A post/changelog body's own heading rhythm: the shared h1-h6 rule
+   * above is also used for page titles and other chrome that wants zero
+   * top margin, so a section break inside real long-form prose needs its
+   * own rule rather than changing that shared one. A gold rule to the
+   * left plus small-caps reads as a deliberate section marker; the
+   * generous top margin is what makes it read as a break at all instead
+   * of sitting one line under the previous paragraph.
+   */
+  .rpgm-prose h2,
+  .rpgm-prose h3 {
+    margin-top: 2.5em;
+    padding-left: var(--rpgm-space-3);
+    border-left: 3px solid var(--rpgm-accent);
+    text-transform: uppercase;
+    font-variant: small-caps;
+    letter-spacing: 0.04em;
+  }
+
+  .rpgm-prose h2:first-child,
+  .rpgm-prose h3:first-child {
+    margin-top: 0;
+  }
+
+  /*
+   * A manuscript drop cap on a post's opening paragraph - cheap (one
+   * pseudo-element) and reads as "grimoire" far more specifically than
+   * the shared token palette does on its own.
+   */
+  .rpgm-prose > p:first-of-type::first-letter {
+    float: left;
+    font-family: var(--rpgm-font-display);
+    font-size: 3.4em;
+    line-height: 0.8;
+    font-weight: 700;
+    padding: 0.05em 0.08em 0 0;
+    color: var(--rpgm-accent);
+  }
+
+  /*
    * Everything below is prose-BODY markup (rendered markdown), scoped to
    * .rpgm-prose (see Prose.astro). Left unscoped, "li + li" in particular
    * bled into every unrelated flex <ul> sitewide (nav links, footer links,
@@ -83,14 +122,18 @@
   }
 
   .rpgm-prose code {
-    background: rgba(207, 161, 70, 0.12);
+    /* var(--rpgm-accent)-derived, not a fixed gold rgba - so The Ledger's
+       cool accent shows through instead of a warm gold tint pulling it
+       back toward the blog's own palette. */
+    background: color-mix(in srgb, var(--rpgm-accent) 12%, transparent);
     border: 1px solid var(--rpgm-border);
     border-radius: var(--rpgm-radius-sm);
     padding: 0.1em 0.4em;
   }
 
   .rpgm-prose pre {
-    background: var(--rpgm-umber-deep);
+    /* var(--rpgm-bg-elevated), not the fixed warm-umber anchor - same reasoning as .rpgm-prose code above. */
+    background: var(--rpgm-bg-elevated);
     border: 1px solid var(--rpgm-border);
     border-radius: var(--rpgm-radius-md);
     padding: var(--rpgm-space-4);

@@ -22,25 +22,55 @@ export interface Props {
 const { repo, repoId, category, categoryId, mapping = "pathname", term } = Astro.props;
 ---
 
-<section class="rpgm-giscus" data-pagefind-ignore>
-  <script
-    src="https://giscus.app/client.js"
-    data-repo={repo}
-    data-repo-id={repoId}
-    data-category={category}
-    data-category-id={categoryId}
-    data-mapping={mapping}
-    data-term={term}
-    data-strict="0"
-    data-reactions-enabled="1"
-    data-emit-metadata="0"
-    data-input-position="top"
-    data-theme="dark_dimmed"
-    data-lang="en"
-    crossorigin="anonymous"
-    async
-  ></script>
+<section class="rpgm-giscus" data-pagefind-ignore data-rpgm-giscus>
+  <!--
+    The script tag is built client-side (see below), not written statically
+    here: giscus reads data-theme once, at embed time, and this page is a
+    static build with no way to know a visitor's OS preference or stored
+    ThemeToggle choice ahead of time. A hardcoded "dark_dimmed" here would
+    mean a dark comment box on top of a light page for any light-mode
+    reader - giscus reacts to *this site's* theme instead, both at first
+    load and live, whenever ThemeToggle changes it.
+  -->
 </section>
+
+<script
+  define:vars={{ repo, repoId, category, categoryId, mapping, term: term ?? "" }}
+>
+  function resolvedTheme() {
+    if (document.documentElement.dataset.theme === "light") return "light";
+    if (document.documentElement.dataset.theme === "dark") return "dark_dimmed";
+    return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark_dimmed" : "light";
+  }
+
+  const host = document.querySelector("[data-rpgm-giscus]");
+  if (host) {
+    const script = document.createElement("script");
+    script.src = "https://giscus.app/client.js";
+    script.setAttribute("data-repo", repo);
+    script.setAttribute("data-repo-id", repoId);
+    script.setAttribute("data-category", category);
+    script.setAttribute("data-category-id", categoryId);
+    script.setAttribute("data-mapping", mapping);
+    if (term) script.setAttribute("data-term", term);
+    script.setAttribute("data-strict", "0");
+    script.setAttribute("data-reactions-enabled", "1");
+    script.setAttribute("data-emit-metadata", "0");
+    script.setAttribute("data-input-position", "top");
+    script.setAttribute("data-theme", resolvedTheme());
+    script.setAttribute("data-lang", "en");
+    script.crossOrigin = "anonymous";
+    script.async = true;
+    host.appendChild(script);
+  }
+
+  document.addEventListener("rpgm-theme-change", (event) => {
+    const iframe = document.querySelector("iframe.giscus-frame");
+    if (!iframe) return;
+    const theme = event.detail.theme === "dark" ? "dark_dimmed" : "light";
+    iframe.contentWindow?.postMessage({ giscus: { setConfig: { theme } } }, "https://giscus.app");
+  });
+</script>
 
 <style>
   .rpgm-giscus {

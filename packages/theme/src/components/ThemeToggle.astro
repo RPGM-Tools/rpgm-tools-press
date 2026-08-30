@@ -41,12 +41,23 @@ const STORAGE_KEY = "rpgm-theme";
     }
   }
 
+  function resolved(theme) {
+    if (theme !== "system") return theme;
+    return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+
   function apply(theme) {
     if (theme === "system") delete document.documentElement.dataset.theme;
     else document.documentElement.dataset.theme = theme;
     document.querySelectorAll("[data-rpgm-theme-toggle]").forEach((btn) => {
       btn.dataset.current = theme;
     });
+    // Lets anything that can't just read CSS custom properties (e.g. an
+    // embedded third-party widget like giscus) react to a resolved
+    // light/dark value without polling.
+    document.dispatchEvent(
+      new CustomEvent("rpgm-theme-change", { detail: { theme: resolved(theme) } }),
+    );
   }
 
   apply(stored());

@@ -50,6 +50,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   blog posts are filterable by tag and category from within it.
 - Footer now also links to the site's RSS feed and its own source repo.
 - An About page on the blog, linked from the nav, with a real author bio.
+- The search field itself, not just the results, is themed: clicking the
+  search trigger (or pressing "/") turns it into the actual input in
+  place, instead of leaving an unchanged button next to a second field
+  that appears somewhere else.
+- The Ledger's release list is now a ruled register (date gutter, a thin
+  per-repo accent tick, monospace dates) instead of a stack of full-width
+  cards, with an entry/repo-count "last synchronized" line at the top -
+  it reads as a scannable log rather than the blog's own card list
+  wearing a different color. A new Repositories page (linked from the
+  nav) lists every tracked repo; its own per-repo pages were previously
+  unreachable from anywhere in the site.
+- The header candle glyph now actually flickers (respects
+  prefers-reduced-motion), instead of sitting unused in the ornament set.
+- Prose headings (h2/h3) inside a post or changelog body get a gold rule,
+  small-caps, and real top margin, and a post's opening paragraph gets a
+  manuscript-style drop cap - a section break used to read as barely more
+  than a line-height gap.
 
 ### Changed
 
@@ -109,3 +126,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   elements written in the file that owns the `<style>` block - the rule
   never applied, so every card sat at its title's own content width instead
   of filling the row. Rule now uses `:global()`.
+- The dark-mode gold accent (used directly as text color for links, the
+  eyebrow label, and card dates) measured ~1.9:1 against light-mode
+  parchment and ~2.4:1 against white - both well under WCAG AA's 4.5:1.
+  Light mode now uses a deeper antique-gold that clears 4.5:1 against
+  both. The focus ring was also hardcoded to the raw gold anchor color
+  regardless of site or theme, which put a warm ring (failing contrast in
+  light mode) on The Ledger's cool palette too; it now follows the active
+  accent token.
+- A category chip's text used the category's own raw color, several of
+  which (graphite, dark red) are themselves dark - as text on a dark card
+  with only a faint tint behind it, that measured as low as ~1.15:1. Chip
+  text is now always the theme's own high-contrast foreground color; the
+  category color still carries the identity via the chip's border and
+  background tint.
+- `Flourish`'s `preserveAspectRatio="none"` intentionally lets its line
+  segments stretch to fill their container, but with no width limit
+  outside the footer, the decorative curl in the middle stretched into a
+  flattened smear on any wide page. It now caps its own width by default
+  via a real `maxWidth` prop, rather than depending on a class passed in
+  from the page using it (which, same as the `EntryCard` fix above,
+  compiles with the wrong component's scope attribute and never matched).
+- Giscus was hardcoded to `dark_dimmed` regardless of the site's actual
+  theme, producing a dark comment box on a light-mode page. It now embeds
+  with the resolved light/dark theme and updates live when ThemeToggle
+  changes it.
+- No `prefers-reduced-motion` handling existed anywhere (card hover lift,
+  the new candle flicker). A global rule now collapses animations and
+  transitions to effectively instant for anyone who's asked for that.
+- The large end of the type scale (used for `h1`/`h2` in particular) was
+  fixed at up to 3.4rem with no responsive range at all - a post title set
+  in Cormorant at 54px on a narrow phone read as a wall of text. The top
+  four sizes now use `clamp()`, unchanged at desktop widths.

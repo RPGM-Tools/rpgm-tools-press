@@ -23,7 +23,9 @@ const allLinks: NavLink[] = [
 
 <footer class="rpgm-footer">
   <div class="rpgm-footer__inner">
-    <Flourish class="rpgm-footer__flourish" color="var(--rpgm-border-strong)" size={18} />
+    <div class="rpgm-footer__flourish-wrap">
+      <Flourish maxWidth="16rem" color="var(--rpgm-border-strong)" size={18} />
+    </div>
     <div class="rpgm-footer__row">
       <p class="rpgm-footer__site">{siteTitle}</p>
       {
@@ -58,10 +60,8 @@ const allLinks: NavLink[] = [
     padding: var(--rpgm-space-6) var(--rpgm-space-5) var(--rpgm-space-7);
   }
 
-  .rpgm-footer__flourish {
-    display: block;
-    margin: 0 auto var(--rpgm-space-5);
-    max-width: 16rem;
+  .rpgm-footer__flourish-wrap {
+    margin-bottom: var(--rpgm-space-5);
   }
 
   .rpgm-footer__row {

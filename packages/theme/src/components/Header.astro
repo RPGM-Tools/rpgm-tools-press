@@ -1,6 +1,7 @@
 ---
 import Nav, { type NavLink } from "./Nav.astro";
 import SealGlyph from "../ornaments/SealGlyph.astro";
+import CandleIcon from "../ornaments/CandleIcon.astro";
 import SearchTrigger from "./SearchTrigger.astro";
 import ThemeToggle from "./ThemeToggle.astro";
 
@@ -27,6 +28,7 @@ const { siteTitle, tagline, links, logoSrc } = Astro.props;
         <span class="rpgm-header__title">{siteTitle}</span>
         {tagline && <span class="rpgm-header__tagline">{tagline}</span>}
       </span>
+      <CandleIcon size={18} color="var(--rpgm-accent)" />
     </a>
     <div class="rpgm-header__right">
       <Nav links={links} />

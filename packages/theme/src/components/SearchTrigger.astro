@@ -80,6 +80,10 @@ const { label = "Search" } = Astro.props;
 
     async function open() {
       if (!panel!.hidden) return;
+      // The button IS the search field, once open - hiding it rather than
+      // leaving it sitting there next to a second, separately-appearing
+      // input would read as two different controls for one action.
+      button!.hidden = true;
       panel!.hidden = false;
       await loadPagefindUI();
       panel!.querySelector("input")?.focus();
@@ -88,6 +92,7 @@ const { label = "Search" } = Astro.props;
     function close({ refocus = false } = {}) {
       if (panel!.hidden) return;
       panel!.hidden = true;
+      button!.hidden = false;
       if (refocus) button!.focus();
     }
 
@@ -169,11 +174,20 @@ const { label = "Search" } = Astro.props;
     padding: 0.15em 0.4em;
   }
 
+  /*
+   * The panel occupies the exact box the button just vacated (top:0/
+   * right:0 of the same relative container, same starting width) rather
+   * than appearing as a second, separate box below an unchanged button -
+   * clicking (or "/") turns the control you're looking at into the field
+   * itself, instead of popping open a different field somewhere else.
+   * It's free to grow wider/taller than that starting box as results
+   * arrive; it just can't start disconnected from what triggered it.
+   */
   .rpgm-search-trigger__panel {
     position: absolute;
-    top: calc(100% + var(--rpgm-space-2));
+    top: 0;
     right: 0;
-    min-width: 20rem;
+    width: max(20rem, 100%);
     max-width: min(28rem, 90vw);
     z-index: 20;
   }
@@ -191,14 +205,31 @@ const { label = "Search" } = Astro.props;
     --pagefind-ui-border: var(--rpgm-border-strong);
     --pagefind-ui-tag: var(--rpgm-border);
     --pagefind-ui-border-width: 1px;
-    --pagefind-ui-border-radius: 10px;
+    --pagefind-ui-border-radius: 999px;
     --pagefind-ui-font: var(--rpgm-font-body);
+  }
+
+  /* The input row itself takes over the button's exact pill shape - this is the part standing where the button was. */
+  .rpgm-search-trigger__panel :global(.pagefind-ui__form) {
+    border-radius: var(--rpgm-radius-full);
+    box-shadow: var(--rpgm-shadow-candle);
+  }
+
+  .rpgm-search-trigger__panel :global(.pagefind-ui__search-input) {
+    font-family: var(--rpgm-font-body);
+    padding-top: 0.6em;
+    padding-bottom: 0.6em;
+  }
+
+  /* Results/filters drop below the input pill as their own elevated sheet, not fused to it. */
+  .rpgm-search-trigger__panel :global(.pagefind-ui__drawer) {
+    margin-top: var(--rpgm-space-2);
     padding: var(--rpgm-space-3);
     background: var(--rpgm-surface);
     border: 1px solid var(--rpgm-border-strong);
     border-radius: var(--rpgm-radius-lg);
     box-shadow: var(--rpgm-shadow-elevated);
-    max-height: 70vh;
+    max-height: 65vh;
     overflow-y: auto;
   }
 

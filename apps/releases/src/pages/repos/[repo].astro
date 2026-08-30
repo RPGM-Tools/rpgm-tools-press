@@ -1,7 +1,7 @@
 ---
 import { getCollection } from "astro:content";
 import Layout from "@rpgm/tools-press-theme/components/Layout.astro";
-import EntryCard from "@rpgm/tools-press-theme/components/EntryCard.astro";
+import LedgerRow from "@rpgm/tools-press-theme/components/LedgerRow.astro";
 import ProductSeal from "@rpgm/tools-press-theme/ornaments/ProductSeal.astro";
 import SiteHead from "../../components/SiteHead.astro";
 import { SITE_TITLE, SITE_LOGO, NAV_LINKS, REPO_URL } from "../../consts";
@@ -50,19 +50,17 @@ const { tracked, releases } = Astro.props;
     releases.length === 0 ? (
       <p>No releases have synced for this repository yet.</p>
     ) : (
-      <ul class="release-list">
+      <div class="ledger-register">
         {releases.map((release) => (
-          <li>
-            <EntryCard
-              title={release.data.version}
-              href={`/releases/${release.id}/`}
-              date={release.data.publishedAt}
-              description={release.data.summary ?? summarize(release.body)}
-              accentColor={tracked.color}
-            />
-          </li>
+          <LedgerRow
+            title={release.data.version}
+            href={`/releases/${release.id}/`}
+            date={release.data.publishedAt}
+            description={release.data.summary ?? summarize(release.body)}
+            accentColor={tracked.color}
+          />
         ))}
-      </ul>
+      </div>
     )
   }
 </Layout>
@@ -74,11 +72,7 @@ const { tracked, releases } = Astro.props;
     gap: var(--rpgm-space-3);
   }
 
-  .release-list {
-    list-style: none;
-    margin: var(--rpgm-space-6) 0 0;
-    padding: 0;
-    display: grid;
-    gap: var(--rpgm-space-5);
+  .ledger-register {
+    margin-top: var(--rpgm-space-6);
   }
 </style>

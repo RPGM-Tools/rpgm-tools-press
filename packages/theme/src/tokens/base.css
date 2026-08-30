@@ -73,14 +73,20 @@
     --rpgm-font-body: "EB Garamond", Georgia, "Times New Roman", serif;
     --rpgm-font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
+    /*
+     * clamp() floors match the previous fixed sizes shrunk ~25-30% (a
+     * hard 3.4rem h1 on a 360px phone was a wall of text, not a heading);
+     * ceilings match the previous fixed sizes so nothing shrinks or grows
+     * past what was already tuned for a full-width desktop reading column.
+     */
     --rpgm-text-xs: 0.8rem;
     --rpgm-text-sm: 0.925rem;
     --rpgm-text-base: 1.0625rem;
     --rpgm-text-lg: 1.25rem;
-    --rpgm-text-xl: 1.55rem;
-    --rpgm-text-2xl: 2rem;
-    --rpgm-text-3xl: 2.65rem;
-    --rpgm-text-4xl: 3.4rem;
+    --rpgm-text-xl: clamp(1.25rem, 1.05rem + 1vw, 1.55rem);
+    --rpgm-text-2xl: clamp(1.5rem, 1.15rem + 1.75vw, 2rem);
+    --rpgm-text-3xl: clamp(1.85rem, 1.35rem + 2.5vw, 2.65rem);
+    --rpgm-text-4xl: clamp(2.2rem, 1.5rem + 3.5vw, 3.4rem);
 
     --rpgm-leading-tight: 1.15;
     --rpgm-leading-snug: 1.35;
@@ -138,6 +144,25 @@
     --rpgm-text: var(--rpgm-ink-on-light);
     --rpgm-text-muted: var(--rpgm-ink-on-light-muted);
     --rpgm-text-inverse: var(--rpgm-ink-on-dark);
+
+    /*
+     * The dark-mode gold (#cfa146) measures ~1.9:1 on parchment and
+     * ~2.4:1 on white - nowhere near WCAG AA's 4.5:1 for text, and it's
+     * used as text color directly (links, the eyebrow label, card dates).
+     * This deeper antique-gold/bronze clears 4.5:1 on both parchment and
+     * white while still reading as "gold," just a tarnished one - which
+     * fits an aged-parchment page at least as well as the brighter dark-
+     * mode gold does against candlelight.
+     */
+    --rpgm-accent: #8a5a12;
+    --rpgm-accent-hover: #6e4610;
+    --rpgm-link: var(--rpgm-accent);
+    --rpgm-link-visited: #7a5228;
+
+    --rpgm-shadow-candle: 0 0 0 1px var(--rpgm-border-strong),
+      0 0 18px 2px rgba(138, 90, 18, 0.22);
+    --rpgm-shadow-candle-hover: 0 0 0 1px var(--rpgm-accent-hover),
+      0 0 26px 6px rgba(138, 90, 18, 0.32);
   }
 
   @media (prefers-color-scheme: light) {
@@ -153,6 +178,16 @@
       --rpgm-text: var(--rpgm-ink-on-light);
       --rpgm-text-muted: var(--rpgm-ink-on-light-muted);
       --rpgm-text-inverse: var(--rpgm-ink-on-dark);
+
+      --rpgm-accent: #8a5a12;
+      --rpgm-accent-hover: #6e4610;
+      --rpgm-link: var(--rpgm-accent);
+      --rpgm-link-visited: #7a5228;
+
+      --rpgm-shadow-candle: 0 0 0 1px var(--rpgm-border-strong),
+        0 0 18px 2px rgba(138, 90, 18, 0.22);
+      --rpgm-shadow-candle-hover: 0 0 0 1px var(--rpgm-accent-hover),
+        0 0 26px 6px rgba(138, 90, 18, 0.32);
     }
   }
 
@@ -178,7 +213,10 @@
 
   a {
     color: var(--rpgm-link);
-    text-decoration-color: rgba(207, 161, 70, 0.45);
+    /* Derived from the active link color, not a hardcoded gold - a cool-accent
+       site (The Ledger) would otherwise get a warm gold underline under a
+       slate-blue link no matter which theme it was actually using. */
+    text-decoration-color: color-mix(in srgb, var(--rpgm-link) 45%, transparent);
     text-underline-offset: 0.2em;
     transition: color var(--rpgm-transition-fast), text-decoration-color var(--rpgm-transition-fast);
   }
@@ -193,8 +231,28 @@
     color: var(--rpgm-link-visited);
   }
 
+  /* var(--rpgm-accent), not a fixed gold - so the ring matches whichever
+     site/theme is actually showing instead of stapling gold onto a cool
+     site, and stays a corrected, AA-passing color in light mode. */
   :focus-visible {
-    outline: 2px solid var(--rpgm-gold);
+    outline: 2px solid var(--rpgm-accent);
     outline-offset: 2px;
+  }
+
+  /*
+   * Respect a reduced-motion preference globally: card lift/glow
+   * transitions, and anything animated added later, collapse to
+   * effectively instant rather than being individually re-guarded at
+   * every call site.
+   */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }

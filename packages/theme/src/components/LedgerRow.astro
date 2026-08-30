@@ -1,0 +1,123 @@
+---
+/**
+ * A single ruled row in a "ledger register" list: date gutter, a thin
+ * accent tick, then title + description - deliberately NOT a floating
+ * card. Built for apps/releases, where dozens of entries as full-width
+ * glowing cards read as oversized for what's really a scannable log; a
+ * ruled register is what an actual ledger looks like.
+ */
+interface Props {
+  title: string;
+  href: string;
+  date?: Date | string;
+  description?: string;
+  /** Per-repo accent color (any CSS color), shown as a thin tick in the gutter. */
+  accentColor?: string;
+  /** Emoji seal, if this entry has one (see ProductSeal). */
+  emoji?: string;
+}
+
+import ProductSeal from "../ornaments/ProductSeal.astro";
+
+const { title, href, date, description, accentColor, emoji } = Astro.props;
+
+let dateLabel: string | undefined;
+if (date instanceof Date) {
+  dateLabel = date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit" });
+} else if (typeof date === "string") {
+  dateLabel = date;
+}
+---
+
+<a
+  href={href}
+  class="rpgm-ledger-row"
+  style={accentColor ? `--rpgm-ledger-accent: ${accentColor}` : undefined}
+>
+  {dateLabel && <span class="rpgm-ledger-row__date">{dateLabel}</span>}
+  <span class="rpgm-ledger-row__mark" aria-hidden="true"></span>
+  <span class="rpgm-ledger-row__body">
+    <span class="rpgm-ledger-row__title">
+      {emoji && <ProductSeal emoji={emoji} size={20} color="var(--rpgm-ledger-accent, currentColor)" />}
+      <span>{title}</span>
+    </span>
+    {description && <span class="rpgm-ledger-row__desc">{description}</span>}
+  </span>
+</a>
+
+<style>
+  .rpgm-ledger-row {
+    display: grid;
+    grid-template-columns: 6rem 3px 1fr;
+    align-items: start;
+    gap: var(--rpgm-space-3);
+    padding: var(--rpgm-space-3) var(--rpgm-space-2);
+    text-decoration: none;
+    color: inherit;
+    border-bottom: 1px solid var(--rpgm-border);
+    transition: background-color var(--rpgm-transition-fast);
+  }
+
+  .rpgm-ledger-row:first-child {
+    border-top: 1px solid var(--rpgm-border);
+  }
+
+  .rpgm-ledger-row:hover,
+  .rpgm-ledger-row:focus-visible {
+    background: color-mix(in srgb, var(--rpgm-ledger-accent, var(--rpgm-accent)) 8%, transparent);
+  }
+
+  .rpgm-ledger-row:hover .rpgm-ledger-row__title,
+  .rpgm-ledger-row:focus-visible .rpgm-ledger-row__title {
+    color: var(--rpgm-accent);
+  }
+
+  .rpgm-ledger-row__date {
+    font-family: var(--rpgm-font-mono);
+    font-size: var(--rpgm-text-xs);
+    color: var(--rpgm-text-muted);
+    padding-top: 0.3em;
+    white-space: nowrap;
+  }
+
+  .rpgm-ledger-row__mark {
+    align-self: stretch;
+    background: var(--rpgm-ledger-accent, var(--rpgm-border-strong));
+    border-radius: var(--rpgm-radius-full);
+  }
+
+  .rpgm-ledger-row__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2em;
+    min-width: 0;
+  }
+
+  .rpgm-ledger-row__title {
+    display: flex;
+    align-items: center;
+    gap: var(--rpgm-space-2);
+    font-family: var(--rpgm-font-display);
+    font-weight: 600;
+    font-size: var(--rpgm-text-lg);
+    color: var(--rpgm-text);
+    transition: color var(--rpgm-transition-fast);
+  }
+
+  .rpgm-ledger-row__desc {
+    font-size: var(--rpgm-text-sm);
+    color: var(--rpgm-text-muted);
+    line-height: var(--rpgm-leading-snug);
+  }
+
+  @media (max-width: 32rem) {
+    .rpgm-ledger-row {
+      grid-template-columns: 3px 1fr;
+    }
+
+    .rpgm-ledger-row__date {
+      grid-column: 1 / -1;
+      padding-top: 0;
+    }
+  }
+</style>
