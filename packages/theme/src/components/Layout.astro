@@ -21,7 +21,12 @@ export interface Props {
   /** RSS autodiscovery <link> - set both to enable. */
   rssTitle?: string;
   rssHref?: string;
-  /** Cloudflare Web Analytics token. The beacon script only renders when this is set. */
+  /**
+   * Cloudflare Web Analytics token. Defaults to the consuming app's own
+   * PUBLIC_CF_BEACON_TOKEN env var when omitted, so most pages never need
+   * to pass this explicitly. The beacon script only renders when a token
+   * ends up set, from either source.
+   */
   analyticsToken?: string;
   /** Absolute canonical URL for this page, if known. */
   canonicalURL?: string | URL;
@@ -36,7 +41,7 @@ const {
   footerLinks,
   rssTitle,
   rssHref,
-  analyticsToken,
+  analyticsToken = import.meta.env.PUBLIC_CF_BEACON_TOKEN,
   canonicalURL,
 } = Astro.props;
 
@@ -85,7 +90,7 @@ const pageTitle = title.includes(siteTitle) ? title : `${title} | ${siteTitle}`;
   </head>
   <body>
     <Header siteTitle={siteTitle} tagline={tagline} links={navLinks} />
-    <main class="rpgm-main">
+    <main class="rpgm-main" data-pagefind-body>
       <slot />
     </main>
     <Footer siteTitle={siteTitle} links={footerLinks ?? navLinks} />

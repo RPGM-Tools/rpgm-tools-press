@@ -1,0 +1,51 @@
+---
+export interface Props {
+  /** "owner/repo" - the Discussions-enabled repo backing every comment thread. */
+  repo: `${string}/${string}`;
+  /** GitHub repo node ID (starts with "R_"). */
+  repoId: string;
+  /** Discussion category name, e.g. "Blog Comments". */
+  category: string;
+  /** Discussion category node ID (starts with "DIC_"). */
+  categoryId: string;
+  /**
+   * How a thread is matched to this page. "pathname" suits URLs that never
+   * change (blog posts); "specific" plus `term` keys the thread to a fixed
+   * string instead, so it survives a future URL reshuffle (release pages,
+   * keyed on repo+version rather than their generated slug).
+   */
+  mapping?: "pathname" | "specific" | "title" | "og:title" | "url";
+  /** Required when mapping="specific" - the fixed term the thread is keyed to. */
+  term?: string;
+}
+
+const { repo, repoId, category, categoryId, mapping = "pathname", term } = Astro.props;
+---
+
+<section class="rpgm-giscus" data-pagefind-ignore>
+  <script
+    src="https://giscus.app/client.js"
+    data-repo={repo}
+    data-repo-id={repoId}
+    data-category={category}
+    data-category-id={categoryId}
+    data-mapping={mapping}
+    data-term={term}
+    data-strict="0"
+    data-reactions-enabled="1"
+    data-emit-metadata="0"
+    data-input-position="top"
+    data-theme="dark_dimmed"
+    data-lang="en"
+    crossorigin="anonymous"
+    async
+  ></script>
+</section>
+
+<style>
+  .rpgm-giscus {
+    margin-top: var(--rpgm-space-7);
+    padding-top: var(--rpgm-space-6);
+    border-top: 1px solid var(--rpgm-border);
+  }
+</style>

@@ -2,9 +2,10 @@
 import { getCollection, render } from "astro:content";
 import Layout from "@rpgm/tools-press-theme/components/Layout.astro";
 import Prose from "@rpgm/tools-press-theme/components/Prose.astro";
+import Giscus from "@rpgm/tools-press-theme/components/Giscus.astro";
 import Flourish from "@rpgm/tools-press-theme/ornaments/Flourish.astro";
 import SiteHead from "../../components/SiteHead.astro";
-import { SITE_TITLE, NAV_LINKS } from "../../consts";
+import { SITE_TITLE, NAV_LINKS, GISCUS } from "../../consts";
 
 export async function getStaticPaths() {
   const releases = await getCollection("releases");
@@ -52,6 +53,17 @@ const dateLabel = release.data.publishedAt.toLocaleDateString("en-US", {
       <Content />
     </Prose>
   </article>
+
+  {GISCUS.ready && (
+    <Giscus
+      repo={GISCUS.repo}
+      repoId={GISCUS.repoId}
+      category={GISCUS.category}
+      categoryId={GISCUS.categoryId}
+      mapping="specific"
+      term={`${release.data.repo} ${release.data.version}`}
+    />
+  )}
 </Layout>
 
 <style>

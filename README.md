@@ -21,6 +21,19 @@ pnpm --filter blog dev
 pnpm --filter releases dev
 ```
 
+## Comments
+
+Both apps support GitHub Discussions-backed comments via
+[giscus](https://giscus.app), gated behind a real Discussion category ID set
+in each app's `src/consts.ts` (`GISCUS.categoryId`). A placeholder ID leaves
+the widget unrendered rather than showing a broken embed.
+
+## Search
+
+Full-text search runs client-side via [Pagefind](https://pagefind.app),
+indexed as a postbuild step (`astro build && pagefind --site dist`) and
+mounted lazily from the header's search trigger only once it's opened.
+
 ## Structure
 
 ```

@@ -1,6 +1,7 @@
 ---
 import Nav, { type NavLink } from "./Nav.astro";
 import SealGlyph from "../ornaments/SealGlyph.astro";
+import SearchTrigger from "./SearchTrigger.astro";
 
 interface Props {
   siteTitle: string;
@@ -20,7 +21,10 @@ const { siteTitle, tagline, links } = Astro.props;
         {tagline && <span class="rpgm-header__tagline">{tagline}</span>}
       </span>
     </a>
-    <Nav links={links} />
+    <div class="rpgm-header__right">
+      <Nav links={links} />
+      <SearchTrigger />
+    </div>
   </div>
 </header>
 
@@ -77,5 +81,12 @@ const { siteTitle, tagline, links } = Astro.props;
     font-size: var(--rpgm-text-xs);
     color: var(--rpgm-text-muted);
     letter-spacing: 0.03em;
+  }
+
+  .rpgm-header__right {
+    display: flex;
+    align-items: center;
+    gap: var(--rpgm-space-4);
+    flex-wrap: wrap;
   }
 </style>

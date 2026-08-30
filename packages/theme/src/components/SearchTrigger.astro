@@ -1,12 +1,12 @@
 ---
 /**
- * Placeholder search trigger + mount point for a future Pagefind UI.
+ * Search trigger + mount point for Pagefind's bundled UI.
  *
- * This intentionally does NOT import "@pagefind/default-ui" or similar -
- * Pagefind isn't installed yet (it runs as a post-build step against the
- * static output, which this scaffold doesn't have wired up). When it is
- * added, a small client script can mount PagefindUI into
- * #pagefind-search on button click/open, using this same markup.
+ * Pagefind runs as a postbuild step (`pagefind --site dist`) that emits
+ * /pagefind/pagefind-ui.js + .css alongside the rest of the static output -
+ * there's no npm UI package to import here. The client script below fetches
+ * those two files lazily, only once the panel is first opened, so search's
+ * JS/CSS never blocks first paint.
  */
 interface Props {
   label?: string;
@@ -23,9 +23,66 @@ const { label = "Search" } = Astro.props;
     </svg>
     <span>{label}</span>
   </button>
-  <!-- Mount point for Pagefind UI, wired up in a later pass. -->
   <div id="pagefind-search" class="rpgm-search-trigger__panel" hidden></div>
 </div>
+
+<script>
+  let pagefindLoaded: Promise<void> | null = null;
+
+  function loadPagefindUI(): Promise<void> {
+    if (pagefindLoaded) return pagefindLoaded;
+
+    pagefindLoaded = (async () => {
+      await new Promise<void>((resolve, reject) => {
+        const link = document.createElement("link");
+        link.rel = "stylesheet";
+        link.href = "/pagefind/pagefind-ui.css";
+        link.onload = () => resolve();
+        link.onerror = () => reject(new Error("failed to load pagefind-ui.css"));
+        document.head.appendChild(link);
+      });
+
+      await new Promise<void>((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = "/pagefind/pagefind-ui.js";
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error("failed to load pagefind-ui.js"));
+        document.body.appendChild(script);
+      });
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      new (window as any).PagefindUI({
+        element: "#pagefind-search",
+        showSubResults: true,
+        showImages: false,
+      });
+    })();
+
+    return pagefindLoaded;
+  }
+
+  document.querySelectorAll<HTMLElement>("[data-rpgm-search-trigger]").forEach((trigger) => {
+    const button = trigger.querySelector("button");
+    const panel = trigger.querySelector<HTMLElement>("#pagefind-search");
+    if (!button || !panel) return;
+
+    button.addEventListener("click", async () => {
+      const opening = panel.hidden;
+      panel.hidden = !opening;
+      if (opening) {
+        await loadPagefindUI();
+        panel.querySelector("input")?.focus();
+      }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !panel.hidden) {
+        panel.hidden = true;
+        button.focus();
+      }
+    });
+  });
+</script>
 
 <style>
   .rpgm-search-trigger {
