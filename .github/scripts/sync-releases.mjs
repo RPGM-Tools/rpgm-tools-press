@@ -88,9 +88,14 @@ function inferChannel(tagName) {
 function buildMarkdown(tracked, release) {
   const fullName = `${tracked.owner}/${tracked.repo}`;
   const channel = inferChannel(release.tag_name);
-  const body = release.body && release.body.trim().length > 0
+  // GitHub release bodies commonly arrive with CRLF line endings; normalize
+  // to LF so the generated file is byte-stable across runs (this repo's
+  // .gitattributes enforces LF, and a body that round-trips through CRLF
+  // would otherwise look "changed" on every sync even when nothing moved).
+  const rawBody = release.body && release.body.trim().length > 0
     ? release.body
     : "_No release notes provided._";
+  const body = rawBody.replace(/\r\n?/g, "\n");
 
   const lines = [
     "---",
