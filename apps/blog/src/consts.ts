@@ -1,5 +1,8 @@
 export const SITE_TITLE = "Relics & Reckonings";
 export const SITE_LOGO = "/logo.webp";
+
+export const AUTHOR_NAME = "Aaron Westover";
+export const AUTHOR_AVATAR = "/aaron-headshot.webp";
 export const SITE_TAGLINE =
   "Notes from the workshop - AI experiments, dev logs, and the occasional dragon.";
 export const SITE_DESCRIPTION = SITE_TAGLINE;

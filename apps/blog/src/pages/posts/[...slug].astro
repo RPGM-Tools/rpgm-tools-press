@@ -5,7 +5,7 @@ import Prose from "@rpgm/tools-press-theme/components/Prose.astro";
 import Giscus from "@rpgm/tools-press-theme/components/Giscus.astro";
 import Flourish from "@rpgm/tools-press-theme/ornaments/Flourish.astro";
 import SiteHead from "../../components/SiteHead.astro";
-import { SITE_TITLE, SITE_LOGO, NAV_LINKS, GISCUS } from "../../consts";
+import { SITE_TITLE, SITE_LOGO, AUTHOR_NAME, AUTHOR_AVATAR, NAV_LINKS, GISCUS } from "../../consts";
 
 export async function getStaticPaths() {
   const posts = await getCollection("posts", ({ data }) => !data.draft);
@@ -41,6 +41,10 @@ const dateLabel = post.data.pubDate.toLocaleDateString("en-US", {
   <article>
     <p class="rpgm-eyebrow">{dateLabel}{post.data.category ? ` - ${post.data.category}` : ""}</p>
     <h1>{post.data.title}</h1>
+    <p class="post-byline">
+      <img src={AUTHOR_AVATAR} alt="" width="32" height="32" class="post-byline__avatar" />
+      {AUTHOR_NAME}
+    </p>
     {
       post.data.tags.length > 0 && (
         <ul class="post-tags">
@@ -70,6 +74,20 @@ const dateLabel = post.data.pubDate.toLocaleDateString("en-US", {
 </Layout>
 
 <style>
+  .post-byline {
+    display: flex;
+    align-items: center;
+    gap: var(--rpgm-space-2);
+    margin: 0 0 var(--rpgm-space-4);
+    color: var(--rpgm-text-muted);
+    font-size: var(--rpgm-text-sm);
+  }
+
+  .post-byline__avatar {
+    border-radius: var(--rpgm-radius-full);
+    object-fit: cover;
+  }
+
   .post-tags {
     display: flex;
     flex-wrap: wrap;

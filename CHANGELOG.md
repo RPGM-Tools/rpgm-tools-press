@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   Ledger, Relics & Reckonings), and a larger RPGM Tools emblem plus a
   "Copyright RPGM Tools, LLC" line in the shared footer, linking to
   rpgm.tools.
+- Blog posts now carry a byline (avatar and name) under the title.
 
 ### Changed
 
