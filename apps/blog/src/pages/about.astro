@@ -102,20 +102,29 @@ import {
     display: flex;
     align-items: center;
     gap: var(--rpgm-space-3);
-    /* The 2.5em heading top-margin from tokens/typography.css's `.rpgm-prose
-       h2` rule moves here instead of staying on the h2 itself - on the h2
-       alone it would push the text down relative to the logo beside it,
-       since the logo carries no such margin. */
+    /*
+     * The gold rule and left padding move here from `.rpgm-prose h2` (along
+     * with its 2.5em top margin) so the bar reads as marking the whole row -
+     * bar, then logo, then heading - instead of sitting between the logo
+     * and the text as if the logo weren't part of the same heading.
+     */
+    padding-left: var(--rpgm-space-3);
+    border-left: 3px solid var(--rpgm-accent);
     margin-top: 2.5em;
   }
 
   .about-article .company-header :global(h2) {
-    margin-top: 0;
+    margin: 0;
+    padding-left: 0;
+    border-left: none;
   }
 
   .company-header__logo {
+    display: block;
     border-radius: var(--rpgm-radius-sm);
+    border: none;
     object-fit: contain;
     flex-shrink: 0;
+    align-self: center;
   }
 </style>

@@ -139,6 +139,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- The About page's "RPGM Tools, LLC" heading had its logo before the gold
+  accent rule, reading as if the bar separated the logo from the text
+  rather than marking the whole heading - the rule now belongs to the row
+  as a whole (logo, then text, both after it), not to the heading text alone.
 - Opening the search field could push the theme toggle onto its own line
   below it, since the header's nav links, the growing search field, and the
   toggle all shared one wrapping row and ran out of width together. Nav
@@ -149,12 +153,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   selector targeting a class a CHILD component renders never matches,
   because the child's elements carry the child's own scope attribute, not
   the parent's - needed `:global()` again.
-- An AI-synthesized release summary that ran long (or a changelog line with
-  no natural short form) was hard-truncated at a fixed character count with
-  an ellipsis, which could cut off mid-sentence and read as broken rather
-  than short. It now prefers cutting at the end of a whole sentence, only
-  falling back to a word-boundary ellipsis when even one full sentence is
-  still too long to fit.
+- An AI-synthesized release summary that ran long (common for one written
+  before the sync prompt was tightened to one sentence) was still hard-
+  truncated with an ellipsis even after an earlier pass added a "prefer a
+  whole sentence" rule - that rule only applied when the sentence fit under
+  the display cap, and a real first sentence is very often longer than
+  that on its own. It no longer has a length gate at all: any complete
+  sentence is shown in full regardless of length, and the character-count
+  ellipsis is reserved for the rare case of text with no sentence-ending
+  punctuation anywhere (2 of 78 currently synced entries - themselves
+  incomplete at the source, not a rendering issue).
 - The search trigger's own button was never actually hidden once its panel
   opened: `button.hidden = true` had no visual effect, since the button's own
   `display: inline-flex` rule (an author stylesheet rule) always beat the

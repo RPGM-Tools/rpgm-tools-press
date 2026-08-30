@@ -21,22 +21,22 @@ export function summarize(body: string | undefined, maxLength = 150): string {
     .replace(/[*_`]/g, "")
     .replace(/\[([^\]]+)]\([^)]*\)/g, "$1");
 
-  if (text.length <= maxLength) return text;
-
   /*
-   * Prefer cutting at the end of a whole sentence over a blind character
-   * count: an AI summary that ran to two sentences (written before the
-   * prompt was tightened to ask for one) or an unusually long changelog
-   * line read as broken mid-thought when hard-truncated with "..." - the
-   * card looked cut off rather than just short. Keeping only the first
-   * complete sentence instead reads as a normal, finished blurb. Only fall
-   * back to an ellipsis when even that first sentence alone is still too
-   * long to fit.
+   * A whole sentence, however long, reads as finished; a maxLength-based
+   * slice reads as cut off - that's true regardless of how much longer
+   * than maxLength the sentence runs, so there's no length gate here on
+   * purpose. This is what actually fixes cards that looked truncated: an
+   * AI summary written before the prompt was tightened to one sentence
+   * often has a first sentence well past 130 characters on its own, and a
+   * gate here would still fall through to the ugly ellipsis path for
+   * every one of those - the exact case that needed fixing. Ellipsis
+   * truncation is the last resort, only for text with no sentence-ending
+   * punctuation anywhere (a bare fragment, or markdown with none).
    */
   const sentenceMatch = text.match(/^.{1,}?[.!?](?=\s|$)/);
-  if (sentenceMatch && sentenceMatch[0].length <= maxLength) {
-    return sentenceMatch[0];
-  }
+  if (sentenceMatch) return sentenceMatch[0];
+
+  if (text.length <= maxLength) return text;
 
   const truncated = text.slice(0, maxLength);
   const lastSpace = truncated.lastIndexOf(" ");
