@@ -21,8 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   wax-seal-style stamp on The Ledger - the first time it scrolls into view,
   instead of sitting fully rendered from first paint. Falls back to a plain,
   fully-drawn static rendering with no JS dependency.
-- A "RPGM Tools" section on the About page, drafted as a first pass on the
-  suite's own history and current state (to be refined further).
+- A "RPGM Tools, LLC" section on the About page, with the company's own
+  logo next to the heading - drafted as a first pass on the company itself
+  (not the tool suite), to be refined further.
 - Full-text search on both sites via Pagefind, indexed as a postbuild step
   and mounted lazily from the header's search trigger.
 - GitHub Discussions-backed comments via giscus on blog posts and release
@@ -75,8 +76,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   wearing a different color. A new Repositories page (linked from the
   nav) lists every tracked repo; its own per-repo pages were previously
   unreachable from anywhere in the site.
-- The header candle glyph now actually flickers (respects
-  prefers-reduced-motion), instead of sitting unused in the ornament set.
 - Prose headings (h2/h3) inside a post or changelog body get a gold rule,
   small-caps, and real top margin, and a post's opening paragraph gets a
   manuscript-style drop cap - a section break used to read as barely more
@@ -84,11 +83,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
-- The header's candle glyph and the theme toggle are now the same element:
-  a lit, flickering flame means dark mode, a snuffed flame with a wisp of
-  smoke means light, and a dim static flame means "following system" -
-  instead of an unexplained decorative candle sitting next to an unrelated
-  abstract toggle icon.
+- The base body text size is bigger (1.0625rem to 1.25rem) and the page
+  shell narrower (76rem to 64rem): EB Garamond's narrow, small-x-height
+  letterforms meant the 42rem reading column was already landing around
+  85-95 characters per line at the old size - wide for its measure, not
+  narrow - and read as optically small rather than actually too narrow.
+  Raising the base size tightens that measure into the middle of a
+  comfortable range; narrowing the shell lets the header/footer chrome
+  actually bracket the text column instead of framing ~270px of bare
+  margin on each side that nothing (there's no advertising or sidebar
+  content) was ever going to fill.
 - A release-listing card's AI-synthesized summary is now capped to a fixed
   length at render time (regardless of what the model actually returned),
   and the prompt itself now asks for one short sentence instead of "at most
@@ -135,6 +139,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Opening the search field could push the theme toggle onto its own line
+  below it, since the header's nav links, the growing search field, and the
+  toggle all shared one wrapping row and ran out of width together. Nav
+  links now hide themselves while search is open (they're not needed mid-
+  search anyway), freeing enough room for the field and the toggle to stay
+  on the same row. Hit the same cross-component Astro scoped-CSS gap this
+  project has hit before (`EntryCard`, `Flourish`): a parent component's
+  selector targeting a class a CHILD component renders never matches,
+  because the child's elements carry the child's own scope attribute, not
+  the parent's - needed `:global()` again.
+- An AI-synthesized release summary that ran long (or a changelog line with
+  no natural short form) was hard-truncated at a fixed character count with
+  an ellipsis, which could cut off mid-sentence and read as broken rather
+  than short. It now prefers cutting at the end of a whole sentence, only
+  falling back to a word-boundary ellipsis when even one full sentence is
+  still too long to fit.
 - The search trigger's own button was never actually hidden once its panel
   opened: `button.hidden = true` had no visual effect, since the button's own
   `display: inline-flex` rule (an author stylesheet rule) always beat the

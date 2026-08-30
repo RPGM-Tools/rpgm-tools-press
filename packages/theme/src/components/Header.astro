@@ -43,7 +43,8 @@ const { siteTitle, tagline, links, logoSrc } = Astro.props;
   }
 
   .rpgm-header__inner {
-    max-width: 76rem;
+    /* Matches .rpgm-main's own 64rem - see Layout.astro's comment. */
+    max-width: 64rem;
     margin: 0 auto;
     padding: var(--rpgm-space-5) var(--rpgm-space-5);
     display: flex;
@@ -101,5 +102,22 @@ const { siteTitle, tagline, links, logoSrc } = Astro.props;
     align-items: center;
     gap: var(--rpgm-space-4);
     flex-wrap: wrap;
+  }
+
+  /*
+   * Nav isn't needed while actively searching, and giving up its width is
+   * what lets the expanding search field grow without forcing the theme
+   * toggle after it to wrap onto its own line - which is what "the search
+   * box pushes the light/dark button down" actually was: the row ran out
+   * of room for all three (nav, a wide search field, and the toggle) at
+   * once, and flex-wrap sent whichever didn't fit to a second line.
+   */
+  .rpgm-header__right:has(#pagefind-search:not([hidden])) :global(.rpgm-nav) {
+    display: none;
+  }
+
+  /* Never the one that gets squeezed onto its own line - it's the smallest, most-used control in the row. */
+  .rpgm-header__right :global([data-rpgm-theme-toggle]) {
+    flex-shrink: 0;
   }
 </style>

@@ -128,7 +128,15 @@ const pageTitle = title.includes(siteTitle) ? title : `${title} | ${siteTitle}`;
 
 <style is:global>
   .rpgm-main {
-    max-width: 76rem;
+    /*
+     * Was 76rem. Against a 42rem reading column, that left ~270px of bare
+     * margin on each side at desktop widths - not framing, just leftover
+     * space, since nothing (ads, a sidebar) was ever going to fill it. 64rem
+     * still gives listing pages (post-list, ledger-register) real room, but
+     * lets the header/footer chrome actually bracket the text column
+     * instead of orphaning it inside a much wider shell.
+     */
+    max-width: 64rem;
     margin: 0 auto;
     padding: var(--rpgm-space-7) var(--rpgm-space-5);
     min-height: 40vh;

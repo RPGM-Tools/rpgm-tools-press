@@ -53,19 +53,18 @@ import {
         &amp; Reckonings</em> is where that work shows up as it happens.
       </p>
 
-      <h2>RPGM Tools</h2>
+      <div class="company-header">
+        <img src="/rpgm-tools-logo.webp" alt="" width="40" height="40" class="company-header__logo" />
+        <h2>RPGM Tools, LLC</h2>
+      </div>
       <p>
-        RPGM Tools is the suite I'm building for tabletop RPG creation: tools
-        meant to generate names, lore, maps, and characters, and help a game
-        master or writer keep a growing campaign consistent from session to
-        session. Neo Angband, a roguelike with real roots going back to 1990
-        and in continuous development since, is the most complete piece of it
-        today and the proving ground a lot of the rest of the suite is being
-        built around. Everything else - the content generators, the
-        world-building tools, the character sheets - is still early and under
-        active construction. The goal is to grow this from a personal project
-        into a real, sustainable business, and this blog is where that
-        build happens in the open.
+        RPGM Tools, LLC is the company I'm building around this work: I'm the
+        principal and co-founder, and the goal is to grow it from a personal
+        project into a real, sustainable business. Neo Angband, a roguelike
+        with real roots going back to 1990, is the most complete product it
+        has shipped so far and the proving ground for the rest of what the
+        company is building. This blog is where that build happens in the
+        open.
       </p>
 
       <p>
@@ -96,6 +95,27 @@ import {
     border-radius: var(--rpgm-radius-full);
     object-fit: cover;
     border: 1px solid var(--rpgm-border-strong);
+    flex-shrink: 0;
+  }
+
+  .company-header {
+    display: flex;
+    align-items: center;
+    gap: var(--rpgm-space-3);
+    /* The 2.5em heading top-margin from tokens/typography.css's `.rpgm-prose
+       h2` rule moves here instead of staying on the h2 itself - on the h2
+       alone it would push the text down relative to the logo beside it,
+       since the logo carries no such margin. */
+    margin-top: 2.5em;
+  }
+
+  .about-article .company-header :global(h2) {
+    margin-top: 0;
+  }
+
+  .company-header__logo {
+    border-radius: var(--rpgm-radius-sm);
+    object-fit: contain;
     flex-shrink: 0;
   }
 </style>
