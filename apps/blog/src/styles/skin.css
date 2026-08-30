@@ -6,18 +6,34 @@
  * a touch warmer/more amber than the base theme, nothing more. Because
  * base.css declares `@layer rpgm-press-base, rpgm-press-skin;` up front,
  * everything in here wins over the base tokens automatically.
+ *
+ * The bg/shadow tweaks below are DARK-only (this warmer amber only reads
+ * as an upgrade against a dark page - the same value would flatten the
+ * base theme's own light/parchment mode). A layer always wins over
+ * specificity regardless of selector, so an unconditional `:root` rule
+ * here would clobber base.css's light-mode bg no matter how that mode
+ * got selected - hence the two guarded rules mirroring the exact
+ * conditions base.css itself uses to decide "light is active."
  */
 @layer rpgm-press-skin {
   :root {
-    /* Slightly warmer accent hover than the base gold-hover. */
+    /* Slightly warmer accent hover than the base gold-hover, fine in both themes. */
     --rpgm-accent-hover: #eab766;
+  }
 
-    /* A touch more amber in the page background, still dark-mode-first. */
+  :root[data-theme="dark"] {
     --rpgm-bg: #180f09;
     --rpgm-bg-elevated: #221609;
-
-    /* Candle glow tuned a little brighter for this site's cards. */
     --rpgm-shadow-candle-hover: 0 0 0 1px var(--rpgm-accent-hover),
       0 0 30px 7px rgba(207, 161, 70, 0.55);
+  }
+
+  @media not (prefers-color-scheme: light) {
+    html:not([data-theme="light"]):not([data-theme="dark"]) {
+      --rpgm-bg: #180f09;
+      --rpgm-bg-elevated: #221609;
+      --rpgm-shadow-candle-hover: 0 0 0 1px var(--rpgm-accent-hover),
+        0 0 30px 7px rgba(207, 161, 70, 0.55);
+    }
   }
 }

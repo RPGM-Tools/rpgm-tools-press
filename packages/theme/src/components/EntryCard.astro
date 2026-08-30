@@ -13,9 +13,23 @@ interface Props {
   class?: string;
   /** Per-repo/product accent color (any CSS color), shown as a thin left-edge stripe. Omit for no stripe. */
   accentColor?: string;
+  /** Category label, shown as its own solid-tinted chip ahead of the plain tag chips. */
+  category?: string;
+  /** Color for the category chip (any CSS color). Falls back to the site accent when a category is given without one. */
+  categoryColor?: string;
 }
 
-const { title, href, date, description, tags = [], class: className, accentColor } = Astro.props;
+const {
+  title,
+  href,
+  date,
+  description,
+  tags = [],
+  class: className,
+  accentColor,
+  category,
+  categoryColor,
+} = Astro.props;
 
 let dateLabel: string | undefined;
 if (date instanceof Date) {
@@ -34,8 +48,16 @@ if (date instanceof Date) {
     {dateLabel && <p class="rpgm-entry-card__date">{dateLabel}</p>}
     {description && <p class="rpgm-entry-card__description">{description}</p>}
     {
-      tags.length > 0 && (
+      (category || tags.length > 0) && (
         <ul class="rpgm-entry-card__tags">
+          {category && (
+            <li
+              class="rpgm-entry-card__tags-category"
+              style={`--rpgm-entry-category-color: ${categoryColor ?? "var(--rpgm-accent)"}`}
+            >
+              {category}
+            </li>
+          )}
           {tags.map((tag) => (
             <li>{tag}</li>
           ))}
@@ -48,6 +70,14 @@ if (date instanceof Date) {
 <style>
   .rpgm-entry-card {
     position: relative;
+    /*
+     * Clip the stripe (below) to this box's own rounded corners instead of
+     * giving the stripe a hand-matched border-radius of its own - two
+     * independently-rounded shapes nested a border-width apart never quite
+     * lined up, leaving a visible seam right where the hover glow's ring
+     * met the stripe's corner.
+     */
+    overflow: hidden;
     background: var(--rpgm-surface);
     border: 1px solid var(--rpgm-border);
     border-radius: var(--rpgm-radius-lg);
@@ -56,19 +86,20 @@ if (date instanceof Date) {
   }
 
   /*
-   * A per-product identity mark, not a mood: a thin rounded stripe on the
-   * resting card, not a background tint (which would fight the card's own
-   * text contrast and the tags' own coloring). The hover glow below stays
-   * the site's one consistent gold, deliberately not recolored per repo -
-   * two competing "pick a color" signals on the same element would read as
-   * noise, not branding.
+   * A per-product identity mark, not a mood: a thin stripe on the resting
+   * card, not a background tint (which would fight the card's own text
+   * contrast and the tags' own coloring). The hover glow below stays the
+   * site's one consistent gold, deliberately not recolored per repo - two
+   * competing "pick a color" signals on the same element would read as
+   * noise, not branding. Box-shadow lives on the card itself, so it's
+   * unaffected by this element's overflow:hidden and still hugs the same
+   * rounded corners the stripe is clipped to.
    */
   .rpgm-entry-card::before {
     content: "";
     position: absolute;
     inset: 0 auto 0 0;
     width: 4px;
-    border-radius: var(--rpgm-radius-lg) 0 0 var(--rpgm-radius-lg);
     background: var(--rpgm-entry-accent, transparent);
   }
 
@@ -120,6 +151,23 @@ if (date instanceof Date) {
     font-size: var(--rpgm-text-xs);
     color: var(--rpgm-text-muted);
     border: 1px solid var(--rpgm-border);
+    border-radius: var(--rpgm-radius-full);
+    padding: 0.15em 0.7em;
+  }
+
+  /*
+   * The one category a card belongs to gets a solid-tinted chip in that
+   * category's own color, distinct from the neutral-bordered tag chips
+   * that follow it - a card's category is a single classification, its
+   * tags are open-ended keywords, and the color makes that difference
+   * legible at a glance across a whole listing.
+   */
+  .rpgm-entry-card__tags-category {
+    font-size: var(--rpgm-text-xs);
+    font-weight: 600;
+    color: var(--rpgm-entry-category-color);
+    background: color-mix(in srgb, var(--rpgm-entry-category-color) 16%, transparent);
+    border: 1px solid color-mix(in srgb, var(--rpgm-entry-category-color) 55%, transparent);
     border-radius: var(--rpgm-radius-full);
     padding: 0.15em 0.7em;
   }

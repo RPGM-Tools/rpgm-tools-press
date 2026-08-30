@@ -20,9 +20,11 @@ export interface Props {
   navLinks: NavLink[];
   /** Footer links (defaults to navLinks if omitted). */
   footerLinks?: NavLink[];
-  /** RSS autodiscovery <link> - set both to enable. */
+  /** RSS autodiscovery <link> - set both to enable. Also surfaced as a footer link. */
   rssTitle?: string;
   rssHref?: string;
+  /** Link to this site's own source repo, surfaced as a footer link. */
+  githubHref?: string;
   /**
    * Cloudflare Web Analytics token. Defaults to the consuming app's own
    * PUBLIC_CF_BEACON_TOKEN env var when omitted, so most pages never need
@@ -44,6 +46,7 @@ const {
   footerLinks,
   rssTitle,
   rssHref,
+  githubHref,
   analyticsToken = import.meta.env.PUBLIC_CF_BEACON_TOKEN,
   canonicalURL,
 } = Astro.props;
@@ -52,8 +55,26 @@ const pageTitle = title.includes(siteTitle) ? title : `${title} | ${siteTitle}`;
 ---
 
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en">
   <head>
+    <script is:inline>
+      // Runs before any stylesheet paints, so an explicit past choice
+      // (ThemeToggle, stored in localStorage) applies with no flash of
+      // the other theme. No stored choice at all is left as-is here -
+      // base.css's own prefers-color-scheme media query resolves that
+      // case, which is what makes "default to system" hold for a
+      // first-time visitor who has never touched the toggle.
+      (function () {
+        try {
+          var stored = localStorage.getItem("rpgm-theme");
+          if (stored === "light" || stored === "dark") {
+            document.documentElement.dataset.theme = stored;
+          }
+        } catch (e) {
+          /* localStorage unavailable (private mode, disabled storage) - fall through to system default */
+        }
+      })();
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="generator" content={Astro.generator} />
@@ -96,7 +117,12 @@ const pageTitle = title.includes(siteTitle) ? title : `${title} | ${siteTitle}`;
     <main class="rpgm-main" data-pagefind-body>
       <slot />
     </main>
-    <Footer siteTitle={siteTitle} links={footerLinks ?? navLinks} />
+    <Footer
+      siteTitle={siteTitle}
+      links={footerLinks ?? navLinks}
+      rssHref={rssHref}
+      githubHref={githubHref}
+    />
   </body>
 </html>
 

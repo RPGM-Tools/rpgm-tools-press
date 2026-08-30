@@ -66,22 +66,30 @@
     margin-bottom: var(--rpgm-space-2);
   }
 
-  code,
-  kbd,
-  samp,
-  pre {
+  /*
+   * Everything below is prose-BODY markup (rendered markdown), scoped to
+   * .rpgm-prose (see Prose.astro). Left unscoped, "li + li" in particular
+   * bled into every unrelated flex <ul> sitewide (nav links, footer links,
+   * card tag chips) and threw off their cross-axis alignment - a chip after
+   * the first in a row would get a phantom margin-top and stretch shorter
+   * than its sibling instead of sitting flush with it.
+   */
+  .rpgm-prose code,
+  .rpgm-prose kbd,
+  .rpgm-prose samp,
+  .rpgm-prose pre {
     font-family: var(--rpgm-font-mono);
     font-size: 0.92em;
   }
 
-  code {
+  .rpgm-prose code {
     background: rgba(207, 161, 70, 0.12);
     border: 1px solid var(--rpgm-border);
     border-radius: var(--rpgm-radius-sm);
     padding: 0.1em 0.4em;
   }
 
-  pre {
+  .rpgm-prose pre {
     background: var(--rpgm-umber-deep);
     border: 1px solid var(--rpgm-border);
     border-radius: var(--rpgm-radius-md);
@@ -90,13 +98,13 @@
     line-height: var(--rpgm-leading-snug);
   }
 
-  pre code {
+  .rpgm-prose pre code {
     background: none;
     border: none;
     padding: 0;
   }
 
-  blockquote {
+  .rpgm-prose blockquote {
     margin: var(--rpgm-space-5) 0;
     padding: var(--rpgm-space-2) var(--rpgm-space-5);
     border-left: 3px solid var(--rpgm-accent);
@@ -104,36 +112,36 @@
     font-style: italic;
   }
 
-  hr {
+  .rpgm-prose hr {
     border: none;
     border-top: 1px solid var(--rpgm-border);
     margin: var(--rpgm-space-6) 0;
   }
 
-  ul,
-  ol {
+  .rpgm-prose ul,
+  .rpgm-prose ol {
     padding-left: 1.4em;
     margin: 0 0 var(--rpgm-space-4);
   }
 
-  li + li {
+  .rpgm-prose li + li {
     margin-top: 0.35em;
   }
 
-  table {
+  .rpgm-prose table {
     width: 100%;
     border-collapse: collapse;
     margin: 0 0 var(--rpgm-space-5);
   }
 
-  th,
-  td {
+  .rpgm-prose th,
+  .rpgm-prose td {
     text-align: left;
     padding: var(--rpgm-space-2) var(--rpgm-space-3);
     border-bottom: 1px solid var(--rpgm-border);
   }
 
-  th {
+  .rpgm-prose th {
     font-family: var(--rpgm-font-display);
     color: var(--rpgm-accent);
     font-weight: 600;

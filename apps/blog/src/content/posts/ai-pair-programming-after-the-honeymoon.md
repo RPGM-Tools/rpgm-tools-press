@@ -7,52 +7,36 @@ category: "ai-projects"
 draft: false
 ---
 
-The first month of using an AI coding assistant seriously, everything feels
-like magic. It writes the boilerplate you were dreading, explains an
-unfamiliar API in one pass, and turns a vague description into a working
-function fast enough that the whole exercise feels a little unfair. Then
-the novelty wears off, the daily grind sets in, and what's left is either
-a genuinely useful tool or an expensive autocomplete, depending on how you
-actually use it.
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod
+tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
+veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
+commodo consequat.
 
-A few things turned out to matter more than raw model quality once the
-honeymoon ended.
+## Placeholder heading one
 
-## Context is the actual bottleneck
+Duis aute irure dolor in reprehenderit in voluptate velit esse cillum
+dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non
+proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 
-The model isn't guessing about your codebase's conventions from nothing -
-it's working from whatever context it's been handed, and most of the bad
-output traces back to thin context, not a weak model. A repo with a clear
-CLAUDE.md, consistent naming, and a couple of representative examples
-nearby gets dramatically better suggestions than the same repo with none
-of that. Writing documentation stopped being a chore done for future human
-maintainers and became infrastructure the assistant reads on every single
-task.
+## Placeholder heading two
 
-## Verification has to be a habit, not an afterthought
+Sed ut perspiciatis unde omnis iste natus error sit voluptatem
+accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab
+illo inventore veritatis et quasi architecto beatae vitae dicta sunt
+explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut
+odit aut fugit.
 
-An assistant will confidently produce code that compiles, looks reasonable,
-and does the wrong thing in a specific edge case it never considered. That
-used to be a mild embarrassment to fix later; now it's cheap to fix
-immediately, if you build the habit of actually running the thing before
-trusting it. The failure mode isn't "the AI is bad," it's "I stopped
-checking because it's usually right," which is a much easier trap to fall
-into than it sounds.
+## Placeholder heading three
 
-## Delegation beats dictation
+Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet,
+consectetur, adipisci velit, sed quia non numquam eius modi tempora
+incidunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim
+ad minima veniam, quis nostrum exercitationem ullam corporis suscipit
+laboriosam.
 
-Describing every line felt safe early on but scaled badly. Handing over a
-real problem - "this parser breaks on nested quotes, here's a failing
-case" - and letting the assistant explore, propose a fix, and show its
-reasoning produced better results than narrating the implementation
-myself. The skill that mattered wasn't writing better prompts, it was
-learning what to delegate wholesale versus what to keep hands-on.
+## Placeholder heading four
 
-## The parts that stayed hard
-
-Architecture decisions with long-term consequences, judgment calls about
-what a project is even for, and anything where "correct" depends on taste
-rather than a test passing - none of that got easier. If anything, having
-more implementation bandwidth just moved the bottleneck upstream, to
-deciding what's worth building in the first place. That's not a
-complaint. It's just where the actual work is now.
+Nisi ut aliquid ex ea commodi consequatur, quis autem vel eum iure
+reprehenderit qui in ea voluptate velit esse quam nihil molestiae
+consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla
+pariatur.

@@ -115,9 +115,16 @@
   }
 
   /*
-   * Optional light-mode variant. Not the default (this theme is
-   * dark-mode-first), but available by setting data-theme="light" on
-   * <html> if a consuming app ever wants it.
+   * Light-mode variant. Dark is this theme's default look and its bare
+   * :root above always wins when a viewer has explicitly chosen dark
+   * (data-theme="dark") or when nothing else applies. Two other cases
+   * resolve to the light palette below (same declarations, listed twice
+   * rather than nested, since a media query can't be scoped to only one
+   * selector in a comma list): an explicit choice (data-theme="light",
+   * set by ThemeToggle), or no explicit choice at all with the OS itself
+   * set to light (prefers-color-scheme: light) - "default to system"
+   * means an unvisited light-system reader sees light without ever
+   * clicking anything.
    */
   :root[data-theme="light"] {
     color-scheme: light;
@@ -131,6 +138,22 @@
     --rpgm-text: var(--rpgm-ink-on-light);
     --rpgm-text-muted: var(--rpgm-ink-on-light-muted);
     --rpgm-text-inverse: var(--rpgm-ink-on-dark);
+  }
+
+  @media (prefers-color-scheme: light) {
+    html:not([data-theme="dark"]):not([data-theme="light"]) {
+      color-scheme: light;
+
+      --rpgm-bg: var(--rpgm-parchment);
+      --rpgm-bg-elevated: var(--rpgm-parchment-dim);
+      --rpgm-surface: #ffffff;
+      --rpgm-border: rgba(44, 30, 20, 0.15);
+      --rpgm-border-strong: rgba(44, 30, 20, 0.3);
+
+      --rpgm-text: var(--rpgm-ink-on-light);
+      --rpgm-text-muted: var(--rpgm-ink-on-light-muted);
+      --rpgm-text-inverse: var(--rpgm-ink-on-dark);
+    }
   }
 
   *,

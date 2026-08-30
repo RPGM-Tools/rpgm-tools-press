@@ -5,7 +5,16 @@ import Prose from "@rpgm/tools-press-theme/components/Prose.astro";
 import Giscus from "@rpgm/tools-press-theme/components/Giscus.astro";
 import Flourish from "@rpgm/tools-press-theme/ornaments/Flourish.astro";
 import SiteHead from "../../components/SiteHead.astro";
-import { SITE_TITLE, SITE_LOGO, AUTHOR_NAME, AUTHOR_AVATAR, NAV_LINKS, GISCUS } from "../../consts";
+import {
+  SITE_TITLE,
+  SITE_LOGO,
+  AUTHOR_NAME,
+  AUTHOR_AVATAR,
+  NAV_LINKS,
+  GISCUS,
+  CATEGORY_META,
+  REPO_URL,
+} from "../../consts";
 
 export async function getStaticPaths() {
   const posts = await getCollection("posts", ({ data }) => !data.draft);
@@ -23,6 +32,8 @@ const dateLabel = post.data.pubDate.toLocaleDateString("en-US", {
   month: "long",
   day: "numeric",
 });
+
+const categoryMeta = post.data.category ? CATEGORY_META[post.data.category] : undefined;
 ---
 
 <Layout
@@ -33,24 +44,36 @@ const dateLabel = post.data.pubDate.toLocaleDateString("en-US", {
   navLinks={NAV_LINKS}
   rssTitle={SITE_TITLE}
   rssHref="/rss.xml"
+  githubHref={REPO_URL}
 >
   <Fragment slot="head">
     <SiteHead />
   </Fragment>
 
   <article>
-    <p class="rpgm-eyebrow">{dateLabel}{post.data.category ? ` - ${post.data.category}` : ""}</p>
+    <p class="rpgm-eyebrow">{dateLabel}</p>
     <h1>{post.data.title}</h1>
     <p class="post-byline">
       <img src={AUTHOR_AVATAR} alt="" width="32" height="32" class="post-byline__avatar" />
       {AUTHOR_NAME}
     </p>
     {
-      post.data.tags.length > 0 && (
+      (post.data.category || post.data.tags.length > 0) && (
         <ul class="post-tags">
+          {categoryMeta && (
+            <li
+              class="post-tags__category"
+              style={`--rpgm-entry-category-color: ${categoryMeta.color}`}
+              data-pagefind-filter="category"
+            >
+              {categoryMeta.label}
+            </li>
+          )}
           {post.data.tags.map((tag) => (
             <li>
-              <a href={`/tags/${tag}/`}>{tag}</a>
+              <a href={`/tags/${tag}/`} data-pagefind-filter="tag">
+                {tag}
+              </a>
             </li>
           ))}
         </ul>
@@ -110,5 +133,15 @@ const dateLabel = post.data.pubDate.toLocaleDateString("en-US", {
   .post-tags a:focus-visible {
     color: var(--rpgm-accent);
     border-color: var(--rpgm-border-strong);
+  }
+
+  .post-tags__category {
+    font-size: var(--rpgm-text-xs);
+    font-weight: 600;
+    color: var(--rpgm-entry-category-color);
+    background: color-mix(in srgb, var(--rpgm-entry-category-color) 16%, transparent);
+    border: 1px solid color-mix(in srgb, var(--rpgm-entry-category-color) 55%, transparent);
+    border-radius: var(--rpgm-radius-full);
+    padding: 0.15em 0.7em;
   }
 </style>

@@ -4,7 +4,7 @@ import Layout from "@rpgm/tools-press-theme/components/Layout.astro";
 import EntryCard from "@rpgm/tools-press-theme/components/EntryCard.astro";
 import Flourish from "@rpgm/tools-press-theme/ornaments/Flourish.astro";
 import SiteHead from "../components/SiteHead.astro";
-import { SITE_TITLE, SITE_TAGLINE, SITE_DESCRIPTION, SITE_LOGO, NAV_LINKS } from "../consts";
+import { SITE_TITLE, SITE_TAGLINE, SITE_DESCRIPTION, SITE_LOGO, NAV_LINKS, CATEGORY_META, REPO_URL } from "../consts";
 
 const allPosts = await getCollection("posts", ({ data }) => !data.draft);
 const posts = allPosts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
@@ -19,6 +19,7 @@ const posts = allPosts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.
   navLinks={NAV_LINKS}
   rssTitle={SITE_TITLE}
   rssHref="/rss.xml"
+  githubHref={REPO_URL}
 >
   <Fragment slot="head">
     <SiteHead />
@@ -37,6 +38,8 @@ const posts = allPosts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.
             date={post.data.pubDate}
             description={post.data.description}
             tags={post.data.tags}
+            category={post.data.category && CATEGORY_META[post.data.category]?.label}
+            categoryColor={post.data.category && CATEGORY_META[post.data.category]?.color}
           />
         </li>
       ))

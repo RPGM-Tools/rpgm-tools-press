@@ -4,7 +4,7 @@ import Layout from "@rpgm/tools-press-theme/components/Layout.astro";
 import EntryCard from "@rpgm/tools-press-theme/components/EntryCard.astro";
 import ProductSeal from "@rpgm/tools-press-theme/ornaments/ProductSeal.astro";
 import SiteHead from "../../components/SiteHead.astro";
-import { SITE_TITLE, SITE_LOGO, NAV_LINKS } from "../../consts";
+import { SITE_TITLE, SITE_LOGO, NAV_LINKS, REPO_URL } from "../../consts";
 import { summarize } from "../../lib/summarize";
 import repos from "../../../repos.json";
 
@@ -34,6 +34,7 @@ const { tracked, releases } = Astro.props;
   navLinks={NAV_LINKS}
   rssTitle={SITE_TITLE}
   rssHref="/rss.xml"
+  githubHref={REPO_URL}
 >
   <Fragment slot="head">
     <SiteHead />

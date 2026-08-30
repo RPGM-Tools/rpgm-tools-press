@@ -5,21 +5,31 @@ import Flourish from "../ornaments/Flourish.astro";
 interface Props {
   siteTitle: string;
   links?: NavLink[];
+  /** RSS feed path, if this app has one - added as an extra footer link. */
+  rssHref?: string;
+  /** Link to this site's own source repo - added as an extra footer link. */
+  githubHref?: string;
 }
 
-const { siteTitle, links = [] } = Astro.props;
+const { siteTitle, links = [], rssHref, githubHref } = Astro.props;
 const year = new Date().getFullYear();
+
+const allLinks: NavLink[] = [
+  ...links,
+  ...(rssHref ? [{ label: "RSS", href: rssHref }] : []),
+  ...(githubHref ? [{ label: "Source", href: githubHref }] : []),
+];
 ---
 
 <footer class="rpgm-footer">
   <div class="rpgm-footer__inner">
     <Flourish class="rpgm-footer__flourish" color="var(--rpgm-border-strong)" size={18} />
     <div class="rpgm-footer__row">
-      <p class="rpgm-footer__copy">&copy; {year} {siteTitle}.</p>
+      <p class="rpgm-footer__site">{siteTitle}</p>
       {
-        links.length > 0 && (
+        allLinks.length > 0 && (
           <ul class="rpgm-footer__links">
-            {links.map((link) => (
+            {allLinks.map((link) => (
               <li>
                 <a href={link.href}>{link.label}</a>
               </li>
@@ -29,7 +39,7 @@ const year = new Date().getFullYear();
       }
     </div>
     <a href="https://rpgm.tools" class="rpgm-footer__brand">
-      <img src="/rpgm-tools-logo.webp" alt="RPGM Tools" width="48" height="48" class="rpgm-footer__brand-logo" />
+      <img src="/rpgm-tools-logo.webp" alt="" width="48" height="48" class="rpgm-footer__brand-logo" />
       <span class="rpgm-footer__brand-copy">&copy; {year} RPGM Tools, LLC.</span>
     </a>
   </div>
@@ -62,8 +72,9 @@ const year = new Date().getFullYear();
     justify-content: space-between;
   }
 
-  .rpgm-footer__copy {
+  .rpgm-footer__site {
     margin: 0;
+    font-family: var(--rpgm-font-display);
     font-size: var(--rpgm-text-sm);
     color: var(--rpgm-text-muted);
   }
@@ -88,9 +99,10 @@ const year = new Date().getFullYear();
 
   .rpgm-footer__brand {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: var(--rpgm-space-3);
+    gap: var(--rpgm-space-2);
     margin-top: var(--rpgm-space-6);
     padding-top: var(--rpgm-space-5);
     border-top: 1px solid var(--rpgm-border);

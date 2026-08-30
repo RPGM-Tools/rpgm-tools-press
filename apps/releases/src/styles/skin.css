@@ -4,29 +4,99 @@
  * The shared theme is warm/earthy by default. This site is a release-notes
  * aggregator rather than a fireside blog, so it leans the palette toward
  * the Graphite anchor instead of Polished Gold: cooler slate-blue accents,
- * a cooler near-black background, and a matching cool-toned glow. Because
- * base.css declares `@layer rpgm-press-base, rpgm-press-skin;` up front,
- * everything in here wins over the base tokens automatically.
+ * a cool background, and a matching cool-toned glow, in EITHER theme - the
+ * accent hue is this site's own identity, not just a dark-mode choice.
+ * Because base.css declares `@layer rpgm-press-base, rpgm-press-skin;` up
+ * front, everything in here wins over the base tokens automatically -
+ * which is also why the two palettes below are each explicitly gated to
+ * their own theme (mirroring the conditions base.css itself uses to decide
+ * "light is active"): a layer always wins over specificity regardless of
+ * selector, so an unconditional `:root` rule would clobber whichever theme
+ * DIDN'T write it, no matter how that theme got selected.
  */
 @layer rpgm-press-skin {
-  :root {
-    /* Cooler slate/graphite accent in place of the base's warm gold. */
+  :root[data-theme="dark"] {
     --rpgm-accent: #7c93ad;
     --rpgm-accent-hover: #9fb4c9;
     --rpgm-link: var(--rpgm-accent);
     --rpgm-link-visited: #6b7f93;
 
-    /* A cooler, more neutral near-black background than the blog's amber-umber. */
     --rpgm-bg: #10141a;
     --rpgm-bg-elevated: #171d26;
     --rpgm-surface: #1b222c;
     --rpgm-border: rgba(124, 147, 173, 0.22);
     --rpgm-border-strong: rgba(124, 147, 173, 0.45);
 
-    /* A cool slate glow in place of the candle's warm gold halo. */
     --rpgm-shadow-candle: 0 0 0 1px var(--rpgm-border-strong),
       0 0 18px 2px rgba(124, 147, 173, 0.3);
     --rpgm-shadow-candle-hover: 0 0 0 1px var(--rpgm-accent-hover),
       0 0 26px 6px rgba(124, 147, 173, 0.45);
+  }
+
+  @media not (prefers-color-scheme: light) {
+    html:not([data-theme="light"]):not([data-theme="dark"]) {
+      --rpgm-accent: #7c93ad;
+      --rpgm-accent-hover: #9fb4c9;
+      --rpgm-link: var(--rpgm-accent);
+      --rpgm-link-visited: #6b7f93;
+
+      --rpgm-bg: #10141a;
+      --rpgm-bg-elevated: #171d26;
+      --rpgm-surface: #1b222c;
+      --rpgm-border: rgba(124, 147, 173, 0.22);
+      --rpgm-border-strong: rgba(124, 147, 173, 0.45);
+
+      --rpgm-shadow-candle: 0 0 0 1px var(--rpgm-border-strong),
+        0 0 18px 2px rgba(124, 147, 173, 0.3);
+      --rpgm-shadow-candle-hover: 0 0 0 1px var(--rpgm-accent-hover),
+        0 0 26px 6px rgba(124, 147, 173, 0.45);
+    }
+  }
+
+  /*
+   * Light mode: a cool paper-gray, not the base theme's warm parchment -
+   * this site's identity is graphite, not candlelit gold, and that
+   * shouldn't disappear just because a reader's OS is set to light.
+   */
+  :root[data-theme="light"] {
+    --rpgm-accent: #3d5b78;
+    --rpgm-accent-hover: #2c465e;
+    --rpgm-link: var(--rpgm-accent);
+    --rpgm-link-visited: #5c7185;
+
+    --rpgm-bg: #eef1f4;
+    --rpgm-bg-elevated: #e3e8ec;
+    --rpgm-surface: #ffffff;
+    --rpgm-border: rgba(31, 41, 55, 0.15);
+    --rpgm-border-strong: rgba(31, 41, 55, 0.3);
+    --rpgm-text: #1c232b;
+    --rpgm-text-muted: #4c5866;
+
+    --rpgm-shadow-candle: 0 0 0 1px var(--rpgm-border-strong),
+      0 0 18px 2px rgba(61, 91, 120, 0.18);
+    --rpgm-shadow-candle-hover: 0 0 0 1px var(--rpgm-accent-hover),
+      0 0 26px 6px rgba(61, 91, 120, 0.28);
+  }
+
+  @media (prefers-color-scheme: light) {
+    html:not([data-theme="dark"]):not([data-theme="light"]) {
+      --rpgm-accent: #3d5b78;
+      --rpgm-accent-hover: #2c465e;
+      --rpgm-link: var(--rpgm-accent);
+      --rpgm-link-visited: #5c7185;
+
+      --rpgm-bg: #eef1f4;
+      --rpgm-bg-elevated: #e3e8ec;
+      --rpgm-surface: #ffffff;
+      --rpgm-border: rgba(31, 41, 55, 0.15);
+      --rpgm-border-strong: rgba(31, 41, 55, 0.3);
+      --rpgm-text: #1c232b;
+      --rpgm-text-muted: #4c5866;
+
+      --rpgm-shadow-candle: 0 0 0 1px var(--rpgm-border-strong),
+        0 0 18px 2px rgba(61, 91, 120, 0.18);
+      --rpgm-shadow-candle-hover: 0 0 0 1px var(--rpgm-accent-hover),
+        0 0 26px 6px rgba(61, 91, 120, 0.28);
+    }
   }
 }

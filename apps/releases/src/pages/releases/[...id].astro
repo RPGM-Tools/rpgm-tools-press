@@ -7,7 +7,7 @@ import Flourish from "@rpgm/tools-press-theme/ornaments/Flourish.astro";
 import ProductSeal from "@rpgm/tools-press-theme/ornaments/ProductSeal.astro";
 import SiteHead from "../../components/SiteHead.astro";
 import DownloadList from "../../components/DownloadList.astro";
-import { SITE_TITLE, SITE_LOGO, NAV_LINKS, GISCUS, MAIN_GAME_REPO, PLAY_NOW_URL } from "../../consts";
+import { SITE_TITLE, SITE_LOGO, NAV_LINKS, GISCUS, MAIN_GAME_REPO, PLAY_NOW_URL, REPO_URL } from "../../consts";
 
 export async function getStaticPaths() {
   const releases = await getCollection("releases");
@@ -38,6 +38,7 @@ const isMod = release.data.kind === "mod";
   navLinks={NAV_LINKS}
   rssTitle={SITE_TITLE}
   rssHref="/rss.xml"
+  githubHref={REPO_URL}
 >
   <Fragment slot="head">
     <SiteHead />

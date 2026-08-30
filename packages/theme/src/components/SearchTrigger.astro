@@ -22,6 +22,7 @@ const { label = "Search" } = Astro.props;
       <path d="M13 13 L18 18" stroke-linecap="round" />
     </svg>
     <span>{label}</span>
+    <kbd class="rpgm-search-trigger__kbd" aria-hidden="true">/</kbd>
   </button>
   <div id="pagefind-search" class="rpgm-search-trigger__panel" hidden></div>
 </div>
@@ -50,11 +51,22 @@ const { label = "Search" } = Astro.props;
         document.body.appendChild(script);
       });
 
+      /*
+       * `filters` just gives the auto-detected data-pagefind-filter facets
+       * (tag/category, on blog posts) a fixed display order + heading -
+       * Pagefind still auto-discovers whatever facets exist on a given
+       * site, so this is a no-op (no filter panel at all) on the releases
+       * site, which doesn't tag its entries this way.
+       * Ranking (exact match, then prefix, then a fuzzy edit-distance
+       * fallback) is Pagefind's own default behavior, not configured here.
+       */
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       new (window as any).PagefindUI({
         element: "#pagefind-search",
         showSubResults: true,
         showImages: false,
+        showEmptyFilters: false,
+        filters: { category: "Category", tag: "Tag" },
       });
     })();
 
@@ -66,20 +78,55 @@ const { label = "Search" } = Astro.props;
     const panel = trigger.querySelector<HTMLElement>("#pagefind-search");
     if (!button || !panel) return;
 
-    button.addEventListener("click", async () => {
-      const opening = panel.hidden;
-      panel.hidden = !opening;
-      if (opening) {
-        await loadPagefindUI();
-        panel.querySelector("input")?.focus();
-      }
+    async function open() {
+      if (!panel!.hidden) return;
+      panel!.hidden = false;
+      await loadPagefindUI();
+      panel!.querySelector("input")?.focus();
+    }
+
+    function close({ refocus = false } = {}) {
+      if (panel!.hidden) return;
+      panel!.hidden = true;
+      if (refocus) button!.focus();
+    }
+
+    button!.addEventListener("click", () => {
+      if (panel!.hidden) void open();
+      else close();
     });
 
     document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape" && !panel.hidden) {
-        panel.hidden = true;
-        button.focus();
+      if (event.key === "Escape" && !panel!.hidden) {
+        close({ refocus: true });
+        return;
       }
+
+      // "/" opens search from anywhere, unless the user is already typing
+      // (an input/textarea/contenteditable) or chording a modifier key -
+      // a lone "/" should never hijack a slash someone meant to type.
+      if (
+        event.key === "/" &&
+        panel!.hidden &&
+        !event.ctrlKey &&
+        !event.metaKey &&
+        !event.altKey
+      ) {
+        const target = event.target as HTMLElement | null;
+        const tag = target?.tagName;
+        const isTyping =
+          tag === "INPUT" || tag === "TEXTAREA" || target?.isContentEditable;
+        if (!isTyping) {
+          event.preventDefault();
+          void open();
+        }
+      }
+    });
+
+    document.addEventListener("click", (event) => {
+      if (panel!.hidden) return;
+      if (trigger.contains(event.target as Node)) return;
+      close();
     });
   });
 </script>
@@ -111,11 +158,58 @@ const { label = "Search" } = Astro.props;
     box-shadow: var(--rpgm-shadow-candle);
   }
 
+  .rpgm-search-trigger__kbd {
+    font-family: var(--rpgm-font-mono);
+    font-size: 0.7em;
+    line-height: 1;
+    color: var(--rpgm-text-muted);
+    background: var(--rpgm-bg);
+    border: 1px solid var(--rpgm-border);
+    border-radius: var(--rpgm-radius-sm);
+    padding: 0.15em 0.4em;
+  }
+
   .rpgm-search-trigger__panel {
     position: absolute;
     top: calc(100% + var(--rpgm-space-2));
     right: 0;
     min-width: 20rem;
+    max-width: min(28rem, 90vw);
     z-index: 20;
+  }
+
+  /*
+   * Pagefind ships its own default (light, generic) look via
+   * pagefind-ui.css. These custom properties are its documented theming
+   * hook - retargeting them here is how the search panel ends up reading
+   * as part of this theme instead of a bolted-on third-party widget.
+   */
+  .rpgm-search-trigger__panel :global(.pagefind-ui) {
+    --pagefind-ui-primary: var(--rpgm-accent);
+    --pagefind-ui-text: var(--rpgm-text);
+    --pagefind-ui-background: var(--rpgm-surface);
+    --pagefind-ui-border: var(--rpgm-border-strong);
+    --pagefind-ui-tag: var(--rpgm-border);
+    --pagefind-ui-border-width: 1px;
+    --pagefind-ui-border-radius: 10px;
+    --pagefind-ui-font: var(--rpgm-font-body);
+    padding: var(--rpgm-space-3);
+    background: var(--rpgm-surface);
+    border: 1px solid var(--rpgm-border-strong);
+    border-radius: var(--rpgm-radius-lg);
+    box-shadow: var(--rpgm-shadow-elevated);
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+
+  .rpgm-search-trigger__panel :global(.pagefind-ui__result-title) {
+    font-family: var(--rpgm-font-display);
+  }
+
+  /* Pagefind's own match-highlight <mark>, not covered by its CSS vars - default browser yellow reads as a jarring foreign color against this palette. */
+  .rpgm-search-trigger__panel :global(mark) {
+    background: color-mix(in srgb, var(--rpgm-accent) 45%, transparent);
+    color: var(--rpgm-text);
+    border-radius: 2px;
   }
 </style>

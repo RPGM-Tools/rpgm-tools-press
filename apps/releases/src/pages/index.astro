@@ -5,7 +5,7 @@ import EntryCard from "@rpgm/tools-press-theme/components/EntryCard.astro";
 import Flourish from "@rpgm/tools-press-theme/ornaments/Flourish.astro";
 import ProductSeal from "@rpgm/tools-press-theme/ornaments/ProductSeal.astro";
 import SiteHead from "../components/SiteHead.astro";
-import { SITE_TITLE, SITE_TAGLINE, SITE_DESCRIPTION, SITE_LOGO, NAV_LINKS } from "../consts";
+import { SITE_TITLE, SITE_TAGLINE, SITE_DESCRIPTION, SITE_LOGO, NAV_LINKS, REPO_URL } from "../consts";
 import { summarize } from "../lib/summarize";
 
 const allReleases = await getCollection("releases");
@@ -23,6 +23,7 @@ const releases = allReleases.sort(
   navLinks={NAV_LINKS}
   rssTitle={SITE_TITLE}
   rssHref="/rss.xml"
+  githubHref={REPO_URL}
 >
   <Fragment slot="head">
     <SiteHead />

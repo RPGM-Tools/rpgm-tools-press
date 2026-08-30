@@ -2,6 +2,7 @@
 import Nav, { type NavLink } from "./Nav.astro";
 import SealGlyph from "../ornaments/SealGlyph.astro";
 import SearchTrigger from "./SearchTrigger.astro";
+import ThemeToggle from "./ThemeToggle.astro";
 
 interface Props {
   siteTitle: string;
@@ -30,6 +31,7 @@ const { siteTitle, tagline, links, logoSrc } = Astro.props;
     <div class="rpgm-header__right">
       <Nav links={links} />
       <SearchTrigger />
+      <ThemeToggle />
     </div>
   </div>
 </header>
