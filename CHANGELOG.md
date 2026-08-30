@@ -7,14 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-08-30
+
+Initial public release of both sites: Relics & Reckonings (the blog) and
+The Ledger (release notes for every tracked repo).
+
 ### Added
 
-- A live text filter above every blog listing page (home, archive, tag pages):
-  typing narrows the visible entries in place, in real time, by title/tag/
-  category - distinct from the header's Pagefind search, which indexes the
-  whole built site and opens its own results panel. The two cover different
-  jobs: "search everything ever published" versus "narrow what's already on
-  this page."
 - A subtle paper-grain texture (inline SVG noise, no network request) behind
   every page, on top of the flat background color.
 - `Flourish` now draws itself in - a pen-stroke reveal on the blog, a
@@ -24,8 +23,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - A "RPGM Tools, LLC" section on the About page, with the company's own
   logo next to the heading - drafted as a first pass on the company itself
   (not the tool suite), to be refined further.
-- Full-text search on both sites via Pagefind, indexed as a postbuild step
-  and mounted lazily from the header's search trigger.
+- [Visible] [Search] Site search: an always-visible inline filter on every
+  listing page (rather than a popup panel) matches a query against each
+  entry's full body text, not just its title or blurb. An exact match keeps
+  the page's normal reverse-chronological order; a genuine zero-result
+  search falls back to a semantic lookup instead, ranked "best match
+  first," using vectors generated per entry at content-sync time. A fixed
+  header Search link, and the existing "/" keyboard shortcut, focus the
+  field directly (or jump to it on the homepage, from a page with no
+  listing of its own to filter).
+- [Internal] [Infra] [Content-Sync] Both sites now deploy as a Cloudflare
+  Worker with static assets, rather than plain static assets, so a small
+  same-origin API endpoint can serve the semantic-search feature above;
+  that endpoint is rate-limited per client IP via Cloudflare's native
+  Worker rate-limit binding, and each entry's embedding vector is
+  generated once at content-sync time and cached by a content hash so a
+  normal sync only calls Workers AI for new or changed entries.
 - GitHub Discussions-backed comments via giscus on blog posts and release
   pages, gated behind a real Discussion category ID per app.
 - Cloudflare Web Analytics wiring in the shared Layout, enabled per app via
@@ -59,16 +72,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   and clicking the toggle stores an explicit override that wins from then
   on. The Ledger carries its own cool graphite-toned light palette rather
   than falling back to the base theme's warm parchment look.
-- Pressing "/" anywhere (outside a text field) opens search, same as
-  clicking the search button; the search panel is now themed to match
-  each site instead of showing Pagefind's generic light-mode default, and
-  blog posts are filterable by tag and category from within it.
 - Footer now also links to the site's RSS feed and its own source repo.
 - An About page on the blog, linked from the nav, with a real author bio.
-- The search field itself, not just the results, is themed: clicking the
-  search trigger (or pressing "/") turns it into the actual input in
-  place, instead of leaving an unchanged button next to a second field
-  that appears somewhere else.
 - The Ledger's release list is now a ruled register (date gutter, a thin
   per-repo accent tick, monospace dates) instead of a stack of full-width
   cards, with an entry/repo-count "last synchronized" line at the top -
@@ -143,16 +148,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   accent rule, reading as if the bar separated the logo from the text
   rather than marking the whole heading - the rule now belongs to the row
   as a whole (logo, then text, both after it), not to the heading text alone.
-- Opening the search field could push the theme toggle onto its own line
-  below it, since the header's nav links, the growing search field, and the
-  toggle all shared one wrapping row and ran out of width together. Nav
-  links now hide themselves while search is open (they're not needed mid-
-  search anyway), freeing enough room for the field and the toggle to stay
-  on the same row. Hit the same cross-component Astro scoped-CSS gap this
-  project has hit before (`EntryCard`, `Flourish`): a parent component's
-  selector targeting a class a CHILD component renders never matches,
-  because the child's elements carry the child's own scope attribute, not
-  the parent's - needed `:global()` again.
 - An AI-synthesized release summary that ran long (common for one written
   before the sync prompt was tightened to one sentence) was still hard-
   truncated with an ellipsis even after an earlier pass added a "prefer a
@@ -163,19 +158,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   ellipsis is reserved for the rare case of text with no sentence-ending
   punctuation anywhere (2 of 78 currently synced entries - themselves
   incomplete at the source, not a rendering issue).
-- The search trigger's own button was never actually hidden once its panel
-  opened: `button.hidden = true` had no visual effect, since the button's own
-  `display: inline-flex` rule (an author stylesheet rule) always beat the
-  browser's built-in `[hidden] { display: none }` (author rules win over the
-  user-agent stylesheet regardless of selector specificity). This went
-  unnoticed while the open panel was absolutely positioned on top of the
-  header, covering the still-visible button; it became visible the moment
-  the panel below stopped being absolutely positioned.
-- The open search panel was absolutely positioned over the header instead of
-  claiming real layout space, so on any header too narrow to spare 20+rem
-  next to it, it drew on top of the nav links and logo to its left rather
-  than pushing them aside. It's now a normal in-flow flex item that grows,
-  letting the header's own row wrap around it.
 - The smallest text sizes in the scale (chip labels, dates, the eyebrow
   label) were tuned for a desktop reading distance and read as genuinely
   tiny on a phone; bumped at narrow viewports only.
