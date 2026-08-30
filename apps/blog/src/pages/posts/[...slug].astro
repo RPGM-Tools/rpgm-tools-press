@@ -60,7 +60,7 @@ const categoryMeta = post.data.category ? CATEGORY_META[post.data.category] : un
     <SiteHead />
   </Fragment>
 
-  <article>
+  <article class="post-article">
     <p class="rpgm-eyebrow">{dateLabel}</p>
     <h1>{post.data.title}</h1>
     <p class="post-byline">
@@ -107,6 +107,19 @@ const categoryMeta = post.data.category ? CATEGORY_META[post.data.category] : un
 </Layout>
 
 <style>
+  /*
+   * The Flourish above the body already centers itself (see Flourish.astro),
+   * but the eyebrow/title/byline/tags and the Prose body below it were each
+   * left/full-width at the page's own 76rem column - only the ornament
+   * lined up with the reading column, not the words around it. Constraining
+   * the whole article (not just Prose) to the same 42rem gives one
+   * consistent centered column, matching how most blogs set post text.
+   */
+  .post-article {
+    max-width: 42rem;
+    margin: 0 auto;
+  }
+
   .post-byline {
     display: flex;
     align-items: center;

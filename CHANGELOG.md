@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- A live text filter above every blog listing page (home, archive, tag pages):
+  typing narrows the visible entries in place, in real time, by title/tag/
+  category - distinct from the header's Pagefind search, which indexes the
+  whole built site and opens its own results panel. The two cover different
+  jobs: "search everything ever published" versus "narrow what's already on
+  this page."
+- A subtle paper-grain texture (inline SVG noise, no network request) behind
+  every page, on top of the flat background color.
+- `Flourish` now draws itself in - a pen-stroke reveal on the blog, a
+  wax-seal-style stamp on The Ledger - the first time it scrolls into view,
+  instead of sitting fully rendered from first paint. Falls back to a plain,
+  fully-drawn static rendering with no JS dependency.
+- A "RPGM Tools" section on the About page, drafted as a first pass on the
+  suite's own history and current state (to be refined further).
 - Full-text search on both sites via Pagefind, indexed as a postbuild step
   and mounted lazily from the header's search trigger.
 - GitHub Discussions-backed comments via giscus on blog posts and release
@@ -70,6 +84,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- The header's candle glyph and the theme toggle are now the same element:
+  a lit, flickering flame means dark mode, a snuffed flame with a wisp of
+  smoke means light, and a dim static flame means "following system" -
+  instead of an unexplained decorative candle sitting next to an unrelated
+  abstract toggle icon.
+- A release-listing card's AI-synthesized summary is now capped to a fixed
+  length at render time (regardless of what the model actually returned),
+  and the prompt itself now asks for one short sentence instead of "at most
+  two" - the model's output was often long enough to read as a recap rather
+  than a scannable one-line blurb.
+- The About page bio is now three short paragraphs (what I do for work,
+  what I studied, what I build in my free time) instead of a longer
+  credentials-focused essay - the free-time paragraph deliberately doesn't
+  call RPGM Tools/Neo Angband "for fun," since the goal is a real business,
+  not a hobby.
+- A post/release page's title, byline, tags, and body are now all
+  constrained to the same centered 42rem column the page's own decorative
+  divider already used - previously only the divider was centered while the
+  words around it spanned the full page width.
 - Release notes now come from that version's own section of `CHANGELOG.md`
   at its tag, not a GitHub Release's `body` - drops the download-instructions
   preamble and boilerplate footer that body carried, keeping only the actual
@@ -102,6 +135,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- The search trigger's own button was never actually hidden once its panel
+  opened: `button.hidden = true` had no visual effect, since the button's own
+  `display: inline-flex` rule (an author stylesheet rule) always beat the
+  browser's built-in `[hidden] { display: none }` (author rules win over the
+  user-agent stylesheet regardless of selector specificity). This went
+  unnoticed while the open panel was absolutely positioned on top of the
+  header, covering the still-visible button; it became visible the moment
+  the panel below stopped being absolutely positioned.
+- The open search panel was absolutely positioned over the header instead of
+  claiming real layout space, so on any header too narrow to spare 20+rem
+  next to it, it drew on top of the nav links and logo to its left rather
+  than pushing them aside. It's now a normal in-flow flex item that grows,
+  letting the header's own row wrap around it.
+- The smallest text sizes in the scale (chip labels, dates, the eyebrow
+  label) were tuned for a desktop reading distance and read as genuinely
+  tiny on a phone; bumped at narrow viewports only.
 - A global typography rule meant only for rendered post/changelog bodies
   (`li + li { margin-top }`, plus the rest of `tokens/typography.css`'s
   list/table/blockquote/code rules) was never scoped to `.rpgm-prose` and

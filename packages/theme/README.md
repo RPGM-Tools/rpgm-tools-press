@@ -41,7 +41,6 @@ import SearchTrigger from "@rpgm/tools-press-theme/components/SearchTrigger.astr
 
 import Flourish from "@rpgm/tools-press-theme/ornaments/Flourish.astro";
 import SealGlyph from "@rpgm/tools-press-theme/ornaments/SealGlyph.astro";
-import CandleIcon from "@rpgm/tools-press-theme/ornaments/CandleIcon.astro";
 ---
 ```
 
@@ -100,6 +99,9 @@ always overrides these base tokens, regardless of import order.
 - `Prose.astro` - typography wrapper for rendered markdown bodies.
 - `SearchTrigger.astro` - search button + `#pagefind-search` mount point
   (Pagefind itself is wired up in a later pass, not yet installed).
-- `ornaments/Flourish.astro`, `ornaments/SealGlyph.astro`,
-  `ornaments/CandleIcon.astro` - `currentColor`-based decorative SVGs,
-  each accepting optional `color` and `size` props.
+- `ornaments/Flourish.astro`, `ornaments/SealGlyph.astro` - `currentColor`-based
+  decorative SVGs, each accepting optional `color` and `size` props. The
+  candle glyph lives in `components/ThemeToggle.astro` instead of its own
+  ornament file - it's the theme toggle itself (lit/flickering = dark,
+  snuffed with a wisp of smoke = light, dim and static = system), not a
+  standalone decoration.

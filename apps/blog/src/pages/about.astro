@@ -29,52 +29,58 @@ import {
     <SiteHead />
   </Fragment>
 
-  <p class="rpgm-eyebrow">About</p>
-  <div class="about-header">
-    <img src={AUTHOR_AVATAR} alt={AUTHOR_NAME} width="96" height="96" class="about-header__avatar" />
-    <h1>{AUTHOR_NAME}</h1>
-  </div>
-  <Flourish size={16} color="var(--rpgm-border-strong)" />
+  <div class="about-article">
+    <p class="rpgm-eyebrow">About</p>
+    <div class="about-header">
+      <img src={AUTHOR_AVATAR} alt={AUTHOR_NAME} width="96" height="96" class="about-header__avatar" />
+      <h1>{AUTHOR_NAME}</h1>
+    </div>
+    <Flourish size={16} color="var(--rpgm-border-strong)" />
 
-  <Prose>
-    <p>
-      By day, I lead a marketing data and analytics organization - the kind of
-      role where "business intelligence," "data science," and, these days,
-      "AI" all show up in the same sentence more often than not. I got there
-      by a slightly winding path: a bachelor's in information technology,
-      over a decade in marketing analytics roles of increasing scope, then an
-      MBA and a master's in business analytics along the way. I've also spent
-      the last several years teaching as an adjunct professor - mostly
-      technology, analytics, and business courses - because explaining
-      something well is usually the fastest way to find out whether you
-      actually understand it.
-    </p>
-    <p>
-      Software engineering is the newest chapter here, not the oldest. I've
-      been writing real code seriously for only a few years - though if you
-      count the fifteen years I spent running my own small Apple repair and
-      training business before that, "comfortable pulling a computer apart"
-      isn't new to me, just "shipping software" is. What's genuinely new is
-      doing it with AI as a constant working partner rather than an
-      occasional assist - that's most of how RPGM Tools, and this blog
-      itself, actually get built day to day.
-    </p>
-    <p>
-      <a href={RPGM_TOOLS_URL}>RPGM Tools</a> is where the rest of my time
-      goes: I'm the principal and co-founder, building a small suite of
-      AI-driven tools for the tabletop RPG community, including Neo Angband, a
-      from-scratch port of a roguelike that's been in continuous development
-      since 1990. <em>Relics &amp; Reckonings</em> is the notebook that comes
-      out of all of it - the relics I've built on purpose, and the reckonings
-      I only understood after the fact.
-    </p>
-    <p>
-      Elsewhere: <a href={AUTHOR_GITHUB}>GitHub</a>.
-    </p>
-  </Prose>
+    <Prose>
+      <p>
+        By day, I lead a marketing data and analytics organization, and teach
+        as an adjunct professor - mostly technology, analytics, and business
+        courses.
+      </p>
+      <p>
+        I studied information technology for my bachelor's degree, then later
+        went back for an MBA and a master's in business analytics.
+      </p>
+      <p>
+        In my free time, I build <a href={RPGM_TOOLS_URL}>RPGM Tools</a>,
+        working alongside AI as my day-to-day coding partner. <em>Relics
+        &amp; Reckonings</em> is where that work shows up as it happens.
+      </p>
+
+      <h2>RPGM Tools</h2>
+      <p>
+        RPGM Tools is the suite I'm building for tabletop RPG creation: tools
+        meant to generate names, lore, maps, and characters, and help a game
+        master or writer keep a growing campaign consistent from session to
+        session. Neo Angband, a roguelike with real roots going back to 1990
+        and in continuous development since, is the most complete piece of it
+        today and the proving ground a lot of the rest of the suite is being
+        built around. Everything else - the content generators, the
+        world-building tools, the character sheets - is still early and under
+        active construction. The goal is to grow this from a personal project
+        into a real, sustainable business, and this blog is where that
+        build happens in the open.
+      </p>
+
+      <p>
+        Elsewhere: <a href={AUTHOR_GITHUB}>GitHub</a>.
+      </p>
+    </Prose>
+  </div>
 </Layout>
 
 <style>
+  .about-article {
+    max-width: 42rem;
+    margin: 0 auto;
+  }
+
   .about-header {
     display: flex;
     align-items: center;

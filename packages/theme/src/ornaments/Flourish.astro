@@ -1,8 +1,26 @@
 ---
 /**
- * Decorative divider - a simple hand-drawn-looking line-art flourish.
- * currentColor-based so it inherits text color from its container;
- * wrap it in an element with `color: var(--rpgm-accent)` (etc) to tint it.
+ * Decorative divider that draws itself in when scrolled into view, instead
+ * of sitting on the page fully rendered from the start - a plain static
+ * squiggle read as a stray SVG separator with no reason to exist. Two
+ * variants, picked per site rather than shared wholesale (a blog and a
+ * release ledger don't want to feel like the same page in different
+ * colors):
+ *
+ * - "draw" (default, used by the blog): the line and swash reveal like a
+ *   pen stroke, left to right, then the center jewel fades in - a quill
+ *   flourish, fitting a personal notebook.
+ * - "stamp" (used by The Ledger): the jewel snaps in first, oversized and
+ *   settling like a wax seal pressed down, then the two rules snap out fast
+ *   - reads as something being stamped/received, fitting a release log.
+ *
+ * Progressive enhancement, not a required animation: every element renders
+ * fully visible by default (plain CSS, no JS dependency). The script below
+ * only ever ADDS a "pending" (hidden/undrawn) class right before it starts
+ * observing an element, so a page with JS disabled - or before the script
+ * has run - simply shows the finished flourish, never a stuck-invisible one.
+ * `prefers-reduced-motion` is handled globally in base.css (collapses every
+ * transition/animation duration to ~0), so this needs no separate guard.
  *
  * maxWidth is a real prop, not a class a call site is expected to supply -
  * `preserveAspectRatio="none"` deliberately lets the line segments stretch
@@ -16,15 +34,22 @@ interface Props {
   color?: string;
   size?: number | string;
   maxWidth?: string;
+  variant?: "draw" | "stamp";
   class?: string;
 }
 
-const { color = "currentColor", size = 24, maxWidth = "20rem", class: className } = Astro.props;
+const {
+  color = "currentColor",
+  size = 24,
+  maxWidth = "20rem",
+  variant = "draw",
+  class: className,
+} = Astro.props;
 const height = typeof size === "number" ? `${size}px` : size;
 ---
 
 <svg
-  class={className}
+  class:list={["rpgm-flourish", `rpgm-flourish--${variant}`, className]}
   viewBox="0 0 240 24"
   height={height}
   width="100%"
@@ -37,10 +62,119 @@ const height = typeof size === "number" ? `${size}px` : size;
   role="presentation"
   aria-hidden="true"
 >
-  <path d="M0 12 H90" />
+  <path class="rpgm-flourish__line rpgm-flourish__line--left" pathLength="1" d="M0 12 H90" />
   <path
+    class="rpgm-flourish__swash"
+    pathLength="1"
     d="M90 12 C100 12 100 4 112 4 C118 4 118 12 120 12 C122 12 122 4 128 4 C140 4 140 12 150 12"
   />
-  <circle cx="120" cy="12" r="2.6" fill={color} stroke="none" />
-  <path d="M150 12 H240" />
+  <circle class="rpgm-flourish__jewel" cx="120" cy="12" r="2.6" fill={color} stroke="none" />
+  <path class="rpgm-flourish__line rpgm-flourish__line--right" pathLength="1" d="M150 12 H240" />
 </svg>
+
+<script>
+  const observed = new WeakSet<Element>();
+
+  function armFlourish(el: Element) {
+    if (observed.has(el)) return;
+    observed.add(el);
+
+    el.classList.add("rpgm-flourish--pending");
+    const io = new IntersectionObserver(
+      (entries, obs) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          entry.target.classList.remove("rpgm-flourish--pending");
+          entry.target.classList.add("rpgm-flourish--in-view");
+          obs.unobserve(entry.target);
+        }
+      },
+      { threshold: 0.4 },
+    );
+    io.observe(el);
+  }
+
+  if ("IntersectionObserver" in window) {
+    document.querySelectorAll(".rpgm-flourish").forEach(armFlourish);
+  }
+</script>
+
+<style>
+  .rpgm-flourish__line,
+  .rpgm-flourish__swash {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 0;
+  }
+
+  .rpgm-flourish__jewel {
+    transform-origin: 120px 12px;
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  /* ---- "draw" (blog): pen-stroke reveal, left rule -> swash -> jewel -> right rule ---- */
+  .rpgm-flourish--draw.rpgm-flourish--pending .rpgm-flourish__line--left {
+    stroke-dashoffset: 1;
+    transition: stroke-dashoffset 0.5s ease 0s;
+  }
+
+  .rpgm-flourish--draw.rpgm-flourish--pending .rpgm-flourish__swash {
+    stroke-dashoffset: 1;
+    transition: stroke-dashoffset 0.7s ease 0.3s;
+  }
+
+  .rpgm-flourish--draw.rpgm-flourish--pending .rpgm-flourish__jewel {
+    opacity: 0;
+    transform: scale(0);
+    transition: opacity 0.3s ease 0.95s, transform 0.35s ease 0.95s;
+  }
+
+  .rpgm-flourish--draw.rpgm-flourish--pending .rpgm-flourish__line--right {
+    stroke-dashoffset: 1;
+    transition: stroke-dashoffset 0.5s ease 1.05s;
+  }
+
+  .rpgm-flourish--draw.rpgm-flourish--in-view .rpgm-flourish__line--left,
+  .rpgm-flourish--draw.rpgm-flourish--in-view .rpgm-flourish__swash,
+  .rpgm-flourish--draw.rpgm-flourish--in-view .rpgm-flourish__line--right {
+    stroke-dashoffset: 0;
+  }
+
+  .rpgm-flourish--draw.rpgm-flourish--in-view .rpgm-flourish__jewel {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  /* ---- "stamp" (The Ledger): the seal presses down first, then rules snap out ---- */
+  .rpgm-flourish--stamp.rpgm-flourish--pending .rpgm-flourish__jewel {
+    opacity: 0;
+    transform: scale(2.6) translateY(-4px);
+    transition: opacity 0.2s ease 0s, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0s;
+  }
+
+  .rpgm-flourish--stamp.rpgm-flourish--pending .rpgm-flourish__line--left {
+    stroke-dashoffset: 1;
+    transition: stroke-dashoffset 0.3s ease 0.35s;
+  }
+
+  .rpgm-flourish--stamp.rpgm-flourish--pending .rpgm-flourish__line--right {
+    stroke-dashoffset: 1;
+    transition: stroke-dashoffset 0.3s ease 0.35s;
+  }
+
+  .rpgm-flourish--stamp.rpgm-flourish--pending .rpgm-flourish__swash {
+    stroke-dashoffset: 1;
+    transition: stroke-dashoffset 0.35s ease 0.4s;
+  }
+
+  .rpgm-flourish--stamp.rpgm-flourish--in-view .rpgm-flourish__jewel {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+
+  .rpgm-flourish--stamp.rpgm-flourish--in-view .rpgm-flourish__line--left,
+  .rpgm-flourish--stamp.rpgm-flourish--in-view .rpgm-flourish__line--right,
+  .rpgm-flourish--stamp.rpgm-flourish--in-view .rpgm-flourish__swash {
+    stroke-dashoffset: 0;
+  }
+</style>

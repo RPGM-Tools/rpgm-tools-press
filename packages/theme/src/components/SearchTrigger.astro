@@ -141,6 +141,34 @@ const { label = "Search" } = Astro.props;
     position: relative;
   }
 
+  /*
+   * While open, let the trigger actually claim layout space instead of the
+   * panel floating over the header in an absolutely-positioned box (below) -
+   * that used to overlay the nav links and logo to its left rather than
+   * pushing them out of the way. Growing this flex item (its siblings in
+   * .rpgm-header__right can wrap thanks to that row's own flex-wrap) is what
+   * makes room for it honestly.
+   */
+  .rpgm-search-trigger:has(#pagefind-search:not([hidden])) {
+    flex: 1 1 18rem;
+    max-width: 32rem;
+    min-width: 0;
+  }
+
+  /*
+   * The attribute selector below needs to out-specificity the plain class
+   * rule, because author-stylesheet rules always beat the UA stylesheet's
+   * own `[hidden] { display: none }` regardless of specificity - setting
+   * `button.hidden = true` from the script had no visual effect at all
+   * until now. It went unnoticed while the panel was absolutely positioned
+   * on top of the (still-visible) button; once the panel became a normal
+   * in-flow element (see .rpgm-search-trigger__panel below), both showed
+   * at once.
+   */
+  .rpgm-search-trigger__button[hidden] {
+    display: none;
+  }
+
   .rpgm-search-trigger__button {
     display: inline-flex;
     align-items: center;
@@ -175,21 +203,14 @@ const { label = "Search" } = Astro.props;
   }
 
   /*
-   * The panel occupies the exact box the button just vacated (top:0/
-   * right:0 of the same relative container, same starting width) rather
-   * than appearing as a second, separate box below an unchanged button -
-   * clicking (or "/") turns the control you're looking at into the field
-   * itself, instead of popping open a different field somewhere else.
-   * It's free to grow wider/taller than that starting box as results
-   * arrive; it just can't start disconnected from what triggered it.
+   * Normal flow, not absolutely positioned: an overlaid panel doesn't
+   * displace anything, so on any header too narrow to spare 20+rem next to
+   * it (i.e. most of them), it just draws on top of the nav links and logo
+   * to its left. Sitting in-flow, sized by the wrapper's own flex-grow
+   * above, means the header genuinely reflows around it instead.
    */
   .rpgm-search-trigger__panel {
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: max(20rem, 100%);
-    max-width: min(28rem, 90vw);
-    z-index: 20;
+    width: 100%;
   }
 
   /*

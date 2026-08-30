@@ -185,8 +185,8 @@ async function summarizeWithAI(changelogBody, { repoDisplayName, version }) {
   if (!MINIMAX_API_KEY || !changelogBody) return null;
 
   const prompt = [
-    `Summarize the following changelog section for "${repoDisplayName} ${version}" in at most two short sentences, plain prose, no markdown formatting.`,
-    "Write for someone browsing a list of release notes across several repositories - focus on what a player or user would actually notice.",
+    `Summarize the following changelog section for "${repoDisplayName} ${version}" in ONE short sentence - no more than 20 words, plain prose, no markdown formatting.`,
+    "This is a one-line blurb on a scannable list of release notes across several repositories, not a recap - name only the single most notable change a player or user would actually notice, and cut everything else.",
     "",
     changelogBody,
   ].join("\n");

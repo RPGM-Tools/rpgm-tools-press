@@ -2,6 +2,7 @@
 import { getCollection } from "astro:content";
 import Layout from "@rpgm/tools-press-theme/components/Layout.astro";
 import EntryCard from "@rpgm/tools-press-theme/components/EntryCard.astro";
+import ListFilter from "@rpgm/tools-press-theme/components/ListFilter.astro";
 import SiteHead from "../../components/SiteHead.astro";
 import { SITE_TITLE, SITE_LOGO, NAV_LINKS, CATEGORY_META, REPO_URL } from "../../consts";
 
@@ -39,6 +40,7 @@ const { tag, posts } = Astro.props;
 
   <p class="rpgm-eyebrow">Tag</p>
   <h1>{tag}</h1>
+  <ListFilter targetSelector=".post-list" placeholder="Filter these entries..." />
 
   <ul class="post-list">
     {

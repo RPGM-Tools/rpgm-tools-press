@@ -46,13 +46,13 @@ const isMod = release.data.kind === "mod";
     <SiteHead />
   </Fragment>
 
-  <article>
+  <article class="post-article">
     <p class="rpgm-eyebrow">{dateLabel}</p>
     <h1 class="release-title">
       {release.data.emoji && <ProductSeal emoji={release.data.emoji} size={40} color="var(--rpgm-accent)" />}
       <span>{release.data.repoDisplayName} {release.data.version}</span>
     </h1>
-    <Flourish size={16} color="var(--rpgm-border-strong)" />
+    <Flourish size={16} color="var(--rpgm-border-strong)" variant="stamp" />
 
     <Prose>
       <Content />
@@ -81,6 +81,14 @@ const isMod = release.data.kind === "mod";
 </Layout>
 
 <style>
+  /* See the identical rule/comment on the blog's [...slug].astro - keeps the
+     title/byline/downloads centered in the same column the Flourish already
+     centers itself in, instead of only the ornament lining up. */
+  .post-article {
+    max-width: 42rem;
+    margin: 0 auto;
+  }
+
   .release-title {
     display: flex;
     align-items: center;

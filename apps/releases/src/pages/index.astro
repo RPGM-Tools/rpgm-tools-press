@@ -38,7 +38,7 @@ const syncedAt = new Date().toLocaleDateString("en-US", {
   </Fragment>
 
   <p class="rpgm-eyebrow">Latest releases</p>
-  <Flourish size={16} color="var(--rpgm-border-strong)" />
+  <Flourish size={16} color="var(--rpgm-border-strong)" variant="stamp" />
   <p class="ledger-receipt">
     {releases.length} entries across {repos.length} repositories - last synchronized {syncedAt}.
   </p>
@@ -50,7 +50,7 @@ const syncedAt = new Date().toLocaleDateString("en-US", {
           title={`${release.data.repoDisplayName} ${release.data.version}`}
           href={`/releases/${release.id}/`}
           date={release.data.publishedAt}
-          description={release.data.summary ?? summarize(release.body)}
+          description={summarize(release.data.summary ?? release.body, 130)}
           accentColor={release.data.color}
           emoji={release.data.emoji}
         />

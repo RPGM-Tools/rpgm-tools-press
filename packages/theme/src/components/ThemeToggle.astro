@@ -1,13 +1,25 @@
 ---
 /**
- * Light/dark/system theme cycle. Defaults to system (no localStorage entry,
- * no data-theme attribute - base.css's own prefers-color-scheme query
- * resolves that case) until a viewer clicks, at which point the choice is
- * stored and wins over the OS setting from then on. See Layout.astro for
- * the matching pre-paint script that applies a stored choice before first
- * render.
+ * Light/dark/system theme cycle - the header's own candle IS this control,
+ * rather than a separate abstract icon sitting next to an unrelated candle
+ * ornament. A lit, flickering candle means dark mode; a snuffed candle with
+ * a drifting wisp of smoke means light (no need for a candle when it's
+ * daytime); "system" shows the candle half-lit and still, since it isn't
+ * committed to either state on its own.
+ *
+ * Defaults to system (no localStorage entry, no data-theme attribute -
+ * base.css's own prefers-color-scheme query resolves that case) until a
+ * viewer clicks, at which point the choice is stored and wins over the OS
+ * setting from then on. See Layout.astro for the matching pre-paint script
+ * that applies a stored choice before first render.
  */
 const STORAGE_KEY = "rpgm-theme";
+
+const TITLES = {
+  system: "Theme: following your system setting - click to light it",
+  dark: "Theme: dark (lit) - click to snuff it out",
+  light: "Theme: light (snuffed out) - click to follow your system setting",
+};
 ---
 
 <button
@@ -15,21 +27,38 @@ const STORAGE_KEY = "rpgm-theme";
   class="rpgm-theme-toggle"
   data-rpgm-theme-toggle
   aria-label="Toggle color theme"
+  title={TITLES.system}
 >
-  <svg data-rpgm-theme-icon="system" viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
-    <circle cx="10" cy="10" r="7" />
-    <path d="M10 3 A7 7 0 0 1 10 17 Z" fill="currentColor" stroke="none" />
-  </svg>
-  <svg data-rpgm-theme-icon="light" viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
-    <circle cx="10" cy="10" r="4" />
-    <path stroke-linecap="round" d="M10 1.5v2M10 16.5v2M18.5 10h-2M3.5 10h-2M15.66 4.34l-1.42 1.42M5.76 14.24l-1.42 1.42M15.66 15.66l-1.42-1.42M5.76 5.76L4.34 4.34" />
-  </svg>
-  <svg data-rpgm-theme-icon="dark" viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
-    <path stroke-linecap="round" stroke-linejoin="round" d="M17 11.2A7 7 0 1 1 8.8 3a5.6 5.6 0 0 0 8.2 8.2Z" />
+  <svg
+    class="rpgm-theme-toggle__candle"
+    viewBox="0 0 24 32"
+    width="20"
+    height="20"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="1.4"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    aria-hidden="true"
+  >
+    <path
+      class="rpgm-theme-toggle__flame"
+      d="M12 3 C13.5 6 15 8.2 15 10.5 C15 12.4 13.7 13.6 12 13.6 C10.3 13.6 9 12.4 9 10.5 C9 8.2 10.5 6 12 3 Z"
+      fill="currentColor"
+      stroke="none"
+    />
+    <path
+      class="rpgm-theme-toggle__smoke"
+      d="M12 10 C10.5 8.4 13.5 7.2 12 5.6 C10.7 4.2 12.8 3.2 12 2"
+    />
+    <path d="M12 13.6 V16" />
+    <rect x="8" y="16" width="8" height="12" rx="1" />
+    <path d="M8 20 H16" opacity="0.6" />
+    <path d="M6 28 H18" stroke-width="1.2" opacity="0.7" />
   </svg>
 </button>
 
-<script define:vars={{ STORAGE_KEY }}>
+<script define:vars={{ STORAGE_KEY, TITLES }}>
   const ORDER = ["system", "light", "dark"];
 
   function stored() {
@@ -51,6 +80,7 @@ const STORAGE_KEY = "rpgm-theme";
     else document.documentElement.dataset.theme = theme;
     document.querySelectorAll("[data-rpgm-theme-toggle]").forEach((btn) => {
       btn.dataset.current = theme;
+      btn.title = TITLES[theme];
     });
     // Lets anything that can't just read CSS custom properties (e.g. an
     // embedded third-party widget like giscus) react to a resolved
@@ -97,25 +127,49 @@ const STORAGE_KEY = "rpgm-theme";
     box-shadow: var(--rpgm-shadow-candle);
   }
 
-  .rpgm-theme-toggle [data-rpgm-theme-icon] {
-    display: none;
+  /*
+   * Three states, one glyph. "system" (no data-current yet, or explicitly
+   * "system") shows a half-committed candle: flame present but dim and
+   * static. "dark" lights it fully and lets it flicker (same keyframes as
+   * the old standalone CandleIcon). "light" snuffs the flame out and shows
+   * a thin wisp of smoke drifting instead - a candle has no job in daylight.
+   */
+  .rpgm-theme-toggle__flame {
+    transform-origin: 12px 8px;
+    opacity: 0.55;
+    transition: opacity var(--rpgm-transition-glow);
   }
 
-  /* Default (no JS yet, or before the click handler's first apply()): show the system icon. */
-  .rpgm-theme-toggle [data-rpgm-theme-icon="system"] {
-    display: block;
+  .rpgm-theme-toggle__smoke {
+    opacity: 0;
+    stroke-width: 1.1;
+    transition: opacity var(--rpgm-transition-glow);
   }
 
-  .rpgm-theme-toggle[data-current="light"] [data-rpgm-theme-icon="system"],
-  .rpgm-theme-toggle[data-current="dark"] [data-rpgm-theme-icon="system"] {
-    display: none;
+  .rpgm-theme-toggle[data-current="dark"] .rpgm-theme-toggle__flame {
+    opacity: 1;
+    animation: rpgm-flicker 2.6s ease-in-out infinite;
   }
 
-  .rpgm-theme-toggle[data-current="light"] [data-rpgm-theme-icon="light"] {
-    display: block;
+  .rpgm-theme-toggle[data-current="light"] .rpgm-theme-toggle__flame {
+    opacity: 0;
   }
 
-  .rpgm-theme-toggle[data-current="dark"] [data-rpgm-theme-icon="dark"] {
-    display: block;
+  .rpgm-theme-toggle[data-current="light"] .rpgm-theme-toggle__smoke {
+    opacity: 0.7;
+    animation: rpgm-smoke-drift 3.2s ease-in-out infinite;
+  }
+
+  @keyframes rpgm-flicker {
+    0%, 100% { opacity: 1; transform: scale(1) skewX(0deg); }
+    25% { opacity: 0.92; transform: scale(1.04, 0.97) skewX(-1deg); }
+    50% { opacity: 0.85; transform: scale(0.97, 1.03) skewX(1deg); }
+    75% { opacity: 0.96; transform: scale(1.02, 0.99) skewX(-0.5deg); }
+  }
+
+  @keyframes rpgm-smoke-drift {
+    0% { opacity: 0.7; transform: translateY(0) scaleY(1); }
+    50% { opacity: 0.3; transform: translateY(-1.5px) scaleY(1.08); }
+    100% { opacity: 0.7; transform: translateY(0) scaleY(1); }
   }
 </style>
