@@ -2,6 +2,7 @@
 import { getCollection } from "astro:content";
 import Layout from "@rpgm/tools-press-theme/components/Layout.astro";
 import LedgerRow from "@rpgm/tools-press-theme/components/LedgerRow.astro";
+import ListFilter from "@rpgm/tools-press-theme/components/ListFilter.astro";
 import Flourish from "@rpgm/tools-press-theme/ornaments/Flourish.astro";
 import SiteHead from "../components/SiteHead.astro";
 import { SITE_TITLE, SITE_TAGLINE, SITE_DESCRIPTION, SITE_LOGO, NAV_LINKS, REPO_URL } from "../consts";
@@ -42,6 +43,7 @@ const syncedAt = new Date().toLocaleDateString("en-US", {
   <p class="ledger-receipt">
     {releases.length} entries across {repos.length} repositories - last synchronized {syncedAt}.
   </p>
+  <ListFilter targetSelector=".ledger-register" placeholder="Search every release, including its full notes..." />
 
   <div class="ledger-register">
     {

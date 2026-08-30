@@ -30,17 +30,35 @@ the widget unrendered rather than showing a broken embed.
 
 ## Search
 
-Full-text search runs client-side via [Pagefind](https://pagefind.app),
-indexed as a postbuild step (`astro build && pagefind --site dist`) and
-mounted lazily from the header's search trigger only once it's opened.
-Because the index only exists after that postbuild step, search cannot be
-exercised under `astro dev` - use each app's `preview` script (or a
-`*-preview` launch config) against a real `build` to test it. Pressing "/"
-anywhere outside a text field opens it too, and blog posts expose their
-tag and category as Pagefind filters (`data-pagefind-filter`) so the panel
-can narrow results by either. The panel's own CSS custom properties are
-retargeted to this theme's tokens rather than left at Pagefind's generic
-default look.
+Listing pages have one inline search field that filters the entries already
+rendered in the body; results never move out of reverse-chronological order.
+Tier one uses [Pagefind](https://pagefind.app)'s plain JavaScript API and its
+postbuild index (`astro build && pagefind --site dist`) to match full entry
+text, then maps matching page URLs back to the existing cards/ledger rows.
+Because that index only exists after postbuild, exercise full-text search
+against a real build rather than `astro dev`.
+
+Only when Pagefind finds no entry on the current listing does tier two run.
+One normalized Qwen3 embedding per entry lives in each app's committed
+`public/search-embeddings.json`; the browser sends the novel query text to
+that site's `/api/search-embedding` Worker route, then ranks the in-scope
+static vectors locally by cosine similarity. If Workers AI is unavailable,
+the page stays usable and reports no related results. The stable header
+Search link (and `/` shortcut) focuses the local field when one exists or
+navigates from a detail/About page to `/#entry-search`, so it never expands
+or renders a separate results drawer.
+
+Regenerate vectors after changing content with:
+
+```bash
+node .github/scripts/generate-search-embeddings.mjs all
+```
+
+The command requires `CLOUDFLARE_ACCOUNT_ID` plus either
+`CLOUDFLARE_API_TOKEN` or a working `wrangler auth token` login, and reuses
+vectors whose content hash is unchanged. CI runs the offline `--check` mode;
+the releases sync regenerates and commits changed release vectors, while the
+blog deploy refreshes its artifact before building.
 
 ## Theme
 

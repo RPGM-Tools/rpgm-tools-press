@@ -37,7 +37,7 @@ import Footer from "@rpgm/tools-press-theme/components/Footer.astro";
 import Nav from "@rpgm/tools-press-theme/components/Nav.astro";
 import EntryCard from "@rpgm/tools-press-theme/components/EntryCard.astro";
 import Prose from "@rpgm/tools-press-theme/components/Prose.astro";
-import SearchTrigger from "@rpgm/tools-press-theme/components/SearchTrigger.astro";
+import ListFilter from "@rpgm/tools-press-theme/components/ListFilter.astro";
 
 import Flourish from "@rpgm/tools-press-theme/ornaments/Flourish.astro";
 import SealGlyph from "@rpgm/tools-press-theme/ornaments/SealGlyph.astro";
@@ -97,7 +97,7 @@ always overrides these base tokens, regardless of import order.
 - `Header.astro`, `Footer.astro`, `Nav.astro` - site chrome.
 - `EntryCard.astro` - generic list-item card (title/date/description/tags/href).
 - `Prose.astro` - typography wrapper for rendered markdown bodies.
-- `SearchTrigger.astro` - search button + `#pagefind-search` mount point
-  (Pagefind itself is wired up in a later pass, not yet installed).
+- `ListFilter.astro` - inline Pagefind full-text filter with a semantic
+  zero-result fallback; it hides existing rows without reordering them.
 - `ornaments/Flourish.astro`, `ornaments/SealGlyph.astro` - `currentColor`-based
   decorative SVGs, each accepting optional `color` and `size` props.

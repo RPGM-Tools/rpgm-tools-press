@@ -28,7 +28,7 @@ const posts = allPosts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.
 
   <p class="rpgm-eyebrow">Latest entries</p>
   <Flourish size={16} color="var(--rpgm-border-strong)" />
-  <ListFilter targetSelector=".post-list" placeholder="Filter entries by title, tag, or category..." />
+  <ListFilter targetSelector=".post-list" placeholder="Search every entry, including its full text..." />
 
   <ul class="post-list">
     {

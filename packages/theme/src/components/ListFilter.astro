@@ -1,78 +1,444 @@
 ---
 /**
- * A live text filter for an entry listing - as-you-type, no page reload, no
- * separate results panel. Distinct from SearchTrigger/Pagefind: Pagefind is
- * a full-text index of the WHOLE built site, opened in its own panel;
- * this is a plain substring match scoped to the entries already rendered on
- * THIS page, hiding non-matching <li> children in place as you type. Use it
- * above a listing (post-list, ledger-register, etc.) where "just narrow
- * down what's already on screen" is the ask, not "search everything ever
- * published."
+ * Inline full-entry search for a listing that is already rendered in the
+ * page. Pagefind supplies exact/full-text hits; when the current listing has
+ * no Pagefind hits, the component ranks that listing's precomputed document
+ * vectors against a query vector from /api/search-embedding.
  *
- * targetSelector is resolved with querySelectorAll against the whole
- * document (not just this component's own markup - Astro scoping wouldn't
- * reach the list anyway), so it can match more than one list on a page (the
- * archive page has one <ul class="post-list"> per year).
+ * An exact/pagefind match never reorders DOM nodes - the list stays in its
+ * normal reverse-chronological order, matches are just shown/hidden in
+ * place. A genuine semantic fallback is the one exception: those results
+ * reorder to descending similarity ("best match first") within each
+ * rendered list container, then revert to normal order the moment the
+ * query changes or clears (see restoreNaturalOrder). "Within each list
+ * container" matters on a page like the blog archive, which renders one
+ * <ul> per year under its own heading - reordering only ever happens
+ * inside one such list, never across the whole page, so the year
+ * groupings stay meaningful rather than being flattened into one global
+ * rank.
+ *
+ * Each filter owns a token in
+ * data-rpgm-hidden-by and `hidden` is the OR of those tokens, so a later
+ * deterministic filter can compose with search by dispatching a bubbling
+ * `rpgm:set-hidden-reason` CustomEvent from an item:
+ *   { detail: { reason: "tag", hidden: true } }
+ * Search only adds/removes its own `search` token and reruns after those
+ * external reasons change, so exact/semantic fallback stays pre-filtered.
  */
 interface Props {
   targetSelector: string;
   placeholder?: string;
 }
 
-const { targetSelector, placeholder = "Filter these entries..." } = Astro.props;
+const { targetSelector, placeholder = "Search every entry..." } = Astro.props;
 ---
 
-<div class="rpgm-list-filter">
+<div class="rpgm-list-filter" data-rpgm-list-filter-root>
   <svg viewBox="0 0 20 20" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
     <circle cx="8.5" cy="8.5" r="6" />
     <path d="M13 13 L18 18" stroke-linecap="round" />
   </svg>
   <input
+    id="entry-search"
     type="search"
     class="rpgm-list-filter__input"
     data-rpgm-list-filter={targetSelector}
     placeholder={placeholder}
     aria-label={placeholder}
+    aria-describedby="entry-search-help"
+    autocomplete="off"
+    spellcheck="false"
   />
-  <p class="rpgm-list-filter__empty" hidden>Nothing matches "<span></span>".</p>
+  <p id="entry-search-help" class="rpgm-list-filter__hint">
+    Exact full-text first; only a zero-hit query is sent to Cloudflare for related matching.
+  </p>
+  <p class="rpgm-list-filter__status" data-rpgm-list-filter-status role="status" aria-live="polite" hidden></p>
 </div>
 
 <script>
-  document.querySelectorAll<HTMLInputElement>("[data-rpgm-list-filter]").forEach((input) => {
-    const selector = input.dataset.rpgmListFilter;
-    if (!selector) return;
+  interface PagefindResultData {
+    url: string;
+  }
+
+  interface PagefindResult {
+    data(): Promise<PagefindResultData>;
+  }
+
+  interface PagefindModule {
+    init(): Promise<void> | void;
+    search(query: string): Promise<{ results: PagefindResult[] }>;
+  }
+
+  interface SemanticEntry {
+    url: string;
+    vector: number[];
+  }
+
+  interface SemanticArtifact {
+    version: number;
+    model: string;
+    dimensions: number;
+    normalized: boolean;
+    entries: SemanticEntry[];
+  }
+
+  interface QueryEmbeddingResponse {
+    model: string;
+    vector: number[];
+  }
+
+  interface ItemRecord {
+    element: HTMLElement;
+    url: string;
+    localText: string;
+  }
+
+  const SEARCH_REASON = "search";
+  const SECTION_REASON = "search-empty";
+  const SEMANTIC_ARTIFACT_URL = "/search-embeddings.json";
+  const SEMANTIC_ENDPOINT = "/api/search-embedding";
+  const SEMANTIC_LIMIT = 10;
+  const SEMANTIC_MIN_SCORE = 0.25;
+  const SEMANTIC_SCORE_WINDOW = 0.08;
+  const DEBOUNCE_MS = 300;
+
+  let pagefindPromise: Promise<PagefindModule> | null = null;
+  let semanticArtifactPromise: Promise<SemanticArtifact> | null = null;
+
+  function normalizedPath(value: string): string {
+    const path = new URL(value, window.location.origin).pathname.replace(/\/+$/, "");
+    return path || "/";
+  }
+
+  function hiddenReasons(element: HTMLElement): Set<string> {
+    return new Set((element.dataset.rpgmHiddenBy ?? "").split(/\s+/).filter(Boolean));
+  }
+
+  function rememberInitialHidden(element: HTMLElement): void {
+    if (element.hidden && hiddenReasons(element).size === 0) {
+      element.dataset.rpgmHiddenBy = "initial";
+    }
+  }
+
+  function setHiddenReason(element: HTMLElement, reason: string, hidden: boolean): void {
+    const reasons = hiddenReasons(element);
+    if (hidden) reasons.add(reason);
+    else reasons.delete(reason);
+
+    if (reasons.size > 0) element.dataset.rpgmHiddenBy = Array.from(reasons).sort().join(" ");
+    else delete element.dataset.rpgmHiddenBy;
+    element.hidden = reasons.size > 0;
+  }
+
+  function hiddenByAnotherFilter(element: HTMLElement): boolean {
+    return Array.from(hiddenReasons(element)).some((reason) => reason !== SEARCH_REASON);
+  }
+
+  document.addEventListener("rpgm:set-hidden-reason", (event) => {
+    if (!(event instanceof CustomEvent) || !(event.target instanceof HTMLElement)) return;
+    const detail: unknown = event.detail;
+    if (typeof detail !== "object" || detail === null || !("reason" in detail) || !("hidden" in detail)) return;
+    if (typeof detail.reason !== "string" || detail.reason === SEARCH_REASON || typeof detail.hidden !== "boolean") return;
+    setHiddenReason(event.target, detail.reason, detail.hidden);
+    document.dispatchEvent(new CustomEvent("rpgm:hidden-reasons-changed"));
+  });
+
+  function itemHref(item: HTMLElement): string | null {
+    const anchor = item.matches("a[href]") ? item : item.querySelector<HTMLAnchorElement>("a[href]");
+    return anchor instanceof HTMLAnchorElement ? anchor.href : null;
+  }
+
+  function loadPagefind(): Promise<PagefindModule> {
+    if (!pagefindPromise) {
+      const modulePath = "/pagefind/pagefind.js";
+      pagefindPromise = import(/* @vite-ignore */ modulePath) as Promise<PagefindModule>;
+    }
+    return pagefindPromise;
+  }
+
+  function isSemanticArtifact(value: unknown): value is SemanticArtifact {
+    if (typeof value !== "object" || value === null) return false;
+    if (!("version" in value) || value.version !== 1) return false;
+    if (!("model" in value) || typeof value.model !== "string") return false;
+    if (!("dimensions" in value) || typeof value.dimensions !== "number") return false;
+    if (!("normalized" in value) || value.normalized !== true) return false;
+    if (!("entries" in value) || !Array.isArray(value.entries)) return false;
+    return value.entries.every((entry) =>
+      typeof entry === "object" &&
+      entry !== null &&
+      "url" in entry &&
+      typeof entry.url === "string" &&
+      "vector" in entry &&
+      Array.isArray(entry.vector) &&
+      entry.vector.length === value.dimensions &&
+      entry.vector.every(Number.isFinite),
+    );
+  }
+
+  function loadSemanticArtifact(): Promise<SemanticArtifact> {
+    if (!semanticArtifactPromise) {
+      semanticArtifactPromise = (async () => {
+        const response = await fetch(SEMANTIC_ARTIFACT_URL);
+        if (!response.ok) throw new Error(`semantic artifact returned ${response.status}`);
+        const value: unknown = await response.json();
+        if (!isSemanticArtifact(value)) throw new Error("semantic artifact has an invalid shape");
+        return value;
+      })();
+    }
+    return semanticArtifactPromise;
+  }
+
+  function isQueryEmbedding(value: unknown, dimensions: number, model: string): value is QueryEmbeddingResponse {
+    return (
+      typeof value === "object" &&
+      value !== null &&
+      "model" in value &&
+      value.model === model &&
+      "vector" in value &&
+      Array.isArray(value.vector) &&
+      value.vector.length === dimensions &&
+      value.vector.every(Number.isFinite)
+    );
+  }
+
+  function normalizedVector(vector: number[]): number[] | null {
+    const magnitude = Math.sqrt(vector.reduce((sum, value) => sum + value * value, 0));
+    if (!Number.isFinite(magnitude) || magnitude === 0) return null;
+    return vector.map((value) => value / magnitude);
+  }
+
+  function dotProduct(left: number[], right: number[]): number {
+    let score = 0;
+    for (let index = 0; index < left.length; index += 1) {
+      score += (left[index] ?? 0) * (right[index] ?? 0);
+    }
+    return score;
+  }
+
+  document.querySelectorAll<HTMLElement>("[data-rpgm-list-filter-root]").forEach((root) => {
+    const input = root.querySelector<HTMLInputElement>("[data-rpgm-list-filter]");
+    const status = root.querySelector<HTMLElement>("[data-rpgm-list-filter-status]");
+    const selector = input?.dataset.rpgmListFilter;
+    if (!input || !selector) return;
 
     const lists = Array.from(document.querySelectorAll<HTMLElement>(selector));
     if (lists.length === 0) return;
 
-    const empty = input.closest(".rpgm-list-filter")?.querySelector<HTMLElement>(".rpgm-list-filter__empty");
-    const emptyTerm = empty?.querySelector("span");
+    const recordsByList = new Map<HTMLElement, ItemRecord[]>();
+    const recordByUrl = new Map<string, ItemRecord>();
+    for (const list of lists) {
+      const records = [];
+      for (const item of Array.from(list.children)) {
+        if (!(item instanceof HTMLElement)) continue;
+        const href = itemHref(item);
+        if (!href) continue;
+        rememberInitialHidden(item);
+        const record = {
+          element: item,
+          url: normalizedPath(href),
+          localText: (item.textContent ?? "").toLowerCase(),
+        };
+        records.push(record);
+        recordByUrl.set(record.url, record);
+      }
+      recordsByList.set(list, records);
+      const section = list.closest<HTMLElement>("section");
+      if (section) rememberInitialHidden(section);
+    }
+
+    function updateStatus(message = ""): void {
+      if (!status) return;
+      status.textContent = message;
+      status.hidden = message.length === 0;
+    }
+
+    // Exact/pagefind matches keep the page's normal reverse-chronological
+    // DOM order - only a genuine semantic fallback (see reorderBySemanticRank)
+    // reorders by score, and only ever within one rendered list container
+    // (e.g. one archive year-section), never across the whole page - the
+    // year headings stay meaningful groupings, not a single global rank.
+    function restoreNaturalOrder(): void {
+      for (const [list, records] of recordsByList) {
+        for (const record of records) list.appendChild(record.element);
+      }
+    }
+
+    function reorderBySemanticRank(rankedUrls: string[]): void {
+      for (const [list, records] of recordsByList) {
+        const elementByUrl = new Map(records.map((record) => [record.url, record.element]));
+        for (const url of rankedUrls) {
+          const element = elementByUrl.get(url);
+          if (element) list.appendChild(element);
+        }
+      }
+    }
+
+    function applyMatches(term: string, matchedUrls: Set<string> | null): number {
+      restoreNaturalOrder();
+      let totalVisible = 0;
+      for (const [list, records] of recordsByList) {
+        for (const record of records) {
+          const matches = matchedUrls === null || matchedUrls.has(record.url);
+          setHiddenReason(record.element, SEARCH_REASON, term.length > 0 && !matches);
+          if (!record.element.hidden) totalVisible += 1;
+        }
+
+        const section = list.closest<HTMLElement>("section");
+        if (section) {
+          const hasVisibleItem = records.some((record) => !record.element.hidden);
+          setHiddenReason(section, SECTION_REASON, term.length > 0 && !hasVisibleItem);
+        }
+      }
+      return totalVisible;
+    }
+
+    function eligibleRecord(url: string): ItemRecord | null {
+      const record = recordByUrl.get(normalizedPath(url));
+      return record && !hiddenByAnotherFilter(record.element) ? record : null;
+    }
+
+    async function pagefindMatches(query: string): Promise<Set<string>> {
+      const pagefind = await loadPagefind();
+      const search = await pagefind.search(query);
+      const data = await Promise.all(search.results.map((result) => result.data()));
+      const matches = new Set<string>();
+      for (const result of data) {
+        const record = recordByUrl.get(normalizedPath(result.url));
+        if (record) matches.add(record.url);
+      }
+      return matches;
+    }
+
+    // Returned in descending-score ("best match first") order - callers that
+    // display these results should reorder by it, not just show/hide against
+    // the page's normal chronological order.
+    async function semanticMatches(query: string, signal: AbortSignal): Promise<string[]> {
+      const artifact = await loadSemanticArtifact();
+      const response = await fetch(SEMANTIC_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query }),
+        signal,
+      });
+      if (!response.ok) throw new Error(`query embedding returned ${response.status}`);
+      const value: unknown = await response.json();
+      if (!isQueryEmbedding(value, artifact.dimensions, artifact.model)) {
+        throw new Error("query embedding has an invalid shape");
+      }
+      const queryVector = normalizedVector(value.vector);
+      if (!queryVector) throw new Error("query embedding could not be normalized");
+
+      const scored = artifact.entries.flatMap((entry) => {
+        const record = eligibleRecord(entry.url);
+        return record ? [{ url: record.url, score: dotProduct(queryVector, entry.vector) }] : [];
+      }).sort((left, right) => right.score - left.score);
+
+      const bestScore = scored[0]?.score;
+      if (bestScore === undefined || bestScore < SEMANTIC_MIN_SCORE) return [];
+      const cutoff = Math.max(SEMANTIC_MIN_SCORE, bestScore - SEMANTIC_SCORE_WINDOW);
+      return scored
+        .filter((entry) => entry.score >= cutoff)
+        .slice(0, SEMANTIC_LIMIT)
+        .map((entry) => entry.url);
+    }
+
+    let revision = 0;
+    let debounceTimer: number | undefined;
+    let semanticController: AbortController | null = null;
+
+    async function runSearch(query: string, searchRevision: number): Promise<void> {
+      let exactMatches: Set<string>;
+      try {
+        exactMatches = await pagefindMatches(query);
+      } catch (error) {
+        console.error("Pagefind search failed", error);
+        if (searchRevision !== revision) return;
+        const localMatches = new Set(
+          Array.from(recordByUrl.values())
+            .filter((record) => record.localText.includes(query.toLowerCase()))
+            .map((record) => record.url),
+        );
+        const visible = applyMatches(query, localMatches);
+        updateStatus(
+          visible > 0
+            ? `${visible} visible-card match${visible === 1 ? "" : "es"}; full-text search is temporarily unavailable.`
+            : "Full-text search is temporarily unavailable.",
+        );
+        return;
+      }
+
+      if (searchRevision !== revision) return;
+      const eligibleExactMatches = Array.from(exactMatches).filter((url) => eligibleRecord(url));
+      if (eligibleExactMatches.length > 0) {
+        const visible = applyMatches(query, exactMatches);
+        updateStatus(`${visible} exact text match${visible === 1 ? "" : "es"}.`);
+        return;
+      }
+
+      if (query.length < 2) {
+        applyMatches(query, new Set());
+        updateStatus(`Nothing matches “${query}”.`);
+        return;
+      }
+
+      semanticController = new AbortController();
+      updateStatus("No exact text matches; looking for related entries...");
+      try {
+        const rankedMatches = await semanticMatches(query, semanticController.signal);
+        if (searchRevision !== revision) return;
+        const visible = applyMatches(query, new Set(rankedMatches));
+        if (visible > 0) reorderBySemanticRank(rankedMatches);
+        updateStatus(
+          visible > 0
+            ? `No exact text matches; showing ${visible} related entr${visible === 1 ? "y" : "ies"}.`
+            : `Nothing matches “${query}”.`,
+        );
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        console.error("Semantic search failed", error);
+        if (searchRevision !== revision) return;
+        applyMatches(query, new Set());
+        updateStatus("No exact text matches. Related search is temporarily unavailable.");
+      }
+    }
+
+    input.addEventListener("focus", () => {
+      void loadPagefind().then((pagefind) => pagefind.init()).catch(() => undefined);
+    }, { once: true });
 
     input.addEventListener("input", () => {
-      const term = input.value.trim().toLowerCase();
-      let totalVisible = 0;
+      revision += 1;
+      const searchRevision = revision;
+      const query = input.value.trim();
+      window.clearTimeout(debounceTimer);
+      semanticController?.abort();
+      semanticController = null;
 
-      for (const list of lists) {
-        let visibleInList = 0;
-        for (const item of Array.from(list.children) as HTMLElement[]) {
-          const match = term.length === 0 || (item.textContent ?? "").toLowerCase().includes(term);
-          item.hidden = !match;
-          if (match) visibleInList += 1;
-        }
-        totalVisible += visibleInList;
-
-        // The archive page groups lists inside a per-year <section> - hide
-        // the whole section (its heading included) once a filter empties it
-        // out, rather than leaving a bare "2026" heading over nothing.
-        const section = list.closest("section");
-        if (section) section.hidden = term.length > 0 && visibleInList === 0;
+      if (query.length === 0) {
+        applyMatches("", null);
+        updateStatus();
+        return;
       }
 
-      if (empty) {
-        empty.hidden = term.length === 0 || totalVisible > 0;
-        if (emptyTerm) emptyTerm.textContent = input.value.trim();
-      }
+      updateStatus("Searching full entry text...");
+      debounceTimer = window.setTimeout(() => void runSearch(query, searchRevision), DEBOUNCE_MS);
     });
+
+    document.addEventListener("rpgm:hidden-reasons-changed", () => {
+      const query = input.value.trim();
+      if (query.length === 0) return;
+      revision += 1;
+      const searchRevision = revision;
+      window.clearTimeout(debounceTimer);
+      semanticController?.abort();
+      semanticController = null;
+      updateStatus("Updating search for the active filters...");
+      debounceTimer = window.setTimeout(() => void runSearch(query, searchRevision), DEBOUNCE_MS);
+    });
+
+    if (window.location.hash === "#entry-search") {
+      window.requestAnimationFrame(() => input.focus());
+    }
   });
 </script>
 
@@ -86,7 +452,7 @@ const { targetSelector, placeholder = "Filter these entries..." } = Astro.props;
   .rpgm-list-filter svg {
     position: absolute;
     left: var(--rpgm-space-3);
-    top: 50%;
+    top: 1.15rem;
     transform: translateY(-50%);
     pointer-events: none;
   }
@@ -114,16 +480,20 @@ const { targetSelector, placeholder = "Filter these entries..." } = Astro.props;
     box-shadow: var(--rpgm-shadow-candle);
   }
 
-  /* Kill the native browser "clear" and "search" decorations so this reads as
-     the theme's own control, not an unstyled OS widget. */
   .rpgm-list-filter__input::-webkit-search-decoration,
   .rpgm-list-filter__input::-webkit-search-cancel-button {
     -webkit-appearance: none;
   }
 
-  .rpgm-list-filter__empty {
-    margin: var(--rpgm-space-4) 0 0;
+  .rpgm-list-filter__status {
+    margin: var(--rpgm-space-3) 0 0;
     font-size: var(--rpgm-text-sm);
+    color: var(--rpgm-text-muted);
+  }
+
+  .rpgm-list-filter__hint {
+    margin: var(--rpgm-space-2) var(--rpgm-space-3) 0;
+    font-size: var(--rpgm-text-xs);
     color: var(--rpgm-text-muted);
   }
 </style>

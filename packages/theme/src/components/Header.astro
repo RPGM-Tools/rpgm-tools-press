@@ -1,7 +1,6 @@
 ---
 import Nav, { type NavLink } from "./Nav.astro";
 import SealGlyph from "../ornaments/SealGlyph.astro";
-import SearchTrigger from "./SearchTrigger.astro";
 import ThemeToggle from "./ThemeToggle.astro";
 
 interface Props {
@@ -30,11 +29,43 @@ const { siteTitle, tagline, links, logoSrc } = Astro.props;
     </a>
     <div class="rpgm-header__right">
       <Nav links={links} />
-      <SearchTrigger />
+      <a href="/#entry-search" class="rpgm-header__search-link" data-rpgm-search-link>
+        <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+          <circle cx="8.5" cy="8.5" r="6" />
+          <path d="M13 13 L18 18" stroke-linecap="round" />
+        </svg>
+        <span>Search</span>
+        <kbd aria-hidden="true">/</kbd>
+      </a>
       <ThemeToggle />
     </div>
   </div>
 </header>
+
+<script>
+  document.querySelectorAll<HTMLAnchorElement>("[data-rpgm-search-link]").forEach((link) => {
+    function focusLocalSearch(): boolean {
+      const input = document.querySelector<HTMLInputElement>("#entry-search");
+      if (!input) return false;
+      input.focus();
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      input.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
+      return true;
+    }
+
+    link.addEventListener("click", (event) => {
+      if (focusLocalSearch()) event.preventDefault();
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "/" || event.ctrlKey || event.metaKey || event.altKey) return;
+      const target = event.target as HTMLElement | null;
+      if (target?.tagName === "INPUT" || target?.tagName === "TEXTAREA" || target?.isContentEditable) return;
+      event.preventDefault();
+      if (!focusLocalSearch()) window.location.assign(link.href);
+    });
+  });
+</script>
 
 <style>
   .rpgm-header {
@@ -104,16 +135,36 @@ const { siteTitle, tagline, links, logoSrc } = Astro.props;
     flex-wrap: wrap;
   }
 
-  /*
-   * Nav isn't needed while actively searching, and giving up its width is
-   * what lets the expanding search field grow without forcing the theme
-   * toggle after it to wrap onto its own line - which is what "the search
-   * box pushes the light/dark button down" actually was: the row ran out
-   * of room for all three (nav, a wide search field, and the toggle) at
-   * once, and flex-wrap sent whichever didn't fit to a second line.
-   */
-  .rpgm-header__right:has(#pagefind-search:not([hidden])) :global(.rpgm-nav) {
-    display: none;
+  .rpgm-header__search-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--rpgm-space-2);
+    color: var(--rpgm-text-muted);
+    border: 1px solid var(--rpgm-border);
+    border-radius: var(--rpgm-radius-full);
+    padding: 0.4em 0.9em;
+    font-size: var(--rpgm-text-sm);
+    line-height: 1;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: border-color var(--rpgm-transition-fast), color var(--rpgm-transition-fast), box-shadow var(--rpgm-transition-glow);
+  }
+
+  .rpgm-header__search-link:hover,
+  .rpgm-header__search-link:focus-visible {
+    color: var(--rpgm-accent);
+    border-color: var(--rpgm-border-strong);
+    box-shadow: var(--rpgm-shadow-candle);
+  }
+
+  .rpgm-header__search-link kbd {
+    font-family: var(--rpgm-font-mono);
+    font-size: 0.7em;
+    color: var(--rpgm-text-muted);
+    background: var(--rpgm-bg);
+    border: 1px solid var(--rpgm-border);
+    border-radius: var(--rpgm-radius-sm);
+    padding: 0.15em 0.4em;
   }
 
   /* Never the one that gets squeezed onto its own line - it's the smallest, most-used control in the row. */
