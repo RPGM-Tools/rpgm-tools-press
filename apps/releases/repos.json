@@ -5,5 +5,6 @@
   { "owner": "neostryder", "repo": "neo-angband-mod-feature-restoration", "displayName": "Neo Angband: Feature Restoration", "kind": "mod", "emoji": "🕛", "color": "#8e44ad" },
   { "owner": "neostryder", "repo": "neo-angband-mod-forge", "displayName": "Neo Angband: ModForge", "kind": "mod", "emoji": "🧰", "color": "#607d8b" },
   { "owner": "neostryder", "repo": "neo-angband-mod-linoleum", "displayName": "Neo Angband: Linoleum", "kind": "mod", "emoji": "🎨", "color": "#27ae60" },
-  { "owner": "neostryder", "repo": "neo-angband-mod-qol", "displayName": "Neo Angband: QoL", "kind": "mod", "emoji": "🛠️", "color": "#2f80c4" }
+  { "owner": "neostryder", "repo": "neo-angband-mod-qol", "displayName": "Neo Angband: QoL", "kind": "mod", "emoji": "🛠️", "color": "#2f80c4" },
+  { "owner": "RPGM-Tools", "repo": "rpgm-tools-press", "displayName": "RPGM Tools Press", "kind": "tool", "emoji": "📰", "color": "#6c3fa8" }
 ]

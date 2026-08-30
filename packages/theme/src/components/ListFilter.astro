@@ -50,7 +50,7 @@ const { targetSelector, placeholder = "Search every entry..." } = Astro.props;
     spellcheck="false"
   />
   <p id="entry-search-help" class="rpgm-list-filter__hint">
-    Exact full-text first; only a zero-hit query is sent to Cloudflare for related matching.
+    Searches for exact matches first, then approximate matches.
   </p>
   <p class="rpgm-list-filter__status" data-rpgm-list-filter-status role="status" aria-live="polite" hidden></p>
 </div>
@@ -98,7 +98,21 @@ const { targetSelector, placeholder = "Search every entry..." } = Astro.props;
   const SEMANTIC_ARTIFACT_URL = "/search-embeddings.json";
   const SEMANTIC_ENDPOINT = "/api/search-embedding";
   const SEMANTIC_LIMIT = 10;
-  const SEMANTIC_MIN_SCORE = 0.25;
+  /*
+   * Measured directly against the live qwen3-embedding-0.6b vectors on both
+   * sites: this model's cosine similarity has a real "noise floor" of
+   * roughly 0.15-0.30 between essentially ANY two pieces of text, not just
+   * related ones - pure gibberish against a 78-entry real corpus scored as
+   * high as 0.29, while a genuine but metaphorical match ("wedding" against
+   * a post titled "...After the Honeymoon") scored only 0.229, UNDER the
+   * previous 0.25 floor. A clearly-relevant query, by contrast, scores far
+   * higher (0.45+). There is no single absolute cutoff that cleanly
+   * separates real matches from noise at this corpus size - lowering this
+   * to 0.20 favors not hiding genuine (if modest-scoring) matches over
+   * never showing a low-confidence one; it does not fully eliminate an
+   * occasional false-feeling "related" result for a nonsense query.
+   */
+  const SEMANTIC_MIN_SCORE = 0.2;
   const SEMANTIC_SCORE_WINDOW = 0.08;
   const DEBOUNCE_MS = 300;
 

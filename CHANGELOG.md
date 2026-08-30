@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- [Internal] [Content-Sync] This repo's own releases are now tracked on The
+  Ledger alongside the game and its mods.
+
+### Changed
+
+- [Visible] [Search] The search hint below the field is shorter and less
+  technical: "Searches for exact matches first, then approximate matches."
+
+### Fixed
+
+- [Visible] [Search] A release row on The Ledger never actually
+  disappeared when search filtered it out - the status line above it
+  ("N matches") updated correctly, but every row stayed visible regardless.
+  `LedgerRow`'s own root has a `display: grid` author rule, which (same
+  trap as the old search-trigger button earlier this session) always beats
+  the browser's built-in `[hidden] { display: none }` no matter how the
+  `hidden` attribute gets set. The blog's post list never hit this, since
+  its cards sit inside a plain `<li>` with no competing `display` rule of
+  its own.
+- [Internal] [Search] The semantic-fallback similarity floor was
+  recalibrated against real production data: a genuine match ("wedding"
+  against a post titled "...After the Honeymoon") scored 0.229 - under the
+  original 0.25 floor - while unrelated gibberish scored as high as 0.29
+  on the larger Ledger corpus. There's no single cutoff that cleanly
+  separates real matches from noise at this embedding model's actual score
+  distribution; lowering the floor to 0.20 favors surfacing a genuine but
+  modest-scoring match over hiding it, at the cost of occasionally showing
+  a low-confidence result for a truly unrelated query.
+
 ## [0.1.0] - 2026-08-30
 
 Initial public release of both sites: Relics & Reckonings (the blog) and

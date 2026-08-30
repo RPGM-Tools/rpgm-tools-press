@@ -64,6 +64,19 @@ if (date instanceof Date) {
     transition: background-color var(--rpgm-transition-fast);
   }
 
+  /*
+   * This element IS the direct child ListFilter hides/shows (releases'
+   * index has no wrapping <li> the way the blog's post list does), and its
+   * own `display: grid` above is an author rule that always beats the
+   * browser's built-in `[hidden] { display: none }` regardless of
+   * selector specificity - same trap already hit once this session on the
+   * old search-trigger button. Without this, ListFilter's status text
+   * ("N matches") updated correctly while every row stayed visibly shown.
+   */
+  .rpgm-ledger-row[hidden] {
+    display: none;
+  }
+
   .rpgm-ledger-row:first-child {
     border-top: 1px solid var(--rpgm-border);
   }
