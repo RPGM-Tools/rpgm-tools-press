@@ -1,0 +1,32 @@
+/*
+ * The Ledger - app-level skin overrides.
+ *
+ * The shared theme is warm/earthy by default. This site is a release-notes
+ * aggregator rather than a fireside blog, so it leans the palette toward
+ * the Graphite anchor instead of Polished Gold: cooler slate-blue accents,
+ * a cooler near-black background, and a matching cool-toned glow. Because
+ * base.css declares `@layer rpgm-press-base, rpgm-press-skin;` up front,
+ * everything in here wins over the base tokens automatically.
+ */
+@layer rpgm-press-skin {
+  :root {
+    /* Cooler slate/graphite accent in place of the base's warm gold. */
+    --rpgm-accent: #7c93ad;
+    --rpgm-accent-hover: #9fb4c9;
+    --rpgm-link: var(--rpgm-accent);
+    --rpgm-link-visited: #6b7f93;
+
+    /* A cooler, more neutral near-black background than the blog's amber-umber. */
+    --rpgm-bg: #10141a;
+    --rpgm-bg-elevated: #171d26;
+    --rpgm-surface: #1b222c;
+    --rpgm-border: rgba(124, 147, 173, 0.22);
+    --rpgm-border-strong: rgba(124, 147, 173, 0.45);
+
+    /* A cool slate glow in place of the candle's warm gold halo. */
+    --rpgm-shadow-candle: 0 0 0 1px var(--rpgm-border-strong),
+      0 0 18px 2px rgba(124, 147, 173, 0.3);
+    --rpgm-shadow-candle-hover: 0 0 0 1px var(--rpgm-accent-hover),
+      0 0 26px 6px rgba(124, 147, 173, 0.45);
+  }
+}

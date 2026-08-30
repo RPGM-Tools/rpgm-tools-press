@@ -1,0 +1,76 @@
+---
+// A flat archive grouped by year headings, rather than a dynamic
+// /archive/[year]/ route - simpler, and there's no shortage of years to
+// paginate with only a handful of seed posts.
+import { getCollection } from "astro:content";
+import Layout from "@rpgm/tools-press-theme/components/Layout.astro";
+import EntryCard from "@rpgm/tools-press-theme/components/EntryCard.astro";
+import SiteHead from "../components/SiteHead.astro";
+import { SITE_TITLE, NAV_LINKS } from "../consts";
+
+const allPosts = await getCollection("posts", ({ data }) => !data.draft);
+const posts = allPosts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+const byYear = new Map<number, typeof posts>();
+for (const post of posts) {
+  const year = post.data.pubDate.getFullYear();
+  const existing = byYear.get(year);
+  if (existing) {
+    existing.push(post);
+  } else {
+    byYear.set(year, [post]);
+  }
+}
+const years = Array.from(byYear.keys()).sort((a, b) => b - a);
+---
+
+<Layout
+  title="Archive"
+  description={`Every post on ${SITE_TITLE}, grouped by year.`}
+  siteTitle={SITE_TITLE}
+  navLinks={NAV_LINKS}
+  rssTitle={SITE_TITLE}
+  rssHref="/rss.xml"
+>
+  <Fragment slot="head">
+    <SiteHead />
+  </Fragment>
+
+  <p class="rpgm-eyebrow">Archive</p>
+  <h1>Every entry</h1>
+
+  {
+    years.map((year) => (
+      <section class="archive-year">
+        <h2>{year}</h2>
+        <ul class="post-list">
+          {byYear.get(year)!.map((post) => (
+            <li>
+              <EntryCard
+                title={post.data.title}
+                href={`/posts/${post.id}/`}
+                date={post.data.pubDate}
+                description={post.data.description}
+                tags={post.data.tags}
+              />
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))
+  }
+</Layout>
+
+<style>
+  .archive-year {
+    margin-top: var(--rpgm-space-6);
+  }
+
+  .post-list {
+    list-style: none;
+    margin: var(--rpgm-space-4) 0 0;
+    padding: 0;
+    display: grid;
+    gap: var(--rpgm-space-5);
+  }
+</style>

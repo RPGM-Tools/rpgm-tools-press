@@ -1,0 +1,16 @@
+{
+  "name": "rpgm-tools-press",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.20.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "lint": "pnpm -r --if-present run lint",
+    "typecheck": "pnpm -r --if-present run typecheck",
+    "build": "pnpm -r --if-present run build",
+    "dev:blog": "pnpm --filter blog dev",
+    "dev:releases": "pnpm --filter releases dev"
+  }
+}

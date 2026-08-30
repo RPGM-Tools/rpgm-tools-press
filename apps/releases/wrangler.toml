@@ -1,0 +1,12 @@
+name = "rpgm-press-releases"
+compatibility_date = "2026-08-29"
+# account_id = "TODO - confirm rpgm.tools zone's account before first deploy"
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "404-page"
+
+[[routes]]
+pattern = "releases.rpgm.tools"
+custom_domain = true

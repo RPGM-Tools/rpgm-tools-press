@@ -1,0 +1,33 @@
+---
+import Layout from "@rpgm/tools-press-theme/components/Layout.astro";
+import SealGlyph from "@rpgm/tools-press-theme/ornaments/SealGlyph.astro";
+import SiteHead from "../components/SiteHead.astro";
+import { SITE_TITLE, NAV_LINKS } from "../consts";
+---
+
+<Layout title="Page Not Found" siteTitle={SITE_TITLE} navLinks={NAV_LINKS}>
+  <Fragment slot="head">
+    <SiteHead />
+  </Fragment>
+
+  <div class="not-found">
+    <SealGlyph size={64} color="var(--rpgm-accent)" />
+    <p class="rpgm-eyebrow">404</p>
+    <h1>This page was never inked</h1>
+    <p>
+      Whatever you were looking for isn't in this volume. Try the
+      <a href="/">front page</a> or the <a href="/archive">archive</a>.
+    </p>
+  </div>
+</Layout>
+
+<style>
+  .not-found {
+    text-align: center;
+    padding: var(--rpgm-space-8) 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--rpgm-space-3);
+  }
+</style>

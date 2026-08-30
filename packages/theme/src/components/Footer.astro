@@ -1,0 +1,84 @@
+---
+import type { NavLink } from "./Nav.astro";
+import Flourish from "../ornaments/Flourish.astro";
+
+interface Props {
+  siteTitle: string;
+  links?: NavLink[];
+}
+
+const { siteTitle, links = [] } = Astro.props;
+const year = new Date().getFullYear();
+---
+
+<footer class="rpgm-footer">
+  <div class="rpgm-footer__inner">
+    <Flourish class="rpgm-footer__flourish" color="var(--rpgm-border-strong)" size={18} />
+    <div class="rpgm-footer__row">
+      <p class="rpgm-footer__copy">&copy; {year} {siteTitle}. Published by RPGM Tools.</p>
+      {
+        links.length > 0 && (
+          <ul class="rpgm-footer__links">
+            {links.map((link) => (
+              <li>
+                <a href={link.href}>{link.label}</a>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+    </div>
+  </div>
+</footer>
+
+<style>
+  .rpgm-footer {
+    border-top: 1px solid var(--rpgm-border);
+    background: var(--rpgm-bg-elevated);
+    margin-top: var(--rpgm-space-8);
+  }
+
+  .rpgm-footer__inner {
+    max-width: 76rem;
+    margin: 0 auto;
+    padding: var(--rpgm-space-6) var(--rpgm-space-5) var(--rpgm-space-7);
+  }
+
+  .rpgm-footer__flourish {
+    display: block;
+    margin: 0 auto var(--rpgm-space-5);
+    max-width: 16rem;
+  }
+
+  .rpgm-footer__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--rpgm-space-4);
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .rpgm-footer__copy {
+    margin: 0;
+    font-size: var(--rpgm-text-sm);
+    color: var(--rpgm-text-muted);
+  }
+
+  .rpgm-footer__links {
+    display: flex;
+    gap: var(--rpgm-space-4);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: var(--rpgm-text-sm);
+  }
+
+  .rpgm-footer__links a {
+    color: var(--rpgm-text-muted);
+  }
+
+  .rpgm-footer__links a:hover,
+  .rpgm-footer__links a:focus-visible {
+    color: var(--rpgm-accent);
+  }
+</style>

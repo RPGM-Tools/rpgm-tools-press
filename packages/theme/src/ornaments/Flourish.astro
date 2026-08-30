@@ -1,0 +1,36 @@
+---
+/**
+ * Decorative divider - a simple hand-drawn-looking line-art flourish.
+ * currentColor-based so it inherits text color from its container;
+ * wrap it in an element with `color: var(--rpgm-accent)` (etc) to tint it.
+ */
+interface Props {
+  color?: string;
+  size?: number | string;
+  class?: string;
+}
+
+const { color = "currentColor", size = 24, class: className } = Astro.props;
+const height = typeof size === "number" ? `${size}px` : size;
+---
+
+<svg
+  class={className}
+  viewBox="0 0 240 24"
+  height={height}
+  width="100%"
+  preserveAspectRatio="none"
+  fill="none"
+  stroke={color}
+  stroke-width="1.4"
+  stroke-linecap="round"
+  role="presentation"
+  aria-hidden="true"
+>
+  <path d="M0 12 H90" />
+  <path
+    d="M90 12 C100 12 100 4 112 4 C118 4 118 12 120 12 C122 12 122 4 128 4 C140 4 140 12 150 12"
+  />
+  <circle cx="120" cy="12" r="2.6" fill={color} stroke="none" />
+  <path d="M150 12 H240" />
+</svg>

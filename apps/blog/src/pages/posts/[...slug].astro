@@ -1,0 +1,84 @@
+---
+import { getCollection, render } from "astro:content";
+import Layout from "@rpgm/tools-press-theme/components/Layout.astro";
+import Prose from "@rpgm/tools-press-theme/components/Prose.astro";
+import Flourish from "@rpgm/tools-press-theme/ornaments/Flourish.astro";
+import SiteHead from "../../components/SiteHead.astro";
+import { SITE_TITLE, NAV_LINKS } from "../../consts";
+
+export async function getStaticPaths() {
+  const posts = await getCollection("posts", ({ data }) => !data.draft);
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+
+const dateLabel = post.data.pubDate.toLocaleDateString("en-US", {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
+---
+
+<Layout
+  title={post.data.title}
+  description={post.data.description}
+  siteTitle={SITE_TITLE}
+  navLinks={NAV_LINKS}
+  rssTitle={SITE_TITLE}
+  rssHref="/rss.xml"
+>
+  <Fragment slot="head">
+    <SiteHead />
+  </Fragment>
+
+  <article>
+    <p class="rpgm-eyebrow">{dateLabel}{post.data.category ? ` - ${post.data.category}` : ""}</p>
+    <h1>{post.data.title}</h1>
+    {
+      post.data.tags.length > 0 && (
+        <ul class="post-tags">
+          {post.data.tags.map((tag) => (
+            <li>
+              <a href={`/tags/${tag}/`}>{tag}</a>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+    <Flourish size={16} color="var(--rpgm-border-strong)" />
+    <Prose>
+      <Content />
+    </Prose>
+  </article>
+</Layout>
+
+<style>
+  .post-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--rpgm-space-2);
+    list-style: none;
+    margin: 0 0 var(--rpgm-space-4);
+    padding: 0;
+  }
+
+  .post-tags a {
+    font-size: var(--rpgm-text-xs);
+    color: var(--rpgm-text-muted);
+    border: 1px solid var(--rpgm-border);
+    border-radius: var(--rpgm-radius-full);
+    padding: 0.15em 0.7em;
+    text-decoration: none;
+  }
+
+  .post-tags a:hover,
+  .post-tags a:focus-visible {
+    color: var(--rpgm-accent);
+    border-color: var(--rpgm-border-strong);
+  }
+</style>

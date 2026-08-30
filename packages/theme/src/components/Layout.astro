@@ -1,0 +1,102 @@
+---
+import type { NavLink } from "./Nav.astro";
+import Header from "./Header.astro";
+import Footer from "./Footer.astro";
+import "../tokens/base.css";
+import "../tokens/typography.css";
+
+export interface Props {
+  /** Page <title>. Rendered as "{title} | {siteTitle}" unless it already contains the site title. */
+  title: string;
+  /** Page meta description. */
+  description?: string;
+  /** Site name, shown in the header, footer, and title suffix. */
+  siteTitle: string;
+  /** Short tagline shown under the site title in the header. */
+  tagline?: string;
+  /** Primary nav links, passed through to Header/Nav. */
+  navLinks: NavLink[];
+  /** Footer links (defaults to navLinks if omitted). */
+  footerLinks?: NavLink[];
+  /** RSS autodiscovery <link> - set both to enable. */
+  rssTitle?: string;
+  rssHref?: string;
+  /** Cloudflare Web Analytics token. The beacon script only renders when this is set. */
+  analyticsToken?: string;
+  /** Absolute canonical URL for this page, if known. */
+  canonicalURL?: string | URL;
+}
+
+const {
+  title,
+  description,
+  siteTitle,
+  tagline,
+  navLinks,
+  footerLinks,
+  rssTitle,
+  rssHref,
+  analyticsToken,
+  canonicalURL,
+} = Astro.props;
+
+const pageTitle = title.includes(siteTitle) ? title : `${title} | ${siteTitle}`;
+---
+
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{pageTitle}</title>
+    {description && <meta name="description" content={description} />}
+    {canonicalURL && <link rel="canonical" href={canonicalURL.toString()} />}
+
+    <!-- Open Graph / social -->
+    <meta property="og:title" content={pageTitle} />
+    {description && <meta property="og:description" content={description} />}
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={siteTitle} />
+
+    <!-- RSS autodiscovery -->
+    {
+      rssTitle && rssHref && (
+        <link rel="alternate" type="application/rss+xml" title={rssTitle} href={rssHref} />
+      )
+    }
+
+    <!-- Per-page head extras (fonts, additional meta, structured data, etc). -->
+    <slot name="head" />
+
+    <!--
+      Cloudflare Web Analytics. Only rendered when an analyticsToken is
+      supplied - no token means no beacon, no third-party request.
+    -->
+    {
+      analyticsToken && (
+        <script
+          defer
+          src="https://static.cloudflareinsights.com/beacon.min.js"
+          data-cf-beacon={JSON.stringify({ token: analyticsToken })}
+        />
+      )
+    }
+  </head>
+  <body>
+    <Header siteTitle={siteTitle} tagline={tagline} links={navLinks} />
+    <main class="rpgm-main">
+      <slot />
+    </main>
+    <Footer siteTitle={siteTitle} links={footerLinks ?? navLinks} />
+  </body>
+</html>
+
+<style is:global>
+  .rpgm-main {
+    max-width: 76rem;
+    margin: 0 auto;
+    padding: var(--rpgm-space-7) var(--rpgm-space-5);
+    min-height: 40vh;
+  }
+</style>

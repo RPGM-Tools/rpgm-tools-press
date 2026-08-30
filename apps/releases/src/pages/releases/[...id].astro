@@ -1,0 +1,63 @@
+---
+import { getCollection, render } from "astro:content";
+import Layout from "@rpgm/tools-press-theme/components/Layout.astro";
+import Prose from "@rpgm/tools-press-theme/components/Prose.astro";
+import Flourish from "@rpgm/tools-press-theme/ornaments/Flourish.astro";
+import SiteHead from "../../components/SiteHead.astro";
+import { SITE_TITLE, NAV_LINKS } from "../../consts";
+
+export async function getStaticPaths() {
+  const releases = await getCollection("releases");
+  return releases.map((release) => ({
+    params: { id: release.id },
+    props: { release },
+  }));
+}
+
+const { release } = Astro.props;
+const { Content } = await render(release);
+
+const dateLabel = release.data.publishedAt.toLocaleDateString("en-US", {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
+---
+
+<Layout
+  title={`${release.data.repoDisplayName} ${release.data.version}`}
+  description={`Release notes for ${release.data.repoDisplayName} ${release.data.version}.`}
+  siteTitle={SITE_TITLE}
+  navLinks={NAV_LINKS}
+  rssTitle={SITE_TITLE}
+  rssHref="/rss.xml"
+>
+  <Fragment slot="head">
+    <SiteHead />
+  </Fragment>
+
+  <article>
+    <p class="rpgm-eyebrow">
+      {dateLabel}
+      {release.data.prerelease ? " - prerelease" : ""}
+      {release.data.channel ? ` - ${release.data.channel}` : ""}
+    </p>
+    <h1>{release.data.repoDisplayName} {release.data.version}</h1>
+    {release.data.name && <p class="release-name">{release.data.name}</p>}
+    <p>
+      <a href={release.data.url}>View this release on GitHub</a>
+    </p>
+    <Flourish size={16} color="var(--rpgm-border-strong)" />
+    <Prose>
+      <Content />
+    </Prose>
+  </article>
+</Layout>
+
+<style>
+  .release-name {
+    color: var(--rpgm-text-muted);
+    font-size: var(--rpgm-text-lg);
+    margin: 0 0 var(--rpgm-space-4);
+  }
+</style>

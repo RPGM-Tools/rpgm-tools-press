@@ -1,0 +1,56 @@
+---
+import { getCollection } from "astro:content";
+import Layout from "@rpgm/tools-press-theme/components/Layout.astro";
+import EntryCard from "@rpgm/tools-press-theme/components/EntryCard.astro";
+import Flourish from "@rpgm/tools-press-theme/ornaments/Flourish.astro";
+import SiteHead from "../components/SiteHead.astro";
+import { SITE_TITLE, SITE_TAGLINE, SITE_DESCRIPTION, NAV_LINKS } from "../consts";
+import { summarize } from "../lib/summarize";
+
+const allReleases = await getCollection("releases");
+const releases = allReleases.sort(
+  (a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf(),
+);
+---
+
+<Layout
+  title="Home"
+  description={SITE_DESCRIPTION}
+  siteTitle={SITE_TITLE}
+  tagline={SITE_TAGLINE}
+  navLinks={NAV_LINKS}
+  rssTitle={SITE_TITLE}
+  rssHref="/rss.xml"
+>
+  <Fragment slot="head">
+    <SiteHead />
+  </Fragment>
+
+  <p class="rpgm-eyebrow">Latest releases</p>
+  <Flourish size={16} color="var(--rpgm-border-strong)" />
+
+  <ul class="release-list">
+    {
+      releases.map((release) => (
+        <li>
+          <EntryCard
+            title={`${release.data.repoDisplayName} ${release.data.version}`}
+            href={`/releases/${release.id}/`}
+            date={release.data.publishedAt}
+            description={summarize(release.body)}
+          />
+        </li>
+      ))
+    }
+  </ul>
+</Layout>
+
+<style>
+  .release-list {
+    list-style: none;
+    margin: var(--rpgm-space-6) 0 0;
+    padding: 0;
+    display: grid;
+    gap: var(--rpgm-space-5);
+  }
+</style>

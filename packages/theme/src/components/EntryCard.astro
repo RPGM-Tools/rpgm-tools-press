@@ -1,0 +1,103 @@
+---
+/**
+ * Generic list-item card: usable for a blog post list, a release list,
+ * or anything else that boils down to (title, date, blurb, tags, link).
+ */
+interface Props {
+  title: string;
+  href: string;
+  /** Anything Date-parseable, or a pre-formatted string to show as-is. */
+  date?: Date | string;
+  description?: string;
+  tags?: string[];
+  class?: string;
+}
+
+const { title, href, date, description, tags = [], class: className } = Astro.props;
+
+let dateLabel: string | undefined;
+if (date instanceof Date) {
+  dateLabel = date.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+} else if (typeof date === "string") {
+  dateLabel = date;
+}
+---
+
+<article class:list={["rpgm-entry-card", className]}>
+  <a href={href} class="rpgm-entry-card__link">
+    <h3 class="rpgm-entry-card__title">{title}</h3>
+    {dateLabel && <p class="rpgm-entry-card__date">{dateLabel}</p>}
+    {description && <p class="rpgm-entry-card__description">{description}</p>}
+    {
+      tags.length > 0 && (
+        <ul class="rpgm-entry-card__tags">
+          {tags.map((tag) => (
+            <li>{tag}</li>
+          ))}
+        </ul>
+      )
+    }
+  </a>
+</article>
+
+<style>
+  .rpgm-entry-card {
+    background: var(--rpgm-surface);
+    border: 1px solid var(--rpgm-border);
+    border-radius: var(--rpgm-radius-lg);
+    box-shadow: var(--rpgm-shadow-elevated);
+    transition: box-shadow var(--rpgm-transition-glow), border-color var(--rpgm-transition-glow), transform var(--rpgm-transition-fast);
+  }
+
+  .rpgm-entry-card:hover,
+  .rpgm-entry-card:focus-within {
+    border-color: var(--rpgm-border-strong);
+    box-shadow: var(--rpgm-shadow-candle-hover);
+    transform: translateY(-2px);
+  }
+
+  .rpgm-entry-card__link {
+    display: block;
+    padding: var(--rpgm-space-5);
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .rpgm-entry-card__title {
+    margin: 0 0 var(--rpgm-space-1);
+    font-size: var(--rpgm-text-xl);
+    color: var(--rpgm-text);
+  }
+
+  .rpgm-entry-card__date {
+    margin: 0 0 var(--rpgm-space-3);
+    font-size: var(--rpgm-text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--rpgm-accent);
+  }
+
+  .rpgm-entry-card__description {
+    margin: 0 0 var(--rpgm-space-3);
+    color: var(--rpgm-text-muted);
+    font-size: var(--rpgm-text-sm);
+    line-height: var(--rpgm-leading-normal);
+  }
+
+  .rpgm-entry-card__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--rpgm-space-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .rpgm-entry-card__tags li {
+    font-size: var(--rpgm-text-xs);
+    color: var(--rpgm-text-muted);
+    border: 1px solid var(--rpgm-border);
+    border-radius: var(--rpgm-radius-full);
+    padding: 0.15em 0.7em;
+  }
+</style>

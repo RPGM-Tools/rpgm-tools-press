@@ -1,0 +1,177 @@
+/*
+ * @rpgm/tools-press-theme - base design tokens
+ * "Dark fantasy grimoire": candlelit, earthy, grounded. Not bright/flashy
+ * purple or pink. Dark-mode-first: --rpgm-bg is a very dark warm
+ * brown/graphite, never pure black. Parchment-cream is reserved for card
+ * and panel surfaces (or a light-mode variant, applied by setting
+ * [data-theme="light"] on the root element - see the bottom of this file).
+ *
+ * Layer order is declared here, once, so any consuming app's own skin
+ * layer (e.g. apps/blog/src/styles/skin.css using @layer rpgm-press-skin)
+ * always wins over these base tokens without needing !important anywhere.
+ */
+@layer rpgm-press-base, rpgm-press-skin;
+
+/*
+ * Headings use a serif "display" font stack. This package does not bundle
+ * or self-host a font file - it expects the CONSUMING APP to load the
+ * webfont (Google Fonts or self-hosted), e.g. in Layout's <head>:
+ *
+ *   <link rel="preconnect" href="https://fonts.googleapis.com">
+ *   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+ *   <link href="https://fonts.googleapis.com/css2?family=Cormorant:wght@500;600;700&family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+ *
+ * --rpgm-font-display falls back to a solid serif stack if the webfont
+ * never loads, so the site still reads as intended without it.
+ */
+@layer rpgm-press-base {
+  :root {
+    color-scheme: dark;
+
+    /* ---- anchor colors (project design canon) ---- */
+    --rpgm-gold: #cfa146;       /* Polished Gold */
+    --rpgm-graphite: #1f2937;   /* Graphite */
+    --rpgm-rust: #c04100;       /* Fiery Orange / rust */
+
+    /* ---- rest of the palette, built around the anchors ---- */
+    --rpgm-parchment: #f2e6c9;       /* warm parchment-cream (surfaces / light mode) */
+    --rpgm-parchment-dim: #e7d7ae;   /* slightly deeper parchment, for hovers/borders on light surfaces */
+    --rpgm-umber: #2c1e14;          /* deep aged-leather/umber brown */
+    --rpgm-umber-deep: #1c130d;      /* darker umber, near the page background */
+    --rpgm-forest: #35513f;          /* muted deep forest-green, secondary accent */
+    --rpgm-forest-deep: #253a2c;     /* forest, darker, for hover/active states */
+
+    --rpgm-ink-on-dark: #ece1c7;     /* light ink for dark-mode body text (parchment-tinted, not pure white) */
+    --rpgm-ink-on-dark-muted: #b9a98b;
+    --rpgm-ink-on-light: #241b13;    /* dark ink for parchment/light surfaces, near-umber not pure black */
+    --rpgm-ink-on-light-muted: #5c4c3a;
+
+    /* ---- semantic surface tokens (dark-mode-first defaults) ---- */
+    --rpgm-bg: #16110c;                 /* very dark warm brown/graphite, NOT pure black */
+    --rpgm-bg-elevated: #1f1811;        /* header/footer band, one step up from bg */
+    --rpgm-surface: #241b13;            /* card/panel surface in dark mode */
+    --rpgm-surface-parchment: var(--rpgm-parchment); /* card/panel surface in light mode, or a "parchment panel" accent in dark mode */
+    --rpgm-border: rgba(207, 161, 70, 0.22);   /* gold-tinted hairline border */
+    --rpgm-border-strong: rgba(207, 161, 70, 0.45);
+
+    --rpgm-text: var(--rpgm-ink-on-dark);
+    --rpgm-text-muted: var(--rpgm-ink-on-dark-muted);
+    --rpgm-text-inverse: var(--rpgm-ink-on-light);
+
+    --rpgm-accent: var(--rpgm-gold);
+    --rpgm-accent-hover: #e2b562;
+    --rpgm-accent-rust: var(--rpgm-rust);
+    --rpgm-accent-rust-hover: #d9550f;
+    --rpgm-accent-forest: var(--rpgm-forest);
+    --rpgm-accent-graphite: var(--rpgm-graphite);
+
+    --rpgm-link: var(--rpgm-gold);
+    --rpgm-link-visited: #b98a63;
+
+    /* ---- type scale ---- */
+    --rpgm-font-display: "Cormorant", "EB Garamond", Georgia, "Times New Roman", serif;
+    --rpgm-font-body: "EB Garamond", Georgia, "Times New Roman", serif;
+    --rpgm-font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+    --rpgm-text-xs: 0.8rem;
+    --rpgm-text-sm: 0.925rem;
+    --rpgm-text-base: 1.0625rem;
+    --rpgm-text-lg: 1.25rem;
+    --rpgm-text-xl: 1.55rem;
+    --rpgm-text-2xl: 2rem;
+    --rpgm-text-3xl: 2.65rem;
+    --rpgm-text-4xl: 3.4rem;
+
+    --rpgm-leading-tight: 1.15;
+    --rpgm-leading-snug: 1.35;
+    --rpgm-leading-normal: 1.65;
+
+    /* ---- spacing scale ---- */
+    --rpgm-space-1: 0.25rem;
+    --rpgm-space-2: 0.5rem;
+    --rpgm-space-3: 0.75rem;
+    --rpgm-space-4: 1rem;
+    --rpgm-space-5: 1.5rem;
+    --rpgm-space-6: 2rem;
+    --rpgm-space-7: 3rem;
+    --rpgm-space-8: 4.5rem;
+
+    /* ---- radius ---- */
+    --rpgm-radius-sm: 4px;
+    --rpgm-radius-md: 8px;
+    --rpgm-radius-lg: 14px;
+    --rpgm-radius-full: 999px;
+
+    /* ---- shadows: a "candlelit glow" for interactive/focused elements,
+       plus a plain elevation shadow for cards resting on the dark bg ---- */
+    --rpgm-shadow-elevated: 0 10px 30px -12px rgba(0, 0, 0, 0.65);
+    --rpgm-shadow-candle: 0 0 0 1px var(--rpgm-border-strong),
+      0 0 18px 2px rgba(207, 161, 70, 0.35);
+    --rpgm-shadow-candle-hover: 0 0 0 1px var(--rpgm-accent-hover),
+      0 0 26px 6px rgba(207, 161, 70, 0.5);
+
+    --rpgm-transition-fast: 140ms ease;
+    --rpgm-transition-glow: 220ms ease;
+  }
+
+  /*
+   * Optional light-mode variant. Not the default (this theme is
+   * dark-mode-first), but available by setting data-theme="light" on
+   * <html> if a consuming app ever wants it.
+   */
+  :root[data-theme="light"] {
+    color-scheme: light;
+
+    --rpgm-bg: var(--rpgm-parchment);
+    --rpgm-bg-elevated: var(--rpgm-parchment-dim);
+    --rpgm-surface: #ffffff;
+    --rpgm-border: rgba(44, 30, 20, 0.15);
+    --rpgm-border-strong: rgba(44, 30, 20, 0.3);
+
+    --rpgm-text: var(--rpgm-ink-on-light);
+    --rpgm-text-muted: var(--rpgm-ink-on-light-muted);
+    --rpgm-text-inverse: var(--rpgm-ink-on-dark);
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    background: var(--rpgm-bg);
+    color: var(--rpgm-text);
+  }
+
+  body {
+    margin: 0;
+    background: var(--rpgm-bg);
+    color: var(--rpgm-text);
+    font-family: var(--rpgm-font-body);
+    font-size: var(--rpgm-text-base);
+    line-height: var(--rpgm-leading-normal);
+  }
+
+  a {
+    color: var(--rpgm-link);
+    text-decoration-color: rgba(207, 161, 70, 0.45);
+    text-underline-offset: 0.2em;
+    transition: color var(--rpgm-transition-fast), text-decoration-color var(--rpgm-transition-fast);
+  }
+
+  a:hover,
+  a:focus-visible {
+    color: var(--rpgm-accent-hover);
+    text-decoration-color: currentColor;
+  }
+
+  a:visited {
+    color: var(--rpgm-link-visited);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--rpgm-gold);
+    outline-offset: 2px;
+  }
+}

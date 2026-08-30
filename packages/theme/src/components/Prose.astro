@@ -1,0 +1,33 @@
+---
+/**
+ * Wraps a slotted markdown/rendered-content body in the typography
+ * styles from tokens/typography.css. Import that CSS file once
+ * (Layout already does) and use this component around post bodies,
+ * changelog bodies, etc.
+ */
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+<div class:list={["rpgm-prose", className]}>
+  <slot />
+</div>
+
+<style>
+  .rpgm-prose {
+    max-width: 42rem;
+  }
+
+  .rpgm-prose :global(img) {
+    max-width: 100%;
+    border-radius: var(--rpgm-radius-md);
+    border: 1px solid var(--rpgm-border);
+  }
+
+  .rpgm-prose :global(a) {
+    text-underline-offset: 0.2em;
+  }
+</style>

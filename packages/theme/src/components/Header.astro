@@ -1,0 +1,81 @@
+---
+import Nav, { type NavLink } from "./Nav.astro";
+import SealGlyph from "../ornaments/SealGlyph.astro";
+
+interface Props {
+  siteTitle: string;
+  tagline?: string;
+  links: NavLink[];
+}
+
+const { siteTitle, tagline, links } = Astro.props;
+---
+
+<header class="rpgm-header">
+  <div class="rpgm-header__inner">
+    <a href="/" class="rpgm-header__brand">
+      <SealGlyph size={30} class="rpgm-header__seal" />
+      <span class="rpgm-header__title-block">
+        <span class="rpgm-header__title">{siteTitle}</span>
+        {tagline && <span class="rpgm-header__tagline">{tagline}</span>}
+      </span>
+    </a>
+    <Nav links={links} />
+  </div>
+</header>
+
+<style>
+  .rpgm-header {
+    background: var(--rpgm-bg-elevated);
+    border-bottom: 1px solid var(--rpgm-border);
+  }
+
+  .rpgm-header__inner {
+    max-width: 76rem;
+    margin: 0 auto;
+    padding: var(--rpgm-space-5) var(--rpgm-space-5);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--rpgm-space-4);
+  }
+
+  .rpgm-header__brand {
+    display: flex;
+    align-items: center;
+    gap: var(--rpgm-space-3);
+    text-decoration: none;
+    color: var(--rpgm-text);
+  }
+
+  .rpgm-header__brand:hover .rpgm-header__seal,
+  .rpgm-header__brand:focus-visible .rpgm-header__seal {
+    color: var(--rpgm-accent-hover);
+  }
+
+  .rpgm-header__seal {
+    color: var(--rpgm-accent);
+    flex-shrink: 0;
+    transition: color var(--rpgm-transition-fast);
+  }
+
+  .rpgm-header__title-block {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+  }
+
+  .rpgm-header__title {
+    font-family: var(--rpgm-font-display);
+    font-weight: 700;
+    font-size: var(--rpgm-text-xl);
+    color: var(--rpgm-text);
+  }
+
+  .rpgm-header__tagline {
+    font-size: var(--rpgm-text-xs);
+    color: var(--rpgm-text-muted);
+    letter-spacing: 0.03em;
+  }
+</style>

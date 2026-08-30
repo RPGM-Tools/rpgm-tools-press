@@ -1,0 +1,64 @@
+---
+/**
+ * Placeholder search trigger + mount point for a future Pagefind UI.
+ *
+ * This intentionally does NOT import "@pagefind/default-ui" or similar -
+ * Pagefind isn't installed yet (it runs as a post-build step against the
+ * static output, which this scaffold doesn't have wired up). When it is
+ * added, a small client script can mount PagefindUI into
+ * #pagefind-search on button click/open, using this same markup.
+ */
+interface Props {
+  label?: string;
+}
+
+const { label = "Search" } = Astro.props;
+---
+
+<div class="rpgm-search-trigger" data-rpgm-search-trigger>
+  <button type="button" class="rpgm-search-trigger__button" aria-haspopup="dialog" aria-controls="pagefind-search">
+    <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+      <circle cx="8.5" cy="8.5" r="6" />
+      <path d="M13 13 L18 18" stroke-linecap="round" />
+    </svg>
+    <span>{label}</span>
+  </button>
+  <!-- Mount point for Pagefind UI, wired up in a later pass. -->
+  <div id="pagefind-search" class="rpgm-search-trigger__panel" hidden></div>
+</div>
+
+<style>
+  .rpgm-search-trigger {
+    position: relative;
+  }
+
+  .rpgm-search-trigger__button {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--rpgm-space-2);
+    background: transparent;
+    border: 1px solid var(--rpgm-border);
+    border-radius: var(--rpgm-radius-full);
+    color: var(--rpgm-text-muted);
+    font-family: var(--rpgm-font-body);
+    font-size: var(--rpgm-text-sm);
+    padding: 0.4em 0.9em;
+    cursor: pointer;
+    transition: border-color var(--rpgm-transition-fast), color var(--rpgm-transition-fast), box-shadow var(--rpgm-transition-glow);
+  }
+
+  .rpgm-search-trigger__button:hover,
+  .rpgm-search-trigger__button:focus-visible {
+    color: var(--rpgm-accent);
+    border-color: var(--rpgm-border-strong);
+    box-shadow: var(--rpgm-shadow-candle);
+  }
+
+  .rpgm-search-trigger__panel {
+    position: absolute;
+    top: calc(100% + var(--rpgm-space-2));
+    right: 0;
+    min-width: 20rem;
+    z-index: 20;
+  }
+</style>

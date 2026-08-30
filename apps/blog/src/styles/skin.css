@@ -1,0 +1,23 @@
+/*
+ * Relics & Reckonings - app-level skin overrides.
+ *
+ * The shared theme is already warm/earthy by default, so this layer is
+ * deliberately light: a few accent tweaks to lean the blog specifically
+ * a touch warmer/more amber than the base theme, nothing more. Because
+ * base.css declares `@layer rpgm-press-base, rpgm-press-skin;` up front,
+ * everything in here wins over the base tokens automatically.
+ */
+@layer rpgm-press-skin {
+  :root {
+    /* Slightly warmer accent hover than the base gold-hover. */
+    --rpgm-accent-hover: #eab766;
+
+    /* A touch more amber in the page background, still dark-mode-first. */
+    --rpgm-bg: #180f09;
+    --rpgm-bg-elevated: #221609;
+
+    /* Candle glow tuned a little brighter for this site's cards. */
+    --rpgm-shadow-candle-hover: 0 0 0 1px var(--rpgm-accent-hover),
+      0 0 30px 7px rgba(207, 161, 70, 0.55);
+  }
+}

@@ -1,0 +1,74 @@
+name: Deploy releases
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "apps/releases/**"
+      - "packages/theme/**"
+      - ".github/scripts/sync-releases.mjs"
+      - ".github/workflows/deploy-releases.yml"
+
+concurrency:
+  group: deploy-releases
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.sync.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Sync release notes
+        id: sync
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node .github/scripts/sync-releases.mjs
+          if [ -n "$(git status --porcelain apps/releases/src/content/releases)" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+      # NOTE: pushes with the default GITHUB_TOKEN. If branch protection is ever
+      # added to `main` requiring PR review, this push will start failing silently
+      # on schedule runs - switch to a PAT secret or a side-branch+auto-merge then.
+      - name: Commit synced releases
+        if: steps.sync.outputs.changed == 'true'
+        run: |
+          git config user.name "rpgm-press-bot"
+          git config user.email "press-bot@users.noreply.github.com"
+          git add apps/releases/src/content/releases
+          git commit -m "chore: sync release notes"
+          git push
+
+  deploy:
+    needs: sync
+    if: needs.sync.outputs.changed == 'true' || github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter releases build
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          workingDirectory: apps/releases
+          command: deploy
