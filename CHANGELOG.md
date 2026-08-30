@@ -37,6 +37,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   distribution; lowering the floor to 0.20 favors surfacing a genuine but
   modest-scoring match over hiding it, at the cost of occasionally showing
   a low-confidence result for a truly unrelated query.
+- [Internal] [Infra] A Workers AI authentication failure while regenerating
+  embeddings took down the entire release sync + deploy pipeline (caught
+  live: adding this repo's own entry to the tracked-repos list failed to
+  deploy at all because the embedding call for that one new entry hit an
+  auth error). Embedding regeneration is now non-fatal in both deploy
+  workflows - a Cloudflare hiccup falls back to stale-but-present
+  embeddings instead of blocking every other change from shipping.
 
 ## [0.1.0] - 2026-08-30
 

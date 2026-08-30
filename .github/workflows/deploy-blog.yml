@@ -26,6 +26,11 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Refresh semantic-search embeddings
+        # Non-fatal on purpose: a Workers AI hiccup (auth, rate limit, model
+        # outage) should never block deploying otherwise-working code -
+        # search falls back to stale-but-present embeddings, which is a far
+        # better failure mode than the whole site failing to deploy.
+        continue-on-error: true
         env:
           CLOUDFLARE_ACCOUNT_ID: bb37de82a8d1040e9945ead5a03bab8d
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

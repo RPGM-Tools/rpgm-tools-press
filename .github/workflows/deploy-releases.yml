@@ -39,7 +39,13 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
           node .github/scripts/sync-releases.mjs
-          node .github/scripts/generate-search-embeddings.mjs releases
+          # Non-fatal on purpose: a Workers AI hiccup (auth, rate limit,
+          # model outage) should never block syncing/deploying real release
+          # content - search falls back to stale-but-present embeddings,
+          # which is a far better failure mode than every scheduled sync
+          # run failing outright until someone notices and fixes it.
+          node .github/scripts/generate-search-embeddings.mjs releases \
+            || echo "::warning::generate-search-embeddings.mjs failed - continuing with existing embeddings"
           if [ -n "$(git status --porcelain apps/releases/src/content/releases apps/releases/public/search-embeddings.json)" ]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
           else
