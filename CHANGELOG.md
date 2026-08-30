@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - [Internal] [Content-Sync] This repo's own releases are now tracked on The
   Ledger alongside the game and its mods.
+- [Visible] [Content-Sync] The Ledger now also tracks the Upstream Catchup
+  mod, the last Neo Angband mod repo that wasn't yet in the tracked list.
 
 ### Changed
 
