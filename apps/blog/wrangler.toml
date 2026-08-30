@@ -1,6 +1,6 @@
 name = "rpgm-press-blog"
 compatibility_date = "2026-08-29"
-# account_id = "TODO - confirm rpgm.tools zone's account before first deploy"
+account_id = "bb37de82a8d1040e9945ead5a03bab8d"
 
 [assets]
 directory = "./dist"
