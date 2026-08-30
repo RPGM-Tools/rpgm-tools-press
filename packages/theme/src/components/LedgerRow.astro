@@ -23,7 +23,13 @@ const { title, href, date, description, accentColor, emoji } = Astro.props;
 
 let dateLabel: string | undefined;
 if (date instanceof Date) {
-  dateLabel = date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit" });
+  // Pinned to a fixed zone - see EntryCard.astro's identical comment for why.
+  dateLabel = date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    timeZone: "America/Phoenix",
+  });
 } else if (typeof date === "string") {
   dateLabel = date;
 }

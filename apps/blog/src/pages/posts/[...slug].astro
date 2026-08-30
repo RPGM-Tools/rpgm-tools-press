@@ -27,10 +27,20 @@ export async function getStaticPaths() {
 const { post } = Astro.props;
 const { Content } = await render(post);
 
+/*
+ * Pinned to UTC, not a fixed local zone like the release date labels
+ * elsewhere in this repo - pubDate is a date-only frontmatter value
+ * ("2026-07-14"), which the date-only ISO 8601 spec parses as midnight
+ * UTC of that day, not a real local timestamp. Formatting it back out in
+ * UTC recovers exactly the Y-M-D as written, on any machine; formatting
+ * it in America/Phoenix (UTC-7) would shift it a day EARLIER instead,
+ * since that midnight-UTC instant is still the previous evening there.
+ */
 const dateLabel = post.data.pubDate.toLocaleDateString("en-US", {
   year: "numeric",
   month: "long",
   day: "numeric",
+  timeZone: "UTC",
 });
 
 const categoryMeta = post.data.category ? CATEGORY_META[post.data.category] : undefined;

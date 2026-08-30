@@ -20,10 +20,12 @@ export async function getStaticPaths() {
 const { release } = Astro.props;
 const { Content } = await render(release);
 
+// Pinned to a fixed zone - see EntryCard.astro's identical comment for why.
 const dateLabel = release.data.publishedAt.toLocaleDateString("en-US", {
   year: "numeric",
   month: "long",
   day: "numeric",
+  timeZone: "America/Phoenix",
 });
 
 const repoUrl = `https://github.com/${release.data.repo}`;

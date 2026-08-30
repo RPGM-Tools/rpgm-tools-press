@@ -158,3 +158,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   fixed at up to 3.4rem with no responsive range at all - a post title set
   in Cormorant at 54px on a narrow phone read as a wall of text. The top
   four sizes now use `clamp()`, unchanged at desktop widths.
+- Every displayed date was formatted with no explicit time zone, which
+  uses whichever machine happens to run the build - correct by accident
+  in local dev, but GitHub Actions builds in UTC. A release timestamped
+  in the evening Mountain time (a very common case) fell on the following
+  UTC calendar day, so the deployed site showed it a day later than it
+  actually happened. Real timestamped dates (a release's publish date,
+  the release list's "last synchronized" line) are now pinned to
+  `America/Phoenix`; a blog post's date-only frontmatter value (which the
+  date-only ISO 8601 spec parses as midnight UTC, not a real local
+  instant) is pinned to UTC instead, which is what actually recovers the
+  Y-M-D as written regardless of build machine.
