@@ -18,6 +18,15 @@ export function summarize(body: string | undefined, maxLength = 150): string {
     );
 
   const text = (firstLine ?? body.trim())
+    // A raw changelog line still carries its own "- " bullet marker, and
+    // (per the chip-tag convention - see remark-changelog-chips.ts, which
+    // handles this for the full release body) may open with one or more
+    // `[Visible]`/`[Category]` tags meant to render as chips, not literal
+    // brackets. This blurb is plain text, not markdown, so there's nothing
+    // to render them as here - just drop them, the same way the detail
+    // page turns them into chips instead of showing them as text.
+    .replace(/^-\s+/, "")
+    .replace(/^(?:\[[A-Za-z][\w-]*\]\s*)+/, "")
     .replace(/[*_`]/g, "")
     .replace(/\[([^\]]+)]\([^)]*\)/g, "$1");
 

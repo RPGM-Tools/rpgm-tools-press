@@ -13,6 +13,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   Ledger alongside the game and its mods.
 - [Visible] [Content-Sync] The Ledger now also tracks the Upstream Catchup
   mod, the last Neo Angband mod repo that wasn't yet in the tracked list.
+- [Visible] [UI] A release note's own changelog chip tags (`[Visible]`,
+  `[Internal]`, and open-ended category tags like `[UI]` or `[Balance]` -
+  see the `changelog-convention` skill) now render as small pills ahead of
+  each bullet, instead of showing as literal bracket text. A `[Visible]`
+  tag gets the same solid-tinted treatment `EntryCard` already gives its
+  one category chip; everything else is a plain neutral-bordered pill,
+  matching that same component's open-ended tags. The listing-card blurb
+  (which is plain text, not rendered markdown) drops any leading tags
+  outright rather than showing them unstyled.
 
 ### Changed
 

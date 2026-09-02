@@ -103,4 +103,49 @@ const isMod = release.data.kind === "mod";
     display: grid;
     gap: var(--rpgm-space-2);
   }
+
+  /*
+   * The changelog chip-tag convention: remark-changelog-chips.ts turns a
+   * leading `[Visible] [Category]` markdown prefix into these spans, raw
+   * HTML embedded inside the markdown output - `<Content />`'s rendered
+   * elements don't carry this page's own scope attribute (same reason
+   * EntryCard/Flourish content needed :global() before), so these rules
+   * have to reach through it explicitly.
+   */
+  :global(.rpgm-changelog-chips) {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.35em;
+    margin-right: 0.5em;
+    vertical-align: middle;
+  }
+
+  :global(.rpgm-changelog-chip) {
+    display: inline-block;
+    font-family: var(--rpgm-font-body);
+    font-size: 0.7em;
+    font-weight: 600;
+    line-height: 1.4;
+    padding: 0.1em 0.6em;
+    border-radius: var(--rpgm-radius-full);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+  }
+
+  /* Solid-tinted, same treatment EntryCard gives its one category chip - a
+     player-visible change is the one classification worth highlighting. */
+  :global(.rpgm-changelog-chip--visible) {
+    color: var(--rpgm-text);
+    background: color-mix(in srgb, var(--rpgm-accent) 16%, transparent);
+    border: 1px solid color-mix(in srgb, var(--rpgm-accent) 55%, transparent);
+  }
+
+  /* Plain-bordered, same treatment EntryCard gives its open-ended tags. */
+  :global(.rpgm-changelog-chip--internal),
+  :global(.rpgm-changelog-chip--category) {
+    color: var(--rpgm-text-muted);
+    background: transparent;
+    border: 1px solid var(--rpgm-border);
+  }
 </style>
