@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- [Internal] [Content-Sync] Each tracked repo now declares a `releaseSource`
+  in `repos.json`, either `releases` or `tags`, instead of the sync inferring
+  it from whether any GitHub Releases happen to exist. `tags` is the default,
+  because a tag is never lost by gaining a Release.
 - [Internal] [Content-Sync] This repo's own releases are now tracked on The
   Ledger alongside the game and its mods.
 - [Visible] [Content-Sync] The Ledger now also tracks the Upstream Catchup
@@ -30,6 +34,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- [Visible] [Content-Sync] A repo read from its tags no longer loses versions
+  when it gains a GitHub Release. A matching Release is now enrichment on top
+  of a tag, supplying assets, a canonical URL, a publish timestamp, and a body
+  when the changelog section is missing, rather than replacing the tag list
+  entirely. Adding Releases to a repo one version at a time is now additive.
+- [Visible] [Content-Sync] A single prerelease can no longer empty a repo's
+  page. The source set was previously chosen by counting all releases and then
+  filtering to `vX.Y.Z`, so a prerelease switched a repo to a set the filter
+  then rejected, leaving no entries and pruning everything already published.
+- [Internal] [Content-Sync] A sync pass that finds no entries for a repo that
+  already has some is now reported as an error and skipped rather than
+  committing the deletion, since that state is far more likely a fetch failure
+  or a misconfiguration than a real one.
 - [Visible] [Search] A release row on The Ledger never actually
   disappeared when search filtered it out - the status line above it
   ("N matches") updated correctly, but every row stayed visible regardless.

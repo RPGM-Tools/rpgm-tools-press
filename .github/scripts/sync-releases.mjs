@@ -290,6 +290,14 @@ async function writeIfChanged(filePath, content) {
 }
 
 /** Deletes any .md file in `folder` whose name isn't in `keepFilenames`. */
+async function countSyncedEntries(folder) {
+  try {
+    return (await readdir(folder)).filter((f) => f.endsWith(".md")).length;
+  } catch {
+    return 0;
+  }
+}
+
 async function pruneStaleFiles(folder, keepFilenames) {
   let existingFiles;
   try {
@@ -357,37 +365,50 @@ async function main() {
     let entries = [];
     try {
       const allReleases = await fetchAllReleases(tracked.owner, tracked.repo);
+      const releaseByTag = new Map(allReleases.map((r) => [r.tag_name, r]));
 
-      if (allReleases.length > 0) {
-        const stable = allReleases.filter((r) => STABLE_TAG_PATTERN.test(r.tag_name));
-        for (const release of stable) {
-          const fallbackBody = release.body && release.body.trim().length > 0 ? release.body.replace(/\r\n?/g, "\n") : null;
-          const entry = await buildEntryForTag(tracked, release.tag_name, {
-            fallbackBody,
-            fallbackPublishedAt: release.published_at ?? release.created_at,
-            assets: (release.assets ?? []).map((a) => ({
-              name: a.name,
-              url: a.browser_download_url,
-              sizeBytes: a.size,
-            })),
-            url: release.html_url,
-          });
-          if (entry) entries.push(entry);
-          else summary.skipped.push(`${label}#${release.tag_name}: no CHANGELOG.md section and no release body`);
-        }
+      // Which set of versions this repo publishes is DECLARED in repos.json, not
+      // inferred from whether any Releases happen to exist. Inferring it meant a
+      // single Release appearing in a tags-sourced repo silently switched it over
+      // and pruned every version that had no Release, and a single PRErelease
+      // switched it over to a set the stable filter then rejected, emptying the
+      // repo's page outright. Declaring it makes adding Releases to a tags-sourced
+      // repo additive and non-destructive, one version at a time.
+      //
+      // "tags" is the default and the safe direction: a tag is never removed by
+      // gaining a Release. "releases" exists for a repo whose tag history is not
+      // its own release history - the core game carries ~1,477 inherited upstream
+      // Angband tags, 34 of which match the stable pattern exactly (v2.5.8 through
+      // v3.5.0) and would otherwise appear as if they were our releases.
+      const releaseSource = tracked.releaseSource ?? "tags";
+      let sourceTags;
+
+      if (releaseSource === "releases") {
+        sourceTags = allReleases.map((r) => r.tag_name).filter((t) => STABLE_TAG_PATTERN.test(t));
       } else {
         const tags = await fetchAllTags(tracked.owner, tracked.repo);
-        const stableTags = tags.filter((t) => STABLE_TAG_PATTERN.test(t.name));
-        for (const tag of stableTags) {
-          const entry = await buildEntryForTag(tracked, tag.name, {
-            fallbackBody: null,
-            fallbackPublishedAt: null,
-            assets: [],
-            url: `https://github.com/${tracked.owner}/${tracked.repo}/releases/tag/${tag.name}`,
-          });
-          if (entry) entries.push(entry);
-          else summary.skipped.push(`${label}#${tag.name}: no CHANGELOG.md section found`);
-        }
+        sourceTags = tags.map((t) => t.name).filter((t) => STABLE_TAG_PATTERN.test(t));
+      }
+
+      // A matching Release is enrichment on top of a tag, never the thing that
+      // decides whether the tag is listed: assets and a canonical URL when one
+      // exists, a body only if the changelog section is missing, and a real
+      // publish timestamp in place of the tag's commit time.
+      for (const tag of sourceTags) {
+        const release = releaseByTag.get(tag);
+        const releaseBody = release?.body && release.body.trim().length > 0 ? release.body.replace(/\r\n?/g, "\n") : null;
+        const entry = await buildEntryForTag(tracked, tag, {
+          fallbackBody: releaseBody,
+          fallbackPublishedAt: release ? (release.published_at ?? release.created_at) : null,
+          assets: (release?.assets ?? []).map((a) => ({
+            name: a.name,
+            url: a.browser_download_url,
+            sizeBytes: a.size,
+          })),
+          url: release?.html_url ?? `https://github.com/${tracked.owner}/${tracked.repo}/releases/tag/${tag}`,
+        });
+        if (entry) entries.push(entry);
+        else summary.skipped.push(`${label}#${tag}: no CHANGELOG.md section${release ? " and no release body" : ""}`);
       }
     } catch (err) {
       summary.errors.push(`${label}: ${err.message}`);
@@ -398,8 +419,18 @@ async function main() {
 
     const keepFilenames = new Set(entries.map((e) => `${sanitizeForFilename(e.tag)}.md`));
     try {
-      const removed = await pruneStaleFiles(folder, keepFilenames);
-      summary.filesRemoved += removed;
+      // A pass that would delete every entry a repo already has is far more
+      // likely a fetch failure, a rename, or a misconfiguration than a real
+      // state, so it is reported and skipped rather than committed.
+      const existingCount = await countSyncedEntries(folder);
+      if (entries.length === 0 && existingCount > 0) {
+        summary.errors.push(
+          `${label}: refusing to prune all ${existingCount} existing entries after finding none - check releaseSource and the tag or release listing`
+        );
+      } else {
+        const removed = await pruneStaleFiles(folder, keepFilenames);
+        summary.filesRemoved += removed;
+      }
     } catch (err) {
       summary.errors.push(`${label}: pruning stale files failed: ${err.message}`);
     }
