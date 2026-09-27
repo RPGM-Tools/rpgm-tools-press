@@ -59,6 +59,13 @@ const KILL_REASONS = ["Wrong topic", "Boring", "Sounds like AI", "Too private", 
     <button type="button" class="review__btn review__btn--danger" data-action="kill">Kill</button>
   </div>
 
+  <div class="review__next" data-next hidden>
+    <h3 data-next-title></h3>
+    <p class="review__next-body" data-next-body></p>
+    <p class="review__stage" data-stage aria-live="polite"></p>
+    <button type="button" class="review__btn review__btn--primary" data-reload hidden>Read the new revision</button>
+  </div>
+
   <fieldset class="review__block review__kill" data-kill hidden>
     <legend>Why kill it?</legend>
     {
@@ -107,6 +114,8 @@ const KILL_REASONS = ["Wrong topic", "Boring", "Sounds like AI", "Too private", 
   <button type="button" class="review__float" data-float hidden>Comment on selection</button>
 </section>
 
+<div class="review-toast" data-toast role="status" aria-live="polite" hidden></div>
+
 <script>
   const panel = document.querySelector<HTMLElement>(".review")!;
   const slug = panel.dataset.slug!;
@@ -121,6 +130,8 @@ const KILL_REASONS = ["Wrong topic", "Boring", "Sounds like AI", "Too private", 
     statusEl.textContent = text;
     statusEl.dataset.kind = kind;
     statusEl.hidden = false;
+    // The status line sits at the top of the panel, often off screen, so the toast says it too.
+    toast(text);
   }
 
   // Unsent notes survive a reload or a closed tab.
@@ -135,16 +146,25 @@ const KILL_REASONS = ["Wrong topic", "Boring", "Sounds like AI", "Too private", 
     } catch {}
   }
 
+  // Comment boxes grow with what is typed into them.
+  function grow(ta: HTMLTextAreaElement) {
+    ta.style.height = "auto";
+    ta.style.height = `${ta.scrollHeight + 2}px`;
+  }
+
   function addComment(quote: string, note = "") {
     const li = document.createElement("li");
     li.dataset.quote = quote;
     const q = document.createElement("blockquote");
     q.textContent = quote;
     const ta = document.createElement("textarea");
-    ta.rows = 2;
+    ta.rows = 4;
     ta.value = note;
     ta.placeholder = "What's wrong with this passage?";
-    ta.addEventListener("input", saveLocal);
+    ta.addEventListener("input", () => {
+      grow(ta);
+      saveLocal();
+    });
     const rm = document.createElement("button");
     rm.type = "button";
     rm.className = "review__btn review__btn--small";
@@ -155,6 +175,7 @@ const KILL_REASONS = ["Wrong topic", "Boring", "Sounds like AI", "Too private", 
     });
     li.append(q, ta, rm);
     commentsEl.append(li);
+    grow(ta);
     return ta;
   }
 
@@ -223,13 +244,9 @@ const KILL_REASONS = ["Wrong topic", "Boring", "Sounds like AI", "Too private", 
       try {
         localStorage.removeItem(draftKey);
       } catch {}
-      const done: Record<string, string> = {
-        approve: "Approved. It goes live on the blog within a few minutes.",
-        revise: "Notes sent. The revision usually shows up within a few minutes.",
-        park: "Parked. It leaves the queue until you bring it back.",
-        kill: "Killed. The idea won't come back.",
-      };
-      showStatus(done[action] ?? "Sent.", "ok");
+      statusEl.hidden = true;
+      toast(NEXT[action]?.toast ?? "Sent.");
+      showNext(action, "pending", new Date(), null, true);
     } catch (err) {
       showStatus(`Could not send: ${(err as Error).message}. Try again.`, "error");
       buttons.forEach((b) => (b.disabled = false));
@@ -256,11 +273,91 @@ const KILL_REASONS = ["Wrong topic", "Boring", "Sounds like AI", "Too private", 
     send("kill", { reasons });
   });
 
-  // Tell the reader when an earlier request for this draft is still being worked on.
-  fetch(`/api/status?slug=${encodeURIComponent(slug)}`)
-    .then((r) => (r.ok ? (r.json() as Promise<{ pending?: { action: string; created_at: string } | null }>) : null))
-    .then((s) => {
-      if (s?.pending) showStatus(`Your "${s.pending.action}" from ${s.pending.created_at} UTC is still being worked on.`, "info");
+  // After a submit, a card explains what happens next and follows the request
+  // through the queue: waiting, being worked on, then done or failed.
+  const NEXT: Record<string, { toast: string; title: string; body: string }> = {
+    revise: {
+      toast: "Notes received.",
+      title: "Notes received",
+      body: "The drafter looks for new notes every couple of minutes. Once it has yours, the rewrite takes about 5 to 10 minutes, and the new version replaces this page.",
+    },
+    approve: {
+      toast: "Approved.",
+      title: "Approved",
+      body: "The drafter picks it up within a couple of minutes and adds it to the blog. The live link shows up here once the deploy finishes.",
+    },
+    park: { toast: "Parked.", title: "Parked", body: "It's off the queue. Tell the Blog chat when you want it back." },
+    kill: { toast: "Killed.", title: "Killed", body: "It's off the queue, and your reasons are saved so ideas like it rank lower." },
+  };
+
+  const toastEl = document.querySelector<HTMLElement>("[data-toast]")!;
+  const nextEl = panel.querySelector<HTMLElement>("[data-next]")!;
+  const stageEl = panel.querySelector<HTMLElement>("[data-stage]")!;
+  const reloadBtn = panel.querySelector<HTMLButtonElement>("[data-reload]")!;
+  reloadBtn.addEventListener("click", () => location.reload());
+  let toastTimer = 0;
+  let pollTimer = 0;
+
+  function toast(text: string) {
+    toastEl.textContent = text;
+    toastEl.hidden = false;
+    toastEl.classList.add("is-shown");
+    clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(() => {
+      toastEl.classList.remove("is-shown");
+      window.setTimeout(() => (toastEl.hidden = true), 300);
+    }, 4000);
+  }
+
+  const clock = (d: Date) => d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  // D1 stores "YYYY-MM-DD HH:MM:SS" in UTC.
+  const fromDb = (s: string) => new Date(s.replace(" ", "T") + "Z");
+
+  function setStage(action: string, status: string, since: Date, result?: string | null) {
+    reloadBtn.hidden = true;
+    if (status === "pending") stageEl.textContent = `Waiting in the queue since ${clock(since)}.`;
+    else if (status === "working") stageEl.textContent = "The drafter is working on it now.";
+    else if (status === "failed") stageEl.textContent = `That didn't work${result ? `: ${result}` : ""}. Your notes are still in the queue.`;
+    else if (action === "revise") {
+      stageEl.textContent = "Done. Reload to read it.";
+      reloadBtn.hidden = false;
+    } else if (action === "approve") stageEl.textContent = result ? `It's live: ${result}` : "It's live on the blog.";
+    else stageEl.textContent = "Done.";
+    stageEl.dataset.status = status;
+  }
+
+  function showNext(action: string, status: string, since: Date, result?: string | null, scroll = false) {
+    const n = NEXT[action];
+    if (!n) return;
+    panel.querySelector("[data-next-title]")!.textContent = n.title;
+    panel.querySelector("[data-next-body]")!.textContent = n.body;
+    buttons.forEach((b) => (b.disabled = b !== reloadBtn));
+    nextEl.hidden = false;
+    setStage(action, status, since, result);
+    if (scroll) nextEl.scrollIntoView({ behavior: "smooth", block: "center" });
+    clearInterval(pollTimer);
+    if (status === "pending" || status === "working") pollTimer = window.setInterval(poll, 20000);
+  }
+
+  type Latest = { action: string; status: string; created_at: string; result: string | null } | null;
+  async function latest(): Promise<Latest> {
+    const r = await fetch(`/api/status?slug=${encodeURIComponent(slug)}&revision=${revision}`);
+    return r.ok ? ((await r.json()) as { latest: Latest }).latest : null;
+  }
+
+  async function poll() {
+    try {
+      const l = await latest();
+      if (!l) return;
+      setStage(l.action, l.status, fromDb(l.created_at), l.result);
+      if (l.status !== "pending" && l.status !== "working") clearInterval(pollTimer);
+    } catch {}
+  }
+
+  // A request already sent for this revision shows its progress card on load.
+  latest()
+    .then((l) => {
+      if (l) showNext(l.action, l.status, fromDb(l.created_at), l.result);
     })
     .catch(() => {});
 </script>
@@ -291,7 +388,8 @@ const KILL_REASONS = ["Wrong topic", "Boring", "Sounds like AI", "Too private", 
     font-size: var(--rpgm-text-sm);
     margin: 0 0 var(--rpgm-space-2);
   }
-  .review textarea,
+  /* Comment boxes are created in the browser, so they need :global to pick these up. */
+  .review :global(textarea),
   .review select {
     width: 100%;
     box-sizing: border-box;
@@ -313,10 +411,71 @@ const KILL_REASONS = ["Wrong topic", "Boring", "Sounds like AI", "Too private", 
   .review__comments {
     padding-left: 1.2em;
   }
-  .review__comments li {
+  .review__comments :global(li) {
     margin-bottom: var(--rpgm-space-3);
   }
-  .review blockquote {
+  .review__comments :global(textarea) {
+    min-height: 6.5em;
+    resize: vertical;
+  }
+  .review__next {
+    margin-bottom: var(--rpgm-space-4);
+    padding: var(--rpgm-space-3) var(--rpgm-space-4);
+    border: 1px solid var(--rpgm-accent);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--rpgm-accent) 8%, transparent);
+  }
+  .review__next-body {
+    margin: 0 0 var(--rpgm-space-3);
+  }
+  .review__stage {
+    margin: 0 0 var(--rpgm-space-2);
+    font-weight: 600;
+  }
+  .review__stage[data-status="pending"]::before,
+  .review__stage[data-status="working"]::before {
+    content: "";
+    display: inline-block;
+    width: 0.6em;
+    height: 0.6em;
+    margin-right: 0.5em;
+    border-radius: 50%;
+    background: var(--rpgm-accent);
+    animation: review-pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes review-pulse {
+    50% {
+      opacity: 0.25;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .review__stage::before {
+      animation: none;
+    }
+  }
+  .review-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    z-index: 20;
+    transform: translate(-50%, 16px);
+    opacity: 0;
+    transition:
+      opacity 0.25s ease,
+      transform 0.25s ease;
+    padding: 0.7em 1.4em;
+    border-radius: 999px;
+    border: 1px solid var(--rpgm-accent);
+    background: var(--rpgm-bg, #1b1612);
+    color: var(--rpgm-text);
+    font-weight: 600;
+    box-shadow: 0 4px 16px rgb(0 0 0 / 0.35);
+  }
+  .review-toast.is-shown {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  .review :global(blockquote) {
     margin: 0 0 var(--rpgm-space-2);
     padding-left: var(--rpgm-space-3);
     border-left: 2px solid var(--rpgm-border-strong);
@@ -328,7 +487,8 @@ const KILL_REASONS = ["Wrong topic", "Boring", "Sounds like AI", "Too private", 
     gap: var(--rpgm-space-2);
     margin-bottom: var(--rpgm-space-4);
   }
-  .review__btn {
+  .review__btn,
+  .review :global(.review__btn) {
     font: inherit;
     font-size: var(--rpgm-text-sm);
     padding: 0.5em 1em;
@@ -339,7 +499,7 @@ const KILL_REASONS = ["Wrong topic", "Boring", "Sounds like AI", "Too private", 
     color: var(--rpgm-text);
     cursor: pointer;
   }
-  .review__btn--small {
+  .review :global(.review__btn--small) {
     min-height: 32px;
     padding: 0.2em 0.7em;
   }

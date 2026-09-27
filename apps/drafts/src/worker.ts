@@ -5,7 +5,7 @@
  * in case a route is ever added without it.
  *
  *   POST /api/review   queue a review action from the drafts site
- *   GET  /api/status   the oldest unfinished action for one draft
+ *   GET  /api/status   the newest action on a draft's current revision
  *
  * The local drafter drains the queue through D1 directly (wrangler d1
  * execute), so it never needs a route here or an Access service token.
@@ -14,6 +14,8 @@
 interface Env {
   ASSETS: Fetcher;
   DB: D1Database;
+  /** Local testing only: `wrangler dev --var ALLOW_NO_ACCESS:1`. Never set in wrangler.jsonc. */
+  ALLOW_NO_ACCESS?: string;
 }
 
 const ACTIONS = new Set(["revise", "approve", "kill", "park"]);
@@ -68,20 +70,23 @@ async function review(request: Request, env: Env): Promise<Response> {
 
 async function status(url: URL, env: Env): Promise<Response> {
   const slug = url.searchParams.get("slug") ?? "";
+  const revision = Number(url.searchParams.get("revision") ?? "1");
   if (!SLUG.test(slug)) return json({ error: "Invalid slug" }, 400);
-  const pending = await env.DB.prepare(
-    "SELECT id, action, created_at, status FROM actions WHERE slug = ? AND status IN ('pending', 'working') ORDER BY id LIMIT 1",
+  if (!Number.isInteger(revision) || revision < 1) return json({ error: "Invalid revision" }, 400);
+  // The newest request made on this revision or a later one, whatever its state.
+  const latest = await env.DB.prepare(
+    "SELECT id, action, status, created_at, done_at, result FROM actions WHERE slug = ? AND revision >= ? ORDER BY id DESC LIMIT 1",
   )
-    .bind(slug)
+    .bind(slug, revision)
     .first();
-  return json({ pending: pending ?? null });
+  return json({ latest: latest ?? null });
 }
 
 export default {
   async fetch(request, env): Promise<Response> {
     const url = new URL(request.url);
     if (!url.pathname.startsWith("/api/")) return env.ASSETS.fetch(request);
-    if (!request.headers.get("Cf-Access-Jwt-Assertion")) return json({ error: "Forbidden" }, 403);
+    if (!request.headers.get("Cf-Access-Jwt-Assertion") && env.ALLOW_NO_ACCESS !== "1") return json({ error: "Forbidden" }, 403);
 
     const route = `${request.method} ${url.pathname}`;
     switch (route) {
