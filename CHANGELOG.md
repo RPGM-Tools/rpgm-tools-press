@@ -46,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- [Internal] [CI] The Discord announcer no longer reports a failure after posting the role ping into a new thread, which Discord answers with an empty 204 response.
 - [Internal] [CI] The Discord announcer no longer fails when Cloudflare challenges its feed check from GitHub's runners. After three challenged checks it links the post's own URL, and it logs the status of every failed check.
 - [Visible] [Content-Sync] A repo read from its tags no longer loses versions
   when it gains a GitHub Release. A matching Release is now enrichment on top

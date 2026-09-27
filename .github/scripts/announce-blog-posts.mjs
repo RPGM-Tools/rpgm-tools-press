@@ -142,7 +142,8 @@ async function send(url, payload) {
     body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error(`Discord returned ${res.status}: ${await res.text()}`);
-  return res.json();
+  // Without ?wait=true Discord answers 204 with no body.
+  return res.status === 204 ? {} : res.json();
 }
 
 /** @param {{ path: string, data: Record<string, string> }} post */
