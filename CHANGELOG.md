@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- [Visible] [UI] The header stays pinned to the top of the page. Once you scroll, it shrinks to a slim bar, and on phones its links tuck away until you scroll back up.
 - [Visible] [UI] Opening a post or a release from a list slides its title into the page heading, and moving between pages cross-fades, in browsers that support cross-document view transitions. A reduced-motion setting turns both off.
 - [Visible] [UI] Entries that come back into view when a search changes or clears fade in instead of appearing all at once.
 - [Visible] [UI] The Ledger groups releases by month. On wide screens each month's name stays pinned beside its releases while they scroll past.
@@ -42,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- [Visible] [UI] The header's Search button no longer appears on pages that have their own search field. The / shortcut still jumps to that field.
 - [Visible] [Search] The search hint below the field is shorter and less
   technical: "Searches for exact matches first, then approximate matches."
 

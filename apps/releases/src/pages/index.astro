@@ -114,7 +114,7 @@ const syncedAt = new Date().toLocaleDateString("en-US", {
 
     .ledger-month__label {
       position: sticky;
-      top: var(--rpgm-space-4);
+      top: calc(var(--rpgm-header-height, 0px) + var(--rpgm-space-4));
       margin: var(--rpgm-space-3) 0 0;
       text-align: right;
     }

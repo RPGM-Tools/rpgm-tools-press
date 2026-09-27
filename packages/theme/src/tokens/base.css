@@ -306,3 +306,8 @@
     navigation: none;
   }
 }
+
+/* Anchor jumps land below the pinned header. Header.astro keeps --rpgm-header-height current. */
+html {
+  scroll-padding-top: calc(var(--rpgm-header-height, 0px) + var(--rpgm-space-4));
+}

@@ -43,6 +43,30 @@ const { siteTitle, tagline, links, logoSrc } = Astro.props;
 </header>
 
 <script>
+  // Sets data-condensed past 64px of scroll and clears it under 8px, so the header can't toggle back and forth at a single threshold.
+  const header = document.querySelector<HTMLElement>(".rpgm-header");
+  if (header) {
+    // Sticky rails and anchor jumps read the header's current height from --rpgm-header-height.
+    const publishHeight = () => document.documentElement.style.setProperty("--rpgm-header-height", `${header.offsetHeight}px`);
+    let lastY = window.scrollY;
+    const update = () => {
+      const before = header.offsetHeight;
+      const y = window.scrollY;
+      if (y > 64) header.dataset.condensed = "";
+      else if (y < 8) delete header.dataset.condensed;
+      // data-reveal is set when the page moves up more than 4px and cleared when it moves down, so the phone nav row returns on any upward scroll.
+      if (y < lastY - 4) header.dataset.reveal = "";
+      else if (y > lastY + 4) delete header.dataset.reveal;
+      if (Math.abs(y - lastY) > 4) lastY = y;
+      if (header.offsetHeight !== before) publishHeight();
+    };
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", publishHeight, { passive: true });
+    header.addEventListener("transitionend", publishHeight);
+    update();
+    publishHeight();
+  }
+
   document.querySelectorAll<HTMLAnchorElement>("[data-rpgm-search-link]").forEach((link) => {
     function focusLocalSearch(): boolean {
       const input = document.querySelector<HTMLInputElement>("#entry-search");
@@ -69,8 +93,51 @@ const { siteTitle, tagline, links, logoSrc } = Astro.props;
 
 <style>
   .rpgm-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
     background: var(--rpgm-bg-elevated);
     border-bottom: 1px solid var(--rpgm-border);
+    transition: box-shadow var(--rpgm-transition-fast);
+  }
+
+  .rpgm-header[data-condensed] {
+    box-shadow: var(--rpgm-shadow-elevated);
+  }
+
+  .rpgm-header__inner,
+  .rpgm-header__title,
+  .rpgm-header__seal {
+    transition: padding var(--rpgm-transition-fast), font-size var(--rpgm-transition-fast), width var(--rpgm-transition-fast), height var(--rpgm-transition-fast), color var(--rpgm-transition-fast);
+  }
+
+  .rpgm-header[data-condensed] .rpgm-header__inner {
+    padding-block: var(--rpgm-space-2);
+  }
+
+  .rpgm-header[data-condensed] .rpgm-header__title {
+    font-size: var(--rpgm-text-lg);
+  }
+
+  .rpgm-header[data-condensed] .rpgm-header__seal {
+    width: 22px;
+    height: 22px;
+  }
+
+  .rpgm-header[data-condensed] .rpgm-header__tagline {
+    display: none;
+  }
+
+  /* Under 48em the nav wraps to a second row about 80px tall, so a condensed header drops it unless data-reveal is set. */
+  @media (max-width: 48em) {
+    .rpgm-header[data-condensed]:not([data-reveal]) .rpgm-header__right {
+      display: none;
+    }
+  }
+
+  /* A page with its own search field needs no button that only jumps to it. The / shortcut still works. */
+  :global(body:has(#entry-search)) .rpgm-header__search-link {
+    display: none;
   }
 
   .rpgm-header__inner {
@@ -101,7 +168,6 @@ const { siteTitle, tagline, links, logoSrc } = Astro.props;
   .rpgm-header__seal {
     color: var(--rpgm-accent);
     flex-shrink: 0;
-    transition: color var(--rpgm-transition-fast);
   }
 
   img.rpgm-header__seal {

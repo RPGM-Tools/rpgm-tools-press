@@ -226,7 +226,7 @@ const jsonLd = {
     .post-contents__label,
     .post-contents ol {
       position: sticky;
-      top: var(--rpgm-space-5);
+      top: calc(var(--rpgm-header-height, 0px) + var(--rpgm-space-5));
     }
 
     .post-contents__label {
@@ -239,7 +239,7 @@ const jsonLd = {
     }
 
     .post-contents ol {
-      top: calc(var(--rpgm-space-5) + 1.75rem);
+      top: calc(var(--rpgm-header-height, 0px) + var(--rpgm-space-5) + 1.75rem);
       list-style: none;
       margin: 0;
       padding: 0 0 0 var(--rpgm-space-3);
