@@ -1,0 +1,60 @@
+---
+import { getCollection } from "astro:content";
+import Layout from "@rpgm/tools-press-theme/components/Layout.astro";
+import EntryCard from "@rpgm/tools-press-theme/components/EntryCard.astro";
+import Flourish from "@rpgm/tools-press-theme/ornaments/Flourish.astro";
+import SiteHead from "../../../blog/src/components/SiteHead.astro";
+import { SITE_LOGO } from "../../../blog/src/consts";
+import { sidecar } from "../lib/sidecar";
+
+const queue = (await getCollection("drafts"))
+  .map((d) => ({ d, ...sidecar(d.id) }))
+  .filter(({ state }) => state.status === "waiting")
+  .sort((a, b) => (b.state.updated ?? "").localeCompare(a.state.updated ?? ""));
+---
+
+<Layout
+  title="Drafts"
+  description="Drafts waiting for review."
+  siteTitle="Relics & Reckonings drafts"
+  logoSrc={SITE_LOGO}
+  navLinks={[]}
+>
+  <Fragment slot="head">
+    <SiteHead />
+    <meta name="robots" content="noindex, nofollow" />
+  </Fragment>
+
+  <p class="rpgm-eyebrow">{queue.length} waiting</p>
+  <Flourish size={16} color="var(--rpgm-border-strong)" />
+
+  {queue.length === 0 && <p class="empty">No drafts are waiting. New ones show up here as they're written.</p>}
+
+  <ul class="post-list">
+    {
+      queue.map(({ d, state }) => (
+        <li>
+          <EntryCard
+            title={d.data.title}
+            href={`/d/${d.id}/`}
+            description={d.data.description}
+            tags={[state.revision > 1 ? `revision ${state.revision}` : "new", ...d.data.tags]}
+          />
+        </li>
+      ))
+    }
+  </ul>
+</Layout>
+
+<style>
+  .post-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: var(--rpgm-space-4);
+  }
+  .empty {
+    color: var(--rpgm-text-muted);
+  }
+</style>

@@ -1,0 +1,20 @@
+{
+  "name": "drafts",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "typecheck": "astro check && tsc -p tsconfig.worker.json"
+  },
+  "dependencies": {
+    "@rpgm/tools-press-theme": "workspace:*",
+    "astro": "^7.2.9"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.4",
+    "typescript": "^5.9.0",
+    "wrangler": "^4.127.1"
+  }
+}

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- [Internal] [Drafts] A new drafts app serves private previews of blog posts at drafts.blog.rpgm.tools, behind Cloudflare Access. Each draft renders with the blog's own theme and has a review panel for comments on passages, notes, and approve, revise, park or kill. Draft text never enters this repo: the site is built on the deploying machine from a private folder.
 - [Internal] [Content-Sync] Each tracked repo now declares a `releaseSource`
   in `repos.json`, either `releases` or `tags`, instead of the sync inferring
   it from whether any GitHub Releases happen to exist. `tags` is the default,

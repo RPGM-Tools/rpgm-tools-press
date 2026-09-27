@@ -1,0 +1,117 @@
+---
+import { getCollection, render } from "astro:content";
+import Layout from "@rpgm/tools-press-theme/components/Layout.astro";
+import Prose from "@rpgm/tools-press-theme/components/Prose.astro";
+import Flourish from "@rpgm/tools-press-theme/ornaments/Flourish.astro";
+import SiteHead from "../../../../blog/src/components/SiteHead.astro";
+import { AUTHOR_NAME, AUTHOR_AVATAR, CATEGORY_META, SITE_LOGO } from "../../../../blog/src/consts";
+import ReviewPanel from "../../components/ReviewPanel.astro";
+import { sidecar } from "../../lib/sidecar";
+
+export async function getStaticPaths() {
+  const drafts = await getCollection("drafts");
+  return drafts.map((draft) => ({ params: { slug: draft.id }, props: { draft } }));
+}
+
+const { draft } = Astro.props;
+const { Content } = await render(draft);
+const { state, meta, claims } = sidecar(draft.id);
+const categoryMeta = draft.data.category ? CATEGORY_META[draft.data.category] : undefined;
+const categoryLabel = categoryMeta?.label ?? draft.data.category;
+---
+
+<Layout
+  title={draft.data.title}
+  description={draft.data.description}
+  siteTitle="Relics & Reckonings drafts"
+  logoSrc={SITE_LOGO}
+  navLinks={[{ label: "Queue", href: "/" }]}
+>
+  <Fragment slot="head">
+    <SiteHead />
+    <meta name="robots" content="noindex, nofollow" />
+  </Fragment>
+
+  <!-- Same markup and styles as the blog's posts/[...slug].astro, so the draft reads as it will once published. -->
+  <article class="post-article" data-review-target>
+    <p class="rpgm-eyebrow">Draft, revision {state.revision}</p>
+    <h1>{draft.data.title}</h1>
+    <p class="post-byline">
+      <img src={AUTHOR_AVATAR} alt="" width="32" height="32" class="post-byline__avatar" />
+      {AUTHOR_NAME}
+    </p>
+    {
+      (categoryLabel || draft.data.tags.length > 0) && (
+        <ul class="post-tags">
+          {categoryLabel && (
+            <li class="post-tags__category" style={`--rpgm-entry-category-color: ${categoryMeta?.color ?? "#6b5b3e"}`}>
+              {categoryLabel}
+            </li>
+          )}
+          {draft.data.tags.map((tag) => (
+            <li>
+              <span>{tag}</span>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+    <p class="post-description">{draft.data.description}</p>
+    <Flourish size={16} color="var(--rpgm-border-strong)" />
+    <Prose>
+      <Content />
+    </Prose>
+  </article>
+
+  <ReviewPanel slug={draft.id} revision={state.revision} changes={state.changes} claims={claims} meta={meta} />
+</Layout>
+
+<style>
+  .post-article {
+    max-width: 42rem;
+    margin: 0 auto;
+  }
+  .post-byline {
+    display: flex;
+    align-items: center;
+    gap: var(--rpgm-space-2);
+    margin: 0 0 var(--rpgm-space-4);
+    color: var(--rpgm-text-muted);
+    font-size: var(--rpgm-text-sm);
+  }
+  .post-byline__avatar {
+    border-radius: var(--rpgm-radius-full);
+    object-fit: cover;
+  }
+  .post-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--rpgm-space-2);
+    list-style: none;
+    margin: 0 0 var(--rpgm-space-4);
+    padding: 0;
+  }
+  .post-tags span {
+    font-size: var(--rpgm-text-xs);
+    color: var(--rpgm-text-muted);
+    border: 1px solid var(--rpgm-border);
+    border-radius: var(--rpgm-radius-full);
+    padding: 0.15em 0.7em;
+  }
+  .post-tags__category {
+    font-size: var(--rpgm-text-xs);
+    font-weight: 600;
+    color: var(--rpgm-text);
+    background: color-mix(in srgb, var(--rpgm-entry-category-color) 16%, transparent);
+    border: 1px solid color-mix(in srgb, var(--rpgm-entry-category-color) 55%, transparent);
+    border-radius: var(--rpgm-radius-full);
+    padding: 0.15em 0.7em;
+  }
+  /* Only on the drafts site: the description is the search snippet, so it gets reviewed too. */
+  .post-description {
+    color: var(--rpgm-text-muted);
+    font-style: italic;
+    border-left: 2px solid var(--rpgm-border);
+    padding-left: var(--rpgm-space-3);
+  }
+</style>

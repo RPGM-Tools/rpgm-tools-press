@@ -36,6 +36,25 @@ importers:
         specifier: ^4.127.1
         version: 4.127.1
 
+  apps/drafts:
+    dependencies:
+      '@rpgm/tools-press-theme':
+        specifier: workspace:*
+        version: link:../../packages/theme
+      astro:
+        specifier: ^7.2.9
+        version: 7.2.9(@astrojs/markdown-remark@7.3.0(supports-color@10.2.2))(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.3)(@types/node@24.13.3)(yaml@2.9.0)
+    devDependencies:
+      '@astrojs/check':
+        specifier: ^0.9.4
+        version: 0.9.10(prettier@3.9.6)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.9.0
+        version: 5.9.3
+      wrangler:
+        specifier: ^4.127.1
+        version: 4.127.1
+
   apps/releases:
     dependencies:
       '@astrojs/markdown-remark':

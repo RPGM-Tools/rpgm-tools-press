@@ -1,0 +1,410 @@
+---
+import type { Claim } from "../lib/sidecar";
+
+interface Props {
+  slug: string;
+  revision: number;
+  changes: string[];
+  claims: Claim[];
+  meta: Record<string, unknown>;
+}
+
+const { slug, revision, changes, claims, meta } = Astro.props;
+const gates = (meta.gates ?? {}) as Record<string, string>;
+const KILL_REASONS = ["Wrong topic", "Boring", "Sounds like AI", "Too private", "Inaccurate", "Other"];
+---
+
+<section class="review" data-slug={slug} data-revision={revision}>
+  <h2>Review</h2>
+  <p class="review__status" data-status hidden></p>
+
+  {
+    changes.length > 0 && (
+      <div class="review__block">
+        <h3>What changed in this revision</h3>
+        <ul>
+          {changes.map((c) => (
+            <li>{c}</li>
+          ))}
+        </ul>
+      </div>
+    )
+  }
+
+  <div class="review__block">
+    <h3>Comments on passages</h3>
+    <p class="review__hint">Select any text in the post to comment on it.</p>
+    <ol class="review__comments" data-comments></ol>
+  </div>
+
+  <div class="review__block">
+    <label for="review-notes"><h3>Notes</h3></label>
+    <textarea id="review-notes" data-notes rows="5" placeholder="What should change? Everything here goes into the next revision."></textarea>
+  </div>
+
+  <div class="review__block review__row">
+    <label for="review-rating">More posts like this?</label>
+    <select id="review-rating" data-rating>
+      <option value="">No opinion</option>
+      <option value="0">Fewer</option>
+      <option value="1">About the same</option>
+      <option value="2">More</option>
+    </select>
+  </div>
+
+  <div class="review__actions">
+    <button type="button" class="review__btn review__btn--primary" data-action="approve">Approve and publish</button>
+    <button type="button" class="review__btn" data-action="revise">Send notes</button>
+    <button type="button" class="review__btn" data-action="park">Park</button>
+    <button type="button" class="review__btn review__btn--danger" data-action="kill">Kill</button>
+  </div>
+
+  <fieldset class="review__block review__kill" data-kill hidden>
+    <legend>Why kill it?</legend>
+    {
+      KILL_REASONS.map((r) => (
+        <label class="review__chip">
+          <input type="checkbox" value={r} data-kill-reason /> {r}
+        </label>
+      ))
+    }
+    <button type="button" class="review__btn review__btn--danger" data-confirm-kill>Kill this draft</button>
+  </fieldset>
+
+  {
+    claims.length > 0 && (
+      <details class="review__block">
+        <summary>Sources for every claim ({claims.length})</summary>
+        <ol class="review__claims">
+          {claims.map((c) => (
+            <li>
+              <p class="review__claim">{c.claim}</p>
+              <blockquote>{c.evidence}</blockquote>
+              {c.source && <p class="review__source">{c.source}</p>}
+            </li>
+          ))}
+        </ol>
+      </details>
+    )
+  }
+
+  {
+    Object.keys(gates).length > 0 && (
+      <details class="review__block">
+        <summary>Check results</summary>
+        <dl class="review__gates">
+          {Object.entries(gates).map(([k, v]) => (
+            <>
+              <dt>{k}</dt>
+              <dd>{v}</dd>
+            </>
+          ))}
+        </dl>
+      </details>
+    )
+  }
+
+  <button type="button" class="review__float" data-float hidden>Comment on selection</button>
+</section>
+
+<script>
+  const panel = document.querySelector<HTMLElement>(".review")!;
+  const slug = panel.dataset.slug!;
+  const revision = Number(panel.dataset.revision);
+  const statusEl = panel.querySelector<HTMLElement>("[data-status]")!;
+  const commentsEl = panel.querySelector<HTMLOListElement>("[data-comments]")!;
+  const floatBtn = panel.querySelector<HTMLButtonElement>("[data-float]")!;
+  const article = document.querySelector<HTMLElement>("[data-review-target]")!;
+  const draftKey = `review:${slug}:${revision}`;
+
+  function showStatus(text: string, kind: "ok" | "error" | "info" = "info") {
+    statusEl.textContent = text;
+    statusEl.dataset.kind = kind;
+    statusEl.hidden = false;
+  }
+
+  // Unsent notes survive a reload or a closed tab.
+  function saveLocal() {
+    try {
+      const inline = [...commentsEl.querySelectorAll("li")].map((li) => ({
+        quote: li.dataset.quote ?? "",
+        note: li.querySelector("textarea")?.value ?? "",
+      }));
+      const notes = panel.querySelector<HTMLTextAreaElement>("[data-notes]")!.value;
+      localStorage.setItem(draftKey, JSON.stringify({ inline, notes }));
+    } catch {}
+  }
+
+  function addComment(quote: string, note = "") {
+    const li = document.createElement("li");
+    li.dataset.quote = quote;
+    const q = document.createElement("blockquote");
+    q.textContent = quote;
+    const ta = document.createElement("textarea");
+    ta.rows = 2;
+    ta.value = note;
+    ta.placeholder = "What's wrong with this passage?";
+    ta.addEventListener("input", saveLocal);
+    const rm = document.createElement("button");
+    rm.type = "button";
+    rm.className = "review__btn review__btn--small";
+    rm.textContent = "Remove";
+    rm.addEventListener("click", () => {
+      li.remove();
+      saveLocal();
+    });
+    li.append(q, ta, rm);
+    commentsEl.append(li);
+    return ta;
+  }
+
+  try {
+    const saved = JSON.parse(localStorage.getItem(draftKey) ?? "null");
+    if (saved) {
+      saved.inline?.forEach((c: { quote: string; note: string }) => addComment(c.quote, c.note));
+      panel.querySelector<HTMLTextAreaElement>("[data-notes]")!.value = saved.notes ?? "";
+    }
+  } catch {}
+  panel.querySelector("[data-notes]")!.addEventListener("input", saveLocal);
+
+  function selectedQuote() {
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed || !sel.rangeCount) return "";
+    if (!article.contains(sel.getRangeAt(0).commonAncestorContainer)) return "";
+    return sel.toString().trim();
+  }
+
+  function placeFloat() {
+    const quote = selectedQuote();
+    if (quote.length < 3) {
+      floatBtn.hidden = true;
+      return;
+    }
+    const rect = window.getSelection()!.getRangeAt(0).getBoundingClientRect();
+    floatBtn.style.top = `${window.scrollY + rect.bottom + 8}px`;
+    floatBtn.style.left = `${Math.max(8, window.scrollX + rect.left)}px`;
+    floatBtn.hidden = false;
+  }
+  document.addEventListener("selectionchange", () => setTimeout(placeFloat, 0));
+  floatBtn.addEventListener("mousedown", (e) => e.preventDefault());
+  floatBtn.addEventListener("click", () => {
+    const quote = selectedQuote();
+    if (!quote) return;
+    const ta = addComment(quote);
+    saveLocal();
+    floatBtn.hidden = true;
+    window.getSelection()?.removeAllRanges();
+    ta.focus();
+  });
+
+  function collect() {
+    const inline = [...commentsEl.querySelectorAll("li")]
+      .map((li) => ({ quote: li.dataset.quote ?? "", note: li.querySelector("textarea")?.value.trim() ?? "" }))
+      .filter((c) => c.quote);
+    const notes = panel.querySelector<HTMLTextAreaElement>("[data-notes]")!.value.trim();
+    const ratingRaw = panel.querySelector<HTMLSelectElement>("[data-rating]")!.value;
+    return { notes, inline, rating: ratingRaw === "" ? null : Number(ratingRaw) };
+  }
+
+  const buttons = [...panel.querySelectorAll<HTMLButtonElement>("button")];
+
+  async function send(action: string, extra: Record<string, unknown> = {}) {
+    buttons.forEach((b) => (b.disabled = true));
+    try {
+      const res = await fetch("/api/review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug, revision, action, ...collect(), ...extra }),
+      });
+      if (!res.ok) {
+        const err = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(err.error ?? `HTTP ${res.status}`);
+      }
+      try {
+        localStorage.removeItem(draftKey);
+      } catch {}
+      const done: Record<string, string> = {
+        approve: "Approved. It goes live on the blog within a few minutes.",
+        revise: "Notes sent. The revision usually shows up within a few minutes.",
+        park: "Parked. It leaves the queue until you bring it back.",
+        kill: "Killed. The idea won't come back.",
+      };
+      showStatus(done[action] ?? "Sent.", "ok");
+    } catch (err) {
+      showStatus(`Could not send: ${(err as Error).message}. Try again.`, "error");
+      buttons.forEach((b) => (b.disabled = false));
+    }
+  }
+
+  panel.querySelector('[data-action="approve"]')!.addEventListener("click", () => {
+    if (confirm("Publish this post to blog.rpgm.tools now?")) send("approve");
+  });
+  panel.querySelector('[data-action="revise"]')!.addEventListener("click", () => {
+    const { notes, inline } = collect();
+    if (!notes && !inline.some((c) => c.note)) {
+      showStatus("Add a note or a comment on a passage first.", "error");
+      return;
+    }
+    send("revise");
+  });
+  panel.querySelector('[data-action="park"]')!.addEventListener("click", () => send("park"));
+  panel.querySelector('[data-action="kill"]')!.addEventListener("click", () => {
+    panel.querySelector<HTMLElement>("[data-kill]")!.hidden = false;
+  });
+  panel.querySelector("[data-confirm-kill]")!.addEventListener("click", () => {
+    const reasons = [...panel.querySelectorAll<HTMLInputElement>("[data-kill-reason]:checked")].map((i) => i.value);
+    send("kill", { reasons });
+  });
+
+  // Tell the reader when an earlier request for this draft is still being worked on.
+  fetch(`/api/status?slug=${encodeURIComponent(slug)}`)
+    .then((r) => (r.ok ? (r.json() as Promise<{ pending?: { action: string; created_at: string } | null }>) : null))
+    .then((s) => {
+      if (s?.pending) showStatus(`Your "${s.pending.action}" from ${s.pending.created_at} UTC is still being worked on.`, "info");
+    })
+    .catch(() => {});
+</script>
+
+<style>
+  .review {
+    max-width: 42rem;
+    margin: var(--rpgm-space-8) auto 0;
+    padding: var(--rpgm-space-4);
+    border: 1px solid var(--rpgm-border-strong);
+    border-radius: var(--rpgm-radius-md, 8px);
+    background: color-mix(in srgb, var(--rpgm-accent) 4%, transparent);
+  }
+  .review h2,
+  .review h3 {
+    margin-top: 0;
+  }
+  .review h3 {
+    font-size: var(--rpgm-text-base, 1rem);
+    margin-bottom: var(--rpgm-space-2);
+  }
+  .review__block {
+    margin-bottom: var(--rpgm-space-4);
+  }
+  .review__hint,
+  .review__source {
+    color: var(--rpgm-text-muted);
+    font-size: var(--rpgm-text-sm);
+    margin: 0 0 var(--rpgm-space-2);
+  }
+  .review textarea,
+  .review select {
+    width: 100%;
+    box-sizing: border-box;
+    font: inherit;
+    color: var(--rpgm-text);
+    background: var(--rpgm-surface, transparent);
+    border: 1px solid var(--rpgm-border);
+    border-radius: 6px;
+    padding: var(--rpgm-space-2);
+  }
+  .review__row {
+    display: flex;
+    gap: var(--rpgm-space-3);
+    align-items: center;
+  }
+  .review__row select {
+    width: auto;
+  }
+  .review__comments {
+    padding-left: 1.2em;
+  }
+  .review__comments li {
+    margin-bottom: var(--rpgm-space-3);
+  }
+  .review blockquote {
+    margin: 0 0 var(--rpgm-space-2);
+    padding-left: var(--rpgm-space-3);
+    border-left: 2px solid var(--rpgm-border-strong);
+    color: var(--rpgm-text-muted);
+  }
+  .review__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--rpgm-space-2);
+    margin-bottom: var(--rpgm-space-4);
+  }
+  .review__btn {
+    font: inherit;
+    font-size: var(--rpgm-text-sm);
+    padding: 0.5em 1em;
+    min-height: 44px;
+    border-radius: 6px;
+    border: 1px solid var(--rpgm-border-strong);
+    background: transparent;
+    color: var(--rpgm-text);
+    cursor: pointer;
+  }
+  .review__btn--small {
+    min-height: 32px;
+    padding: 0.2em 0.7em;
+  }
+  .review__btn--primary {
+    background: var(--rpgm-accent);
+    border-color: var(--rpgm-accent);
+    color: var(--rpgm-bg, #fff);
+  }
+  .review__btn--danger {
+    border-color: #8b1a1a;
+    color: #c0392b;
+  }
+  .review__btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+  .review__kill {
+    border: 1px solid var(--rpgm-border);
+    border-radius: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--rpgm-space-2);
+    align-items: center;
+  }
+  .review__chip {
+    border: 1px solid var(--rpgm-border);
+    border-radius: var(--rpgm-radius-full);
+    padding: 0.2em 0.8em;
+    font-size: var(--rpgm-text-sm);
+  }
+  .review__status {
+    padding: var(--rpgm-space-2) var(--rpgm-space-3);
+    border-radius: 6px;
+    border: 1px solid var(--rpgm-border);
+  }
+  .review__status[data-kind="ok"] {
+    border-color: #35513f;
+  }
+  .review__status[data-kind="error"] {
+    border-color: #8b1a1a;
+  }
+  .review__claims li {
+    margin-bottom: var(--rpgm-space-3);
+  }
+  .review__claim {
+    margin: 0 0 var(--rpgm-space-1, 4px);
+    font-weight: 600;
+  }
+  .review__gates dt {
+    font-weight: 600;
+  }
+  .review__gates dd {
+    margin: 0 0 var(--rpgm-space-2);
+    color: var(--rpgm-text-muted);
+  }
+  .review__float {
+    position: absolute;
+    z-index: 10;
+    font: inherit;
+    font-size: var(--rpgm-text-sm);
+    padding: 0.4em 0.9em;
+    border-radius: 6px;
+    border: 1px solid var(--rpgm-accent);
+    background: var(--rpgm-accent);
+    color: var(--rpgm-bg, #fff);
+    box-shadow: 0 2px 8px rgb(0 0 0 / 0.3);
+  }
+</style>

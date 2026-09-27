@@ -1,0 +1,30 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "rpgm-press-drafts",
+  "main": "./src/worker.ts",
+  "compatibility_date": "2026-08-29",
+  "account_id": "bb37de82a8d1040e9945ead5a03bab8d",
+  // Cloudflare Access guards drafts.blog.rpgm.tools. A workers.dev or preview
+  // URL would reach the same Worker without passing Access, so both stay off.
+  "workers_dev": false,
+  "preview_urls": false,
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "rpgm-press-drafts",
+      "database_id": "5ee45f39-9ed2-4a8f-9522-a45e77fbbf62"
+    }
+  ],
+  "routes": [
+    {
+      "pattern": "drafts.blog.rpgm.tools",
+      "custom_domain": true
+    }
+  ]
+}
