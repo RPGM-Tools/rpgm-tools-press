@@ -32,8 +32,14 @@ export interface Props {
    * ends up set, from either source.
    */
   analyticsToken?: string;
-  /** Absolute canonical URL for this page, if known. */
+  /** Absolute canonical URL for this page. Defaults to this page's own URL on the configured site. */
   canonicalURL?: string | URL;
+  /** Open Graph type: "article" for posts, "website" (the default) for everything else. */
+  ogType?: "website" | "article";
+  /** Social preview image, absolute or site-relative. Without one, the card is a small summary. */
+  ogImage?: string;
+  /** Alt text for ogImage. */
+  ogImageAlt?: string;
 }
 
 const {
@@ -49,7 +55,15 @@ const {
   githubHref,
   analyticsToken = import.meta.env.PUBLIC_CF_BEACON_TOKEN,
   canonicalURL,
+  ogType = "website",
+  ogImage,
+  ogImageAlt,
 } = Astro.props;
+
+const canonical = canonicalURL ?? (Astro.site ? new URL(Astro.url.pathname, Astro.site) : undefined);
+// Without a page image the site logo stands in, as a small summary card rather than a large one.
+const previewImage = ogImage ?? logoSrc;
+const ogImageURL = previewImage && Astro.site ? new URL(previewImage, Astro.site).toString() : previewImage;
 
 const pageTitle = title.includes(siteTitle) ? title : `${title} | ${siteTitle}`;
 ---
@@ -80,13 +94,20 @@ const pageTitle = title.includes(siteTitle) ? title : `${title} | ${siteTitle}`;
     <meta name="generator" content={Astro.generator} />
     <title>{pageTitle}</title>
     {description && <meta name="description" content={description} />}
-    {canonicalURL && <link rel="canonical" href={canonicalURL.toString()} />}
+    {canonical && <link rel="canonical" href={canonical.toString()} />}
 
     <!-- Open Graph / social -->
     <meta property="og:title" content={pageTitle} />
     {description && <meta property="og:description" content={description} />}
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={ogType} />
     <meta property="og:site_name" content={siteTitle} />
+    {canonical && <meta property="og:url" content={canonical.toString()} />}
+    {ogImageURL && <meta property="og:image" content={ogImageURL} />}
+    {ogImageURL && ogImageAlt && <meta property="og:image:alt" content={ogImageAlt} />}
+    <meta name="twitter:card" content={ogImage ? "summary_large_image" : "summary"} />
+    <meta name="twitter:title" content={pageTitle} />
+    {description && <meta name="twitter:description" content={description} />}
+    {ogImageURL && <meta name="twitter:image" content={ogImageURL} />}
 
     <!-- RSS autodiscovery -->
     {

@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- [Visible] [SEO] Every post now carries structured data naming its author and publisher, article Open Graph tags and Twitter cards, and every page has a canonical URL.
+- [Visible] [SEO] The blog now serves llms.txt, an index of its posts for AI answer engines, and a robots.txt that points to the sitemap.
+- [Visible] [Content] Posts take an optional cover field in frontmatter (a path such as /covers/<slug>.webp, with coverAlt). The image renders above the post body at 1200 by 630 and replaces the logo in Open Graph and Twitter previews.
+- [Visible] [Content] Posts can use three topic categories: Software Engineering, UI/UX Design, and AI & Harness Tips. Any other category slug still builds, labeled from the slug, and the Discord announcer tags the topic categories with the closest existing forum tag.
 - [Internal] [Drafts] A new drafts app serves private previews of blog posts at drafts.blog.rpgm.tools, behind Cloudflare Access. Each draft renders with the blog's own theme and has a review panel for comments on passages, notes, and approve, revise, park or kill. Draft text never enters this repo: the site is built on the deploying machine from a private folder.
 - [Internal] [Content-Sync] Each tracked repo now declares a `releaseSource`
   in `repos.json`, either `releases` or `tags`, instead of the sync inferring

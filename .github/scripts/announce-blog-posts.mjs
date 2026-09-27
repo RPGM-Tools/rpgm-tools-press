@@ -17,7 +17,12 @@ import { readFileSync } from "node:fs";
 const POSTS_DIR = "apps/blog/src/content/posts/";
 const SITE = "https://blog.rpgm.tools";
 const BLOG_NEWS_ROLE_ID = "1553725178150785065";
+// The topic categories reuse the closest existing #blog forum tag until the
+// forum gets tags of its own for them.
 const FORUM_TAGS = {
+  "software-engineering": "1553723558566305862",
+  "ui-ux-design": "1553723558566305862",
+  "ai-and-harness-tips": "1553723453419430029",
   "ai-projects": "1553723453419430029",
   "neo-angband": "1553723538119327834",
   "rpgm-tools": "1553723548353433710",

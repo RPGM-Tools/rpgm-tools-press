@@ -9,9 +9,12 @@ const posts = defineCollection({
     pubDate: z.coerce.date(),
     updatedDate: z.coerce.date().optional(),
     tags: z.array(z.string()).default([]),
-    category: z
-      .enum(["ai-projects", "neo-angband", "rpgm-tools", "dev-musings"])
-      .optional(),
+    // Topic categories live in CATEGORY_META (consts.ts); any other slug still
+    // renders, labelled from the slug, so a new topic never breaks the build.
+    category: z.string().optional(),
+    // Social preview and header image, site-relative (e.g. /covers/<slug>.webp).
+    cover: z.string().optional(),
+    coverAlt: z.string().optional(),
     draft: z.boolean().default(false),
   }),
 });

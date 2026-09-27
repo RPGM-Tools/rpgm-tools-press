@@ -26,6 +26,9 @@ export const RPGM_TOOLS_URL = "https://rpgm.tools";
  * three lean on the theme's existing rust/graphite/forest anchors.
  */
 export const CATEGORY_META: Record<string, { label: string; color: string }> = {
+  "software-engineering": { label: "Software Engineering", color: "#2f4f6f" },
+  "ui-ux-design": { label: "UI/UX Design", color: "#8a5a1f" },
+  "ai-and-harness-tips": { label: "AI & Harness Tips", color: "#4f5b2a" },
   "ai-projects": { label: "AI Projects", color: "#c04100" },
   "neo-angband": { label: "Neo Angband", color: "#8b1a1a" },
   "rpgm-tools": { label: "RPGM Tools", color: "#1f2937" },
