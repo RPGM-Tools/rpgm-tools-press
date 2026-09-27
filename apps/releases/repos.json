@@ -1,5 +1,6 @@
 [
   { "owner": "neostryder", "repo": "neo-angband", "displayName": "Neo Angband", "kind": "core", "releaseSource": "releases", "emoji": "🗡️", "color": "#8b1a1a" },
+  { "owner": "neostryder", "repo": "neo-angband-mod-anybandui", "displayName": "Neo Angband: AnybandUI", "kind": "mod", "releaseSource": "releases", "emoji": "🖼️", "color": "#5ce1e6" },
   { "owner": "neostryder", "repo": "neo-angband-mod-borg", "displayName": "Neo Angband: Borg", "kind": "mod", "releaseSource": "releases", "emoji": "🤖", "color": "#1f8ecd" },
   { "owner": "neostryder", "repo": "neo-angband-mod-bug-fixes", "displayName": "Neo Angband: Bug Fixes", "kind": "mod", "releaseSource": "releases", "emoji": "🩹", "color": "#e07b00" },
   { "owner": "neostryder", "repo": "neo-angband-mod-feature-restoration", "displayName": "Neo Angband: Cutting Room Floor", "kind": "mod", "releaseSource": "releases", "emoji": "🕛", "color": "#8e44ad" },
