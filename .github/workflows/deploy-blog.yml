@@ -9,6 +9,11 @@ on:
       - ".github/scripts/generate-search-embeddings.mjs"
       - ".github/workflows/deploy-blog.yml"
   workflow_dispatch:
+    inputs:
+      announce:
+        description: Post file to announce in the Discord #blog forum (for example apps/blog/src/content/posts/my-post.md)
+        required: false
+        default: ""
 
 concurrency:
   group: deploy-blog
@@ -19,6 +24,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
@@ -43,3 +50,16 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           workingDirectory: apps/blog
           command: deploy
+      - name: Announce new posts on Discord
+        if: github.event_name == 'push' || inputs.announce != ''
+        env:
+          DISCORD_BLOG_WEBHOOK_URL: ${{ secrets.DISCORD_BLOG_WEBHOOK_URL }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+          ANNOUNCE: ${{ inputs.announce }}
+        run: |
+          if [ -n "$ANNOUNCE" ]; then
+            node .github/scripts/announce-blog-posts.mjs --file "$ANNOUNCE"
+          else
+            node .github/scripts/announce-blog-posts.mjs "$BEFORE" "$AFTER"
+          fi

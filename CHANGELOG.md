@@ -27,6 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   (which is plain text, not rendered markdown) drops any leading tags
   outright rather than showing them unstyled.
 
+- [Visible] [Discord] Each newly published blog post now opens a post in the Discord #blog forum, tagged with its category. The forum post arrives without a notification, and a reply in its thread pings the opt-in Blog News role.
+
 ### Changed
 
 - [Visible] [Search] The search hint below the field is shorter and less
