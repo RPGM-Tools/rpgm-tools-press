@@ -1,0 +1,62 @@
+---
+import { getCollection } from "astro:content";
+import Layout from "@rpgm/tools-press-theme/components/Layout.astro";
+import ListFilter from "@rpgm/tools-press-theme/components/ListFilter.astro";
+import Flourish from "@rpgm/tools-press-theme/ornaments/Flourish.astro";
+import SiteHead from "../../components/SiteHead.astro";
+import FamilyNav from "../../components/FamilyNav.astro";
+import ReleaseRegister from "../../components/ReleaseRegister.astro";
+import { SITE_TITLE, SITE_LOGO, NAV_LINKS, REPO_URL } from "../../consts";
+import { activeFamilies, enrolledRepos, familyOf } from "../../lib/repos";
+
+export async function getStaticPaths() {
+  const allReleases = await getCollection("releases");
+  return activeFamilies.map((family) => ({
+    params: { family: family.id },
+    props: {
+      family,
+      releases: allReleases
+        .filter((release) => familyOf(release.data.repo) === family.id)
+        .sort((a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf() || a.id.localeCompare(b.id)),
+    },
+  }));
+}
+
+const { family, releases } = Astro.props;
+const repoCount = enrolledRepos.filter((r) => r.family === family.id).length;
+---
+
+<Layout
+  title={family.label}
+  description={`Release notes for every ${family.label} repository.`}
+  siteTitle={SITE_TITLE}
+  logoSrc={SITE_LOGO}
+  navLinks={NAV_LINKS}
+  rssTitle={`${SITE_TITLE}: ${family.label}`}
+  rssHref={`/rss/${family.id}.xml`}
+  githubHref={REPO_URL}
+>
+  <Fragment slot="head">
+    <SiteHead />
+  </Fragment>
+
+  <p class="rpgm-eyebrow">{family.label}</p>
+  <Flourish size={16} color="var(--rpgm-border-strong)" variant="stamp" />
+  <p class="ledger-receipt">
+    {releases.length} entries across {repoCount} {repoCount === 1 ? "repository" : "repositories"}. <a href={`/rss/${family.id}.xml`}>RSS for {family.label} only</a>.
+  </p>
+  <FamilyNav current={family.id} />
+  <ListFilter slot="search" targetSelector=".ledger-register" placeholder={`Search ${family.label} releases`} />
+
+  {releases.length === 0 ? <p>No releases have synced for this family yet.</p> : <ReleaseRegister releases={releases} />}
+</Layout>
+
+<style>
+  .ledger-receipt {
+    margin: 0 0 var(--rpgm-space-5);
+    font-family: var(--rpgm-font-mono);
+    font-size: var(--rpgm-text-xs);
+    color: var(--rpgm-text-muted);
+    text-align: center;
+  }
+</style>

@@ -1,0 +1,66 @@
+name: Enroll repo
+
+# Records the maintainer's answer to an enrollment ask. The Discord bot
+# dispatches this after asking about a candidate listed in enrollment.json.
+
+on:
+  workflow_dispatch:
+    inputs:
+      repo:
+        description: Repository as owner/name, for example neostryder/augur
+        required: true
+        type: string
+      decision:
+        description: Put the repo on the Ledger, or never offer it again
+        required: true
+        type: choice
+        options: [enroll, decline]
+      family:
+        description: Family the repo belongs to
+        required: true
+        type: choice
+        options: [neo-angband, rpgm-tools, other-projects]
+
+concurrency:
+  group: enroll-repo
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  enroll:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Record the decision
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ inputs.repo }}
+          DECISION: ${{ inputs.decision }}
+          FAMILY: ${{ inputs.family }}
+        run: node .github/scripts/enroll-repo.mjs "$REPO" "$DECISION" "$FAMILY"
+      - name: Commit and push
+        env:
+          REPO: ${{ inputs.repo }}
+          DECISION: ${{ inputs.decision }}
+        run: |
+          if [ -z "$(git status --porcelain apps/releases)" ]; then
+            echo "Nothing changed."
+            exit 0
+          fi
+          git config user.name "rpgm-press-bot"
+          git config user.email "press-bot@users.noreply.github.com"
+          git add apps/releases/repos.json apps/releases/public/enrollment.json
+          git commit -m "chore: $DECISION $REPO"
+          git pull --rebase
+          git push
+      # A push made with GITHUB_TOKEN starts no workflows, so the deploy is started by hand.
+      - name: Rebuild the Ledger
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run deploy-releases.yml --ref main

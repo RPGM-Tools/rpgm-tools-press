@@ -2,24 +2,32 @@ import rss from "@astrojs/rss";
 import { getCollection } from "astro:content";
 import { SITE_TITLE, SITE_DESCRIPTION } from "../consts";
 import { summarize } from "../lib/summarize";
+import { FAMILIES, familyOf } from "../lib/repos";
 
-export async function GET(context) {
-  const releases = await getCollection("releases");
-  const sorted = releases.sort(
-    (a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf(),
-  );
+/** Shared by the main feed and the per-family feeds in rss/[family].xml.js. */
+export async function releaseFeed(context, { title, description, family }) {
+  const releases = (await getCollection("releases"))
+    .filter((release) => {
+      const f = familyOf(release.data.repo);
+      return f && (!family || f === family);
+    })
+    .sort((a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf());
 
   return rss({
-    title: SITE_TITLE,
-    description: SITE_DESCRIPTION,
+    title,
+    description,
     site: context.site,
-    items: sorted.map((release) => ({
+    items: releases.map((release) => ({
       title: `${release.data.repoDisplayName} ${release.data.version}`,
       description: summarize(release.body),
       pubDate: release.data.publishedAt,
       link: `/releases/${release.id}/`,
-      categories: release.data.kind ? [release.data.kind] : [],
+      categories: [FAMILIES.find((f) => f.id === familyOf(release.data.repo))?.label, release.data.kind].filter(Boolean),
     })),
     customData: `<language>en-us</language>`,
   });
+}
+
+export function GET(context) {
+  return releaseFeed(context, { title: SITE_TITLE, description: SITE_DESCRIPTION });
 }

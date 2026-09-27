@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 // @ts-check
 /**
- * Syncs release notes for every repo listed in apps/releases/repos.json
+ * Syncs release notes for every enrolled repo in apps/releases/repos.json
  * into apps/releases/src/content/releases/<owner>-<repo>/<tag>.md content
- * collection entries.
+ * collection entries. Declined repos in the same file are skipped; they are
+ * only there so discover-repos.mjs never offers them again.
  *
  * Usage: node .github/scripts/sync-releases.mjs
  * (run from anywhere - all paths below are resolved relative to this
@@ -15,19 +16,17 @@
  * unauthenticated rate limit - fine for local/manual runs, a real token
  * should be supplied in CI.
  *
- * Only a strict `vX.Y.Z` tag is synced, for every repo alike - GitHub's own
- * `prerelease` flag is NOT used as the filter, because it marks every
- * pre-1.0 version true as well as genuine rolling/edge builds (tagged
- * `vX.Y.Z-edge.N`), and pre-1.0 history is real release history, not noise.
- * The tag pattern alone already excludes edge builds and anything not
- * meant as a real version.
+ * Only a strict `vX.Y.Z` tag is synced (or `<tagPrefix>vX.Y.Z` for a repo
+ * that sets `tagPrefix`) - GitHub's own `prerelease` flag is NOT used as the
+ * filter, because it marks every pre-1.0 version true as well as genuine
+ * rolling/edge builds (tagged `vX.Y.Z-edge.N`), and pre-1.0 history is real
+ * release history, not noise. The tag pattern alone already excludes edge
+ * builds and anything not meant as a real version.
  *
- * A repo that has ANY formal GitHub Releases (currently just the core game)
- * is read from the Releases API, so its ~1,400 inherited upstream Angband
- * tags never enter the picture. A repo with NO formal Releases (currently
- * every mod - a version tag IS the release for them, see each mod's own
- * discord-announce.yml) is read from its tags instead. Either source is
- * then filtered to the same strict vX.Y.Z pattern.
+ * Each repo declares its source in repos.json: `releases` reads the Releases
+ * API, so the core game's ~1,400 inherited upstream Angband tags never enter
+ * the picture, and `tags` (the default) reads the tag list. Either source is
+ * then filtered to the same strict pattern.
  *
  * Either way, the actual release-notes content comes from that version's
  * own section of CHANGELOG.md at that tag - never a GitHub Release's own
@@ -318,7 +317,7 @@ async function pruneStaleFiles(folder, keepFilenames) {
 
 /** Builds one synced entry (changelog section + metadata) for a single stable version tag. */
 async function buildEntryForTag(tracked, tag, { fallbackBody, fallbackPublishedAt, assets, url }) {
-  const version = tag.replace(/^v/, "");
+  const version = tag.slice((tracked.tagPrefix ?? "").length).replace(/^v/, "");
   const changelog = await fetchChangelogAt(tracked.owner, tracked.repo, tag);
   const section = changelog ? changelogSection(changelog, version) : null;
 
@@ -343,8 +342,8 @@ async function buildEntryForTag(tracked, tag, { fallbackBody, fallbackPublishedA
 
 async function main() {
   const reposRaw = await readFile(REPOS_JSON_PATH, "utf8");
-  /** @type {{owner: string, repo: string, displayName: string, kind?: string, emoji?: string}[]} */
-  const repos = JSON.parse(reposRaw);
+  /** @type {{owner: string, repo: string, displayName: string, status: string, tagPrefix?: string, kind?: string, emoji?: string}[]} */
+  const repos = JSON.parse(reposRaw).filter((r) => r.status === "enrolled");
 
   const summary = {
     reposChecked: 0,
@@ -381,13 +380,14 @@ async function main() {
       // Angband tags, 34 of which match the stable pattern exactly (v2.5.8 through
       // v3.5.0) and would otherwise appear as if they were our releases.
       const releaseSource = tracked.releaseSource ?? "tags";
+      const isStable = (t) => t.startsWith(tracked.tagPrefix ?? "") && STABLE_TAG_PATTERN.test(t.slice((tracked.tagPrefix ?? "").length));
       let sourceTags;
 
       if (releaseSource === "releases") {
-        sourceTags = allReleases.map((r) => r.tag_name).filter((t) => STABLE_TAG_PATTERN.test(t));
+        sourceTags = allReleases.map((r) => r.tag_name).filter(isStable);
       } else {
         const tags = await fetchAllTags(tracked.owner, tracked.repo);
-        sourceTags = tags.map((t) => t.name).filter((t) => STABLE_TAG_PATTERN.test(t));
+        sourceTags = tags.map((t) => t.name).filter(isStable);
       }
 
       // A matching Release is enrichment on top of a tag, never the thing that

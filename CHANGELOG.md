@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- [Visible] [UI] Each project family has its own page and RSS feed on The Ledger. A row of links above the release list switches between all releases, Neo Angband, RPGM Tools and Other Projects, and the Repositories page groups repos the same way.
+- [Visible] [Content-Sync] The Ledger now tracks Augur and Mercury under Other Projects. RPGM Tools Press moves there as well.
+- [Internal] [Content-Sync] Each sync looks for public repos in neostryder and RPGM-Tools that have no enrollment decision and lists them in `enrollment.json` with a suggested family. The `enroll-repo` workflow records the answer in `repos.json`, and a declined repo is never offered again.
+- [Visible] [Discord] New releases are posted to their family's Discord announcements forum after the site deploys. Releases from before a repo was enrolled, or older than seven days, are never posted. Neo Angband only logs its posts until `DISCORD_NEO_ANGBAND_MODE` is set to `live`, since each Neo Angband repo still posts its own.
 - [Visible] [UI] The header stays pinned to the top of the page. Once you scroll, it shrinks to a slim bar, and on phones its links tuck away until you scroll back up.
 - [Visible] [UI] Opening a post or a release from a list slides its title into the page heading, and moving between pages cross-fades, in browsers that support cross-document view transitions. A reduced-motion setting turns both off.
 - [Visible] [UI] Entries that come back into view when a search changes or clears fade in instead of appearing all at once.
@@ -43,6 +47,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- [Internal] [Content-Sync] `repos.json` is the one source for each repo's name, emoji and color. Entries gain `family`, `status`, `enrolledAt` and an optional `tagPrefix` for version tags that carry a prefix.
+- [Visible] [UI] The Play Neo Angband link only appears on Neo Angband release pages.
 - [Visible] [UI] The search field moved into the header and stays visible in the slim bar while you scroll. Typing on the blog or The Ledger filters the list where you are and jumps to the first match. From a post or release page, pressing Enter opens the homepage with that search. Press / to focus the field.
 - [Visible] [Search] The search hint below the field is shorter and less
   technical: "Searches for exact matches first, then approximate matches."

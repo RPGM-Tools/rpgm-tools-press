@@ -9,6 +9,7 @@ import SiteHead from "../../components/SiteHead.astro";
 import DownloadList from "../../components/DownloadList.astro";
 import { transitionName } from "@rpgm/tools-press-theme/transition-name";
 import { SITE_TITLE, SITE_LOGO, NAV_LINKS, GISCUS, MAIN_GAME_REPO, PLAY_NOW_URL, REPO_URL } from "../../consts";
+import { familyOf } from "../../lib/repos";
 
 export async function getStaticPaths() {
   const releases = await getCollection("releases");
@@ -31,6 +32,7 @@ const dateLabel = release.data.publishedAt.toLocaleDateString("en-US", {
 
 const repoUrl = `https://github.com/${release.data.repo}`;
 const isMod = release.data.kind === "mod";
+const isNeoAngband = familyOf(release.data.repo) === "neo-angband";
 ---
 
 <Layout
@@ -62,7 +64,7 @@ const isMod = release.data.kind === "mod";
     <DownloadList assets={release.data.assets} />
 
     <ul class="release-links">
-      <li><a href={PLAY_NOW_URL}>Play Neo Angband now</a></li>
+      {isNeoAngband && <li><a href={PLAY_NOW_URL}>Play Neo Angband now</a></li>}
       <li><a href={release.data.url}>View this release on GitHub</a></li>
       <li><a href={repoUrl}>{release.data.repoDisplayName} on GitHub</a></li>
       {isMod && <li><a href={`https://github.com/${MAIN_GAME_REPO}`}>Neo Angband (the main game) on GitHub</a></li>}

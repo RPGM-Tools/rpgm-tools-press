@@ -1,0 +1,20 @@
+{
+  "neo-angband": {
+    "username": "Aragorn",
+    "avatarUrl": "https://cdn.discordapp.com/avatars/373993501559619596/09bcc0d0aa00500da04e119d2473c6da.png?size=256",
+    "namePrefix": "Neo Angband: ",
+    "footer": { "core": "Neo Angband", "default": "Neo Angband mod - {title}" }
+  },
+  "rpgm-tools": {
+    "username": "Aragorn",
+    "avatarUrl": "https://cdn.discordapp.com/avatars/373993501559619596/09bcc0d0aa00500da04e119d2473c6da.png?size=256",
+    "namePrefix": "RPGM Tools: ",
+    "footer": { "default": "RPGM Tools - {title}" }
+  },
+  "other-projects": {
+    "username": "Aragorn",
+    "avatarUrl": "https://cdn.discordapp.com/avatars/373993501559619596/09bcc0d0aa00500da04e119d2473c6da.png?size=256",
+    "namePrefix": "",
+    "footer": { "default": "{title}" }
+  }
+}

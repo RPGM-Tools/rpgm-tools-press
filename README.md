@@ -77,29 +77,9 @@ actually showing.
 
 ## Release notes sync
 
-`.github/scripts/sync-releases.mjs` populates `apps/releases/src/content/releases`
-on a schedule and on push - it is not a live read at request time, so a new
-release can take up to the sync interval to appear. Only a strict `vX.Y.Z` tag
-is synced, whether it comes from a real GitHub Release (currently the core
-game) or, for a repo with no formal Releases at all (currently every mod,
-where a version tag IS the release), from the repo's tags directly. GitHub's
-own `prerelease` flag is deliberately not used as the filter - it also marks
-every pre-1.0 version true, and that history is real, not noise. Either way,
-the notes shown are that version's own section of `CHANGELOG.md` at that tag,
-not a GitHub Release's `body` - the sync script never hand-edits `CHANGELOG.md`
-in the source repos, it only reads from them. Sort order on the site uses each
-entry's real publish/commit timestamp, not the changelog heading's day-only
-date, so same-day releases still land in the order they were actually
-published.
+`.github/scripts/sync-releases.mjs` fills `apps/releases/src/content/releases` on a schedule and on push. It is not a live read at request time, so a new release can take up to the sync interval to appear. Only a strict `vX.Y.Z` tag is synced, after the repo's `tagPrefix` if it has one, and each repo's `releaseSource` says whether that list comes from its GitHub Releases or its tags. GitHub's own `prerelease` flag is not used as the filter, because it also marks every pre-1.0 version, and that history is real. The notes shown are that version's section of `CHANGELOG.md` at that tag, never a GitHub Release's `body`, and the sync only reads the source repos. Sort order uses each entry's real publish or commit time rather than the changelog heading's date, so two releases on the same day still appear in the order they shipped.
 
-Each tracked repo in `apps/releases/repos.json` carries a `kind` (`core` or
-`mod`), an `emoji`, and a `color`, all mirrored from that repo's own
-`discord-announce.mjs` `REPO_CONFIG` so the same identity marks a product on
-both Discord and here. `color` renders as a thin accent tick per entry in the
-release list (`LedgerRow`, a ruled register rather than the blog's card
-list - a deliberately different visual language for a changelog aggregator
-vs. a personal blog) and as a repo's mark on `/repos`, which lists every
-tracked repo and links to its own `/repos/<repo>` page.
+Each entry in `apps/releases/repos.json` names a repo, its `family` (`neo-angband`, `rpgm-tools` or `other-projects`) and its `status`. Enrolled repos also carry a display name, `kind`, `emoji`, `color`, `releaseSource` and `enrolledAt`, plus an optional `tagPrefix` for version tags shaped like `thunderbird-v1.2.3`. Declined repos stay in the file so discovery never offers them again. A repo's emoji and color mark it in the release list, on `/repos`, and in its Discord announcements. `/families/<family>` and `/rss/<family>.xml` list one family's releases.
 
 A release-listing card's blurb comes from a short AI-synthesized summary of
 that version's changelog section (MiniMax-M3, requires `MINIMAX_API_KEY`),
@@ -107,6 +87,12 @@ generated once when the entry is first synced and stored in its frontmatter
 - a tag's content never changes, so later syncs reuse the stored summary
 rather than paying for a fresh call. Without a key, or if a call fails, a
 card falls back to a plain first-line truncation of the changelog instead.
+
+## Enrollment and Discord announcements
+
+Every sync also runs `discover-repos.mjs`. It lists the public repos in neostryder and RPGM-Tools, skips archived repos and forks, and writes the ones with no decision to `apps/releases/public/enrollment.json`, served at `/enrollment.json`, with a suggested family. An RPGM-Tools repo named `rpgm-*` only shows up once it reaches v1.0.0. The Discord bot asks about each candidate and dispatches `enroll-repo.yml` with the answer, which updates `repos.json` and rebuilds the site. The starter entry uses the family's default emoji and color, so give it its own by editing `repos.json` afterwards.
+
+After each deploy, `announce-releases.mjs` posts new releases to the family's Discord forum through the `DISCORD_WEBHOOK_<FAMILY>` secret. It tags the thread with `DISCORD_<FAMILY>_RELEASE_TAG_ID` and mentions `DISCORD_<FAMILY>_ROLE_ID`, both repo variables. `apps/releases/announced.json` lists every release already handled. A release published before its repo's `enrolledAt`, or more than seven days ago, is recorded without a post, and a family with no webhook is skipped until one is set. Neo Angband defaults to dry-run, which logs the post without sending it, until `DISCORD_NEO_ANGBAND_MODE` is `live`. The webhook's name, avatar and footer text come from `apps/releases/discord-families.json`.
 
 ## Structure
 

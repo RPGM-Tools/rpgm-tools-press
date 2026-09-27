@@ -1,26 +1,18 @@
 ---
 import { getCollection } from "astro:content";
 import Layout from "@rpgm/tools-press-theme/components/Layout.astro";
-import LedgerRow from "@rpgm/tools-press-theme/components/LedgerRow.astro";
 import ListFilter from "@rpgm/tools-press-theme/components/ListFilter.astro";
 import Flourish from "@rpgm/tools-press-theme/ornaments/Flourish.astro";
 import SiteHead from "../components/SiteHead.astro";
+import FamilyNav from "../components/FamilyNav.astro";
+import ReleaseRegister from "../components/ReleaseRegister.astro";
 import { SITE_TITLE, SITE_TAGLINE, SITE_DESCRIPTION, SITE_LOGO, NAV_LINKS, REPO_URL } from "../consts";
-import { summarize } from "../lib/summarize";
-import repos from "../../repos.json";
+import { enrolledRepos, familyOf } from "../lib/repos";
 
 const allReleases = await getCollection("releases");
-const releases = allReleases.sort(
-  (a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf() || a.id.localeCompare(b.id),
-);
-
-// Grouped by month for the date rail. Pinned to the same zone as LedgerRow's dates.
-const months: { label: string; releases: typeof releases }[] = [];
-for (const release of releases) {
-  const label = release.data.publishedAt.toLocaleDateString("en-US", { year: "numeric", month: "long", timeZone: "America/Phoenix" });
-  if (months.at(-1)?.label !== label) months.push({ label, releases: [] });
-  months.at(-1)!.releases.push(release);
-}
+const releases = allReleases
+  .filter((release) => familyOf(release.data.repo))
+  .sort((a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf() || a.id.localeCompare(b.id));
 
 // Pinned to a fixed zone - see EntryCard.astro's identical comment for why.
 const syncedAt = new Date().toLocaleDateString("en-US", {
@@ -49,30 +41,12 @@ const syncedAt = new Date().toLocaleDateString("en-US", {
   <p class="rpgm-eyebrow">Latest releases</p>
   <Flourish size={16} color="var(--rpgm-border-strong)" variant="stamp" />
   <p class="ledger-receipt">
-    {releases.length} entries across {repos.length} repositories - last synchronized {syncedAt}.
+    {releases.length} entries across {enrolledRepos.length} repositories - last synchronized {syncedAt}.
   </p>
+  <FamilyNav />
   <ListFilter slot="search" targetSelector=".ledger-register" placeholder="Search every release" />
 
-  {
-    months.map((month) => (
-      <section class="ledger-month" aria-label={month.label}>
-        <h2 class="ledger-month__label">{month.label}</h2>
-        <div class="ledger-register">
-          {month.releases.map((release) => (
-            <LedgerRow
-              title={`${release.data.repoDisplayName} ${release.data.version}`}
-              href={`/releases/${release.id}/`}
-              date={release.data.publishedAt}
-              description={summarize(release.data.summary ?? release.body, 130)}
-              accentColor={release.data.color}
-              emoji={release.data.emoji}
-              transitionId={release.id}
-            />
-          ))}
-        </div>
-      </section>
-    ))
-  }
+  <ReleaseRegister releases={releases} />
 </Layout>
 
 <style>
@@ -82,41 +56,5 @@ const syncedAt = new Date().toLocaleDateString("en-US", {
     font-size: var(--rpgm-text-xs);
     color: var(--rpgm-text-muted);
     text-align: center;
-  }
-
-  /* display: grid below would otherwise beat [hidden] when a search empties the month. */
-  .ledger-month[hidden] {
-    display: none;
-  }
-
-  .ledger-month + .ledger-month {
-    margin-top: var(--rpgm-space-6);
-  }
-
-  .ledger-month__label {
-    margin: 0 0 var(--rpgm-space-2);
-    font-family: var(--rpgm-font-mono);
-    font-size: var(--rpgm-text-xs);
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--rpgm-text-muted);
-  }
-
-  /* On wide screens the month labels sit in a rail beside the register and stay in view while its rows scroll past. */
-  @media (min-width: 60em) {
-    .ledger-month {
-      display: grid;
-      grid-template-columns: 8rem 1fr;
-      gap: var(--rpgm-space-4);
-      align-items: start;
-    }
-
-    .ledger-month__label {
-      position: sticky;
-      top: calc(var(--rpgm-header-height, 0px) + var(--rpgm-space-4));
-      margin: var(--rpgm-space-3) 0 0;
-      text-align: right;
-    }
   }
 </style>

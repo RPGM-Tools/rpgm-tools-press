@@ -6,12 +6,12 @@ import ProductSeal from "@rpgm/tools-press-theme/ornaments/ProductSeal.astro";
 import SiteHead from "../../components/SiteHead.astro";
 import { SITE_TITLE, SITE_LOGO, NAV_LINKS, REPO_URL } from "../../consts";
 import { summarize } from "../../lib/summarize";
-import repos from "../../../repos.json";
+import { enrolledRepos } from "../../lib/repos";
 
 export async function getStaticPaths() {
   const allReleases = await getCollection("releases");
 
-  return repos.map((tracked) => {
+  return enrolledRepos.map((tracked) => {
     const fullName = `${tracked.owner}/${tracked.repo}`;
     const filtered = allReleases
       .filter((release) => release.data.repo === fullName)

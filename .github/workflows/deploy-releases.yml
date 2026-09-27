@@ -10,6 +10,8 @@ on:
       - "apps/releases/**"
       - "packages/theme/**"
       - ".github/scripts/sync-releases.mjs"
+      - ".github/scripts/discover-repos.mjs"
+      - ".github/scripts/announce-releases.mjs"
       - ".github/scripts/generate-search-embeddings.mjs"
       - ".github/workflows/deploy-releases.yml"
 
@@ -39,6 +41,9 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
           node .github/scripts/sync-releases.mjs
+          # Non-fatal: a failed discovery pass only delays the next enrollment ask.
+          node .github/scripts/discover-repos.mjs \
+            || echo "::warning::discover-repos.mjs failed - keeping the previous enrollment.json"
           # Non-fatal on purpose: a Workers AI hiccup (auth, rate limit,
           # model outage) should never block syncing/deploying real release
           # content - search falls back to stale-but-present embeddings,
@@ -46,7 +51,7 @@ jobs:
           # run failing outright until someone notices and fixes it.
           node .github/scripts/generate-search-embeddings.mjs releases \
             || echo "::warning::generate-search-embeddings.mjs failed - continuing with existing embeddings"
-          if [ -n "$(git status --porcelain apps/releases/src/content/releases apps/releases/public/search-embeddings.json)" ]; then
+          if [ -n "$(git status --porcelain apps/releases/src/content/releases apps/releases/public/search-embeddings.json apps/releases/public/enrollment.json)" ]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
           else
             echo "changed=false" >> "$GITHUB_OUTPUT"
@@ -59,7 +64,7 @@ jobs:
         run: |
           git config user.name "rpgm-press-bot"
           git config user.email "press-bot@users.noreply.github.com"
-          git add apps/releases/src/content/releases apps/releases/public/search-embeddings.json
+          git add apps/releases/src/content/releases apps/releases/public/search-embeddings.json apps/releases/public/enrollment.json
           git commit -m "chore: sync release notes"
           git push
 
@@ -85,3 +90,28 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           workingDirectory: apps/releases
           command: deploy
+      # Runs after the deploy so the Ledger link in each post already resolves.
+      - name: Announce new releases on Discord
+        env:
+          DISCORD_WEBHOOK_NEO_ANGBAND: ${{ secrets.DISCORD_WEBHOOK_NEO_ANGBAND }}
+          DISCORD_WEBHOOK_RPGM_TOOLS: ${{ secrets.DISCORD_WEBHOOK_RPGM_TOOLS }}
+          DISCORD_WEBHOOK_OTHER_PROJECTS: ${{ secrets.DISCORD_WEBHOOK_OTHER_PROJECTS }}
+          DISCORD_NEO_ANGBAND_RELEASE_TAG_ID: ${{ vars.DISCORD_NEO_ANGBAND_RELEASE_TAG_ID }}
+          DISCORD_NEO_ANGBAND_ROLE_ID: ${{ vars.DISCORD_NEO_ANGBAND_ROLE_ID }}
+          DISCORD_NEO_ANGBAND_MODE: ${{ vars.DISCORD_NEO_ANGBAND_MODE }}
+          DISCORD_RPGM_TOOLS_RELEASE_TAG_ID: ${{ vars.DISCORD_RPGM_TOOLS_RELEASE_TAG_ID }}
+          DISCORD_RPGM_TOOLS_ROLE_ID: ${{ vars.DISCORD_RPGM_TOOLS_ROLE_ID }}
+          DISCORD_RPGM_TOOLS_MODE: ${{ vars.DISCORD_RPGM_TOOLS_MODE }}
+          DISCORD_OTHER_PROJECTS_RELEASE_TAG_ID: ${{ vars.DISCORD_OTHER_PROJECTS_RELEASE_TAG_ID }}
+          DISCORD_OTHER_PROJECTS_ROLE_ID: ${{ vars.DISCORD_OTHER_PROJECTS_ROLE_ID }}
+          DISCORD_OTHER_PROJECTS_MODE: ${{ vars.DISCORD_OTHER_PROJECTS_MODE }}
+        run: |
+          node .github/scripts/announce-releases.mjs
+          if [ -n "$(git status --porcelain apps/releases/announced.json)" ]; then
+            git config user.name "rpgm-press-bot"
+            git config user.email "press-bot@users.noreply.github.com"
+            git add apps/releases/announced.json
+            git commit -m "chore: record announced releases"
+            git pull --rebase
+            git push
+          fi

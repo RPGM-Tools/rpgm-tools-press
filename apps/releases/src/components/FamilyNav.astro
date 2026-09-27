@@ -1,0 +1,53 @@
+---
+import { activeFamilies, type FamilyId } from "../lib/repos";
+
+interface Props {
+  /** The family page being shown, or undefined on the page listing every family. */
+  current?: FamilyId;
+}
+
+const { current } = Astro.props;
+const links = [{ href: "/", label: "All", active: current === undefined }, ...activeFamilies.map((f) => ({ href: `/families/${f.id}/`, label: f.label, active: f.id === current }))];
+---
+
+<nav class="family-nav" aria-label="Filter by project family">
+  {
+    links.map((link) => (
+      <a href={link.href} class="family-nav__link" aria-current={link.active ? "page" : undefined}>
+        {link.label}
+      </a>
+    ))
+  }
+</nav>
+
+<style>
+  .family-nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--rpgm-space-2);
+    margin: 0 0 var(--rpgm-space-5);
+  }
+
+  .family-nav__link {
+    padding: var(--rpgm-space-1) var(--rpgm-space-3);
+    border: 1px solid var(--rpgm-border);
+    border-radius: 999px;
+    font-family: var(--rpgm-font-mono);
+    font-size: var(--rpgm-text-xs);
+    color: var(--rpgm-text-muted);
+    text-decoration: none;
+    transition: border-color var(--rpgm-transition-fast), color var(--rpgm-transition-fast);
+  }
+
+  .family-nav__link:hover,
+  .family-nav__link:focus-visible {
+    color: var(--rpgm-accent);
+    border-color: var(--rpgm-border-strong);
+  }
+
+  .family-nav__link[aria-current="page"] {
+    color: var(--rpgm-text);
+    border-color: var(--rpgm-accent);
+  }
+</style>

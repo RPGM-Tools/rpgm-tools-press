@@ -3,7 +3,9 @@ import Layout from "@rpgm/tools-press-theme/components/Layout.astro";
 import ProductSeal from "@rpgm/tools-press-theme/ornaments/ProductSeal.astro";
 import SiteHead from "../../components/SiteHead.astro";
 import { SITE_TITLE, SITE_LOGO, NAV_LINKS, REPO_URL } from "../../consts";
-import repos from "../../../repos.json";
+import { FAMILIES, enrolledRepos } from "../../lib/repos";
+
+const groups = FAMILIES.map((family) => ({ family, repos: enrolledRepos.filter((r) => r.family === family.id) })).filter((g) => g.repos.length > 0);
 ---
 
 <Layout
@@ -23,24 +25,54 @@ import repos from "../../../repos.json";
   <p class="rpgm-eyebrow">Repositories</p>
   <h1>Every tracked repository</h1>
 
-  <ul class="repo-list">
-    {
-      repos.map((repo) => (
-        <li>
-          <a href={`/repos/${repo.repo}/`} class="repo-list__item" style={`--rpgm-ledger-accent: ${repo.color}`}>
-            {repo.emoji && <ProductSeal emoji={repo.emoji} size={28} color="var(--rpgm-ledger-accent)" />}
-            <span>{repo.displayName}</span>
-          </a>
-        </li>
-      ))
-    }
-  </ul>
+  {
+    groups.map(({ family, repos }) => (
+      <section class="repo-family">
+        <h2 class="repo-family__label">
+          <a href={`/families/${family.id}/`}>{family.label}</a>
+        </h2>
+        <ul class="repo-list">
+          {repos.map((repo) => (
+            <li>
+              <a href={`/repos/${repo.repo}/`} class="repo-list__item" style={`--rpgm-ledger-accent: ${repo.color}`}>
+                {repo.emoji && <ProductSeal emoji={repo.emoji} size={28} color="var(--rpgm-ledger-accent)" />}
+                <span>{repo.displayName}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))
+  }
 </Layout>
 
 <style>
+  .repo-family {
+    margin-top: var(--rpgm-space-6);
+  }
+
+  .repo-family__label {
+    margin: 0 0 var(--rpgm-space-3);
+    font-family: var(--rpgm-font-mono);
+    font-size: var(--rpgm-text-xs);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .repo-family__label a {
+    color: var(--rpgm-text-muted);
+    text-decoration: none;
+  }
+
+  .repo-family__label a:hover,
+  .repo-family__label a:focus-visible {
+    color: var(--rpgm-accent);
+  }
+
   .repo-list {
     list-style: none;
-    margin: var(--rpgm-space-6) 0 0;
+    margin: 0;
     padding: 0;
     display: grid;
     gap: var(--rpgm-space-2);
