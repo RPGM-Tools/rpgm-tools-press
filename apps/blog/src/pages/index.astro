@@ -32,8 +32,8 @@ const posts = allPosts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.
 
   <ul class="post-list">
     {
-      posts.map((post) => (
-        <li>
+      posts.map((post, i) => (
+        <li class:list={{ "post-list__latest": i === 0 }}>
           <EntryCard
             title={post.data.title}
             href={`/posts/${post.id}/`}
@@ -42,6 +42,7 @@ const posts = allPosts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.
             tags={post.data.tags}
             category={post.data.category && CATEGORY_META[post.data.category]?.label}
             categoryColor={post.data.category && CATEGORY_META[post.data.category]?.color}
+            transitionId={post.id}
           />
         </li>
       ))
@@ -56,5 +57,19 @@ const posts = allPosts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.
     padding: 0;
     display: grid;
     gap: var(--rpgm-space-5);
+  }
+
+  /* The first card is the newest post. It gets a bigger title and a gold top border, and it stays inside .post-list so ListFilter still searches it. */
+  .post-list__latest :global(.rpgm-entry-card) {
+    border-color: var(--rpgm-border-strong);
+    border-top: 3px solid var(--rpgm-accent);
+  }
+
+  .post-list__latest :global(.rpgm-entry-card__title) {
+    font-size: var(--rpgm-text-2xl, 1.75rem);
+  }
+
+  .post-list__latest :global(.rpgm-entry-card__description) {
+    font-size: var(--rpgm-text-lg, 1.125rem);
   }
 </style>

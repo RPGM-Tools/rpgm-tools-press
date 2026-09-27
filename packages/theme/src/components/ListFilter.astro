@@ -141,7 +141,14 @@ const { targetSelector, placeholder = "Search every entry..." } = Astro.props;
 
     if (reasons.size > 0) element.dataset.rpgmHiddenBy = Array.from(reasons).sort().join(" ");
     else delete element.dataset.rpgmHiddenBy;
+    const wasHidden = element.hidden;
     element.hidden = reasons.size > 0;
+    // An entry coming back into view fades in like drying ink instead of popping.
+    if (wasHidden && !element.hidden) {
+      element.classList.remove("rpgm-ink-dry");
+      void element.offsetWidth;
+      element.classList.add("rpgm-ink-dry");
+    }
   }
 
   function hiddenByAnotherFilter(element: HTMLElement): boolean {
@@ -509,5 +516,23 @@ const { targetSelector, placeholder = "Search every entry..." } = Astro.props;
     margin: var(--rpgm-space-2) var(--rpgm-space-3) 0;
     font-size: var(--rpgm-text-xs);
     color: var(--rpgm-text-muted);
+  }
+</style>
+
+<style is:global>
+  /* Applied by setHiddenReason when an entry comes back into view; base.css shortens it under reduced motion. */
+  .rpgm-ink-dry {
+    animation: rpgm-ink-dry 420ms ease-out;
+  }
+
+  @keyframes rpgm-ink-dry {
+    from {
+      opacity: 0;
+      filter: blur(1.5px);
+    }
+    to {
+      opacity: 1;
+      filter: none;
+    }
   }
 </style>

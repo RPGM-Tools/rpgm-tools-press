@@ -6,6 +6,7 @@
   "description": "Shared dark-fantasy-grimoire Astro/CSS theme for RPGM Tools Press sites (blog, releases, etc).",
   "exports": {
     "./components/*": "./src/components/*",
+    "./transition-name": "./src/components/transition-name.ts",
     "./ornaments/*": "./src/ornaments/*",
     "./tokens/*": "./src/tokens/*",
     "./package.json": "./package.json"

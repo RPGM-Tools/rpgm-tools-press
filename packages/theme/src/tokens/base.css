@@ -290,3 +290,19 @@
     }
   }
 }
+
+/*
+ * Navigation between pages cross-fades. An entry's title morphs into its
+ * detail page's heading when both carry the same view-transition-name,
+ * which components/transition-name.ts builds. Browsers without
+ * cross-document view transitions load pages normally.
+ */
+@view-transition {
+  navigation: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @view-transition {
+    navigation: none;
+  }
+}

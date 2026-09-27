@@ -15,11 +15,14 @@ interface Props {
   accentColor?: string;
   /** Emoji seal, if this entry has one (see ProductSeal). */
   emoji?: string;
+  /** Id shared with the detail page's heading, so the title morphs into it on navigation. */
+  transitionId?: string;
 }
 
 import ProductSeal from "../ornaments/ProductSeal.astro";
+import { transitionName } from "./transition-name";
 
-const { title, href, date, description, accentColor, emoji } = Astro.props;
+const { title, href, date, description, accentColor, emoji, transitionId } = Astro.props;
 
 let dateLabel: string | undefined;
 if (date instanceof Date) {
@@ -43,7 +46,7 @@ if (date instanceof Date) {
   {dateLabel && <span class="rpgm-ledger-row__date">{dateLabel}</span>}
   <span class="rpgm-ledger-row__mark" aria-hidden="true"></span>
   <span class="rpgm-ledger-row__body">
-    <span class="rpgm-ledger-row__title">
+    <span class="rpgm-ledger-row__title" style={transitionId ? `view-transition-name: ${transitionName(transitionId)}` : undefined}>
       {emoji && <ProductSeal emoji={emoji} size={20} color="var(--rpgm-ledger-accent, currentColor)" />}
       <span>{title}</span>
     </span>

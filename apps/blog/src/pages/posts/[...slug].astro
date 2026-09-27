@@ -4,6 +4,7 @@ import Layout from "@rpgm/tools-press-theme/components/Layout.astro";
 import Prose from "@rpgm/tools-press-theme/components/Prose.astro";
 import Giscus from "@rpgm/tools-press-theme/components/Giscus.astro";
 import Flourish from "@rpgm/tools-press-theme/ornaments/Flourish.astro";
+import { transitionName } from "@rpgm/tools-press-theme/transition-name";
 import SiteHead from "../../components/SiteHead.astro";
 import {
   SITE_TITLE,
@@ -27,7 +28,10 @@ export async function getStaticPaths() {
 }
 
 const { post } = Astro.props;
-const { Content } = await render(post);
+const { Content, headings } = await render(post);
+// Posts with three or more h2 sections get a contents rail in the left margin.
+const contents = headings.filter((h) => h.depth === 2);
+const showContents = contents.length >= 3;
 
 /*
  * Pinned to UTC, not a fixed local zone like the release date labels
@@ -106,8 +110,22 @@ const jsonLd = {
   </Fragment>
 
   <article class="post-article">
+    {
+      showContents && (
+        <nav class="post-contents" aria-label="Contents">
+          <p class="post-contents__label">Contents</p>
+          <ol>
+            {contents.map((h) => (
+              <li>
+                <a href={`#${h.slug}`}>{h.text}</a>
+              </li>
+            ))}
+          </ol>
+        </nav>
+      )
+    }
     <p class="rpgm-eyebrow">{dateLabel}</p>
-    <h1>{post.data.title}</h1>
+    <h1 style={`view-transition-name: ${transitionName(post.id)}`}>{post.data.title}</h1>
     <p class="post-byline">
       <img src={AUTHOR_AVATAR} alt="" width="32" height="32" class="post-byline__avatar" />
       {AUTHOR_NAME}
@@ -141,6 +159,29 @@ const jsonLd = {
     </Prose>
   </article>
 
+  <script>
+    // Sets aria-current on the rail link whose heading is in the top 30 percent of the viewport.
+    const links = new Map(
+      Array.from(document.querySelectorAll<HTMLAnchorElement>(".post-contents a")).map((a) => [a.hash.slice(1), a]),
+    );
+    if (links.size > 0) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (!entry.isIntersecting) continue;
+            for (const a of links.values()) a.removeAttribute("aria-current");
+            links.get(entry.target.id)?.setAttribute("aria-current", "true");
+          }
+        },
+        { rootMargin: "0px 0px -70% 0px" },
+      );
+      for (const id of links.keys()) {
+        const heading = document.getElementById(id);
+        if (heading) observer.observe(heading);
+      }
+    }
+  </script>
+
   {GISCUS.ready && (
     <Giscus
       repo={GISCUS.repo}
@@ -162,8 +203,63 @@ const jsonLd = {
    * consistent centered column, matching how most blogs set post text.
    */
   .post-article {
+    position: relative;
     max-width: 42rem;
     margin: 0 auto;
+  }
+
+  /* Hidden below 76em, where the margin beside the 42rem column is too narrow for a 10rem rail. */
+  .post-contents {
+    display: none;
+  }
+
+  @media (min-width: 76em) {
+    .post-contents {
+      display: block;
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      right: calc(100% + var(--rpgm-space-6));
+      width: 10rem;
+    }
+
+    .post-contents__label,
+    .post-contents ol {
+      position: sticky;
+      top: var(--rpgm-space-5);
+    }
+
+    .post-contents__label {
+      margin: 0 0 var(--rpgm-space-2);
+      font-family: var(--rpgm-font-mono);
+      font-size: var(--rpgm-text-xs);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--rpgm-text-muted);
+    }
+
+    .post-contents ol {
+      top: calc(var(--rpgm-space-5) + 1.75rem);
+      list-style: none;
+      margin: 0;
+      padding: 0 0 0 var(--rpgm-space-3);
+      border-left: 1px solid var(--rpgm-border);
+      display: grid;
+      gap: var(--rpgm-space-2);
+    }
+
+    .post-contents a {
+      font-size: var(--rpgm-text-sm);
+      line-height: 1.35;
+      color: var(--rpgm-text-muted);
+      text-decoration: none;
+    }
+
+    .post-contents a:hover,
+    .post-contents a:focus-visible,
+    .post-contents a[aria-current="true"] {
+      color: var(--rpgm-accent);
+    }
   }
 
   .post-cover {

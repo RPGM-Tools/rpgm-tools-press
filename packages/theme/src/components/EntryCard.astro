@@ -3,6 +3,8 @@
  * Generic list-item card: usable for a blog post list, a release list,
  * or anything else that boils down to (title, date, blurb, tags, link).
  */
+import { transitionName } from "./transition-name";
+
 interface Props {
   title: string;
   href: string;
@@ -17,6 +19,8 @@ interface Props {
   category?: string;
   /** Color for the category chip (any CSS color). Falls back to the site accent when a category is given without one. */
   categoryColor?: string;
+  /** Id shared with the detail page's heading, so the title morphs into it on navigation. */
+  transitionId?: string;
 }
 
 const {
@@ -29,6 +33,7 @@ const {
   accentColor,
   category,
   categoryColor,
+  transitionId,
 } = Astro.props;
 
 let dateLabel: string | undefined;
@@ -60,7 +65,7 @@ if (date instanceof Date) {
   style={accentColor ? `--rpgm-entry-accent: ${accentColor}` : undefined}
 >
   <a href={href} class="rpgm-entry-card__link">
-    <h3 class="rpgm-entry-card__title">{title}</h3>
+    <h3 class="rpgm-entry-card__title" style={transitionId ? `view-transition-name: ${transitionName(transitionId)}` : undefined}>{title}</h3>
     {dateLabel && <p class="rpgm-entry-card__date">{dateLabel}</p>}
     {description && <p class="rpgm-entry-card__description">{description}</p>}
     {

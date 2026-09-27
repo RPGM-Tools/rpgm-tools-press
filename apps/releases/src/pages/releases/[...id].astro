@@ -7,6 +7,7 @@ import Flourish from "@rpgm/tools-press-theme/ornaments/Flourish.astro";
 import ProductSeal from "@rpgm/tools-press-theme/ornaments/ProductSeal.astro";
 import SiteHead from "../../components/SiteHead.astro";
 import DownloadList from "../../components/DownloadList.astro";
+import { transitionName } from "@rpgm/tools-press-theme/transition-name";
 import { SITE_TITLE, SITE_LOGO, NAV_LINKS, GISCUS, MAIN_GAME_REPO, PLAY_NOW_URL, REPO_URL } from "../../consts";
 
 export async function getStaticPaths() {
@@ -48,7 +49,7 @@ const isMod = release.data.kind === "mod";
 
   <article class="post-article">
     <p class="rpgm-eyebrow">{dateLabel}</p>
-    <h1 class="release-title">
+    <h1 class="release-title" style={`view-transition-name: ${transitionName(release.id)}`}>
       {release.data.emoji && <ProductSeal emoji={release.data.emoji} size={40} color="var(--rpgm-accent)" />}
       <span>{release.data.repoDisplayName} {release.data.version}</span>
     </h1>

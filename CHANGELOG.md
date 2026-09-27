@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- [Visible] [UI] Opening a post or a release from a list slides its title into the page heading, and moving between pages cross-fades, in browsers that support cross-document view transitions. A reduced-motion setting turns both off.
+- [Visible] [UI] Entries that come back into view when a search changes or clears fade in instead of appearing all at once.
+- [Visible] [UI] The Ledger groups releases by month. On wide screens each month's name stays pinned beside its releases while they scroll past.
+- [Visible] [UI] Posts with three or more sections show a contents rail in the left margin on wide screens, and it marks the section being read.
+- [Visible] [UI] The newest post on the blog's homepage has a larger title and a gold top rule.
 - [Visible] [SEO] Every post now carries structured data naming its author and publisher, article Open Graph tags and Twitter cards, and every page has a canonical URL.
 - [Visible] [SEO] The blog now serves llms.txt, an index of its posts for AI answer engines, and a robots.txt that points to the sitemap.
 - [Visible] [Content] Posts take an optional cover field in frontmatter (a path such as /covers/<slug>.webp, with coverAlt). The image renders above the post body at 1200 by 630 and replaces the logo in Open Graph and Twitter previews.
