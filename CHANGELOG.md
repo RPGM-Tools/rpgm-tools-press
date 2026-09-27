@@ -46,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- [Internal] [CI] The Discord announcer no longer fails when Cloudflare challenges its feed check from GitHub's runners. After three challenged checks it links the post's own URL, and it logs the status of every failed check.
 - [Visible] [Content-Sync] A repo read from its tags no longer loses versions
   when it gains a GitHub Release. A matching Release is now enrichment on top
   of a tag, supplying assets, a canonical URL, a publish timestamp, and a body

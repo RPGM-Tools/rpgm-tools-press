@@ -13,6 +13,7 @@
  */
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
+import { basename } from "node:path";
 
 const POSTS_DIR = "apps/blog/src/content/posts/";
 const SITE = "https://blog.rpgm.tools";
@@ -92,8 +93,15 @@ function unescapeXml(s) {
 }
 
 /** The deployed feed is the source of each post's real URL, so the slug rules stay Astro's alone. @param {string} title */
-async function liveLink(title) {
+/**
+ * Cloudflare answers requests from GitHub's runners with a bot challenge, so a
+ * challenged check proves nothing either way. After challenged checks the post's
+ * own URL is used, since this step only runs after a successful deploy.
+ * @param {string} title @param {string} fallback
+ */
+async function liveLink(title, fallback) {
   const attempts = process.env.DRY_RUN ? 1 : FEED_ATTEMPTS;
+  let challenged = 0;
   for (let attempt = 1; attempt <= attempts; attempt++) {
     const res = await fetch(`${SITE}/rss.xml`, { headers: { "Cache-Control": "no-cache" } });
     if (res.ok) {
@@ -104,8 +112,17 @@ async function liveLink(title) {
         if (itemTitle && link && unescapeXml(itemTitle).trim() === title.trim()) {
           const page = await fetch(unescapeXml(link), { method: "HEAD" });
           if (page.ok) return unescapeXml(link);
+          console.log(`Page check ${attempt}: ${page.status} ${page.headers.get("cf-mitigated") ?? ""}`);
         }
       }
+    }
+    else {
+      if (res.headers.get("cf-mitigated") === "challenge") challenged++;
+      console.log(`Feed check ${attempt}: ${res.status} ${res.headers.get("server") ?? ""} ${res.headers.get("cf-mitigated") ?? ""}`);
+    }
+    if (challenged >= 3) {
+      console.log(`Feed checks are being challenged; using ${fallback}`);
+      return fallback;
     }
     if (attempt < attempts) await new Promise((r) => setTimeout(r, FEED_DELAY_MS));
   }
@@ -131,7 +148,7 @@ async function send(url, payload) {
 /** @param {{ path: string, data: Record<string, string> }} post */
 async function announce({ path, data }) {
   if (!data.title) throw new Error(`${path} has no title`);
-  const link = await liveLink(data.title);
+  const link = await liveLink(data.title, `${SITE}/posts/${basename(path, ".md")}/`);
   const webhook = process.env.DISCORD_BLOG_WEBHOOK_URL ?? "";
   if (!webhook && !process.env.DRY_RUN) throw new Error("DISCORD_BLOG_WEBHOOK_URL is not set");
   const tag = FORUM_TAGS[/** @type {keyof typeof FORUM_TAGS} */ (data.category)];
