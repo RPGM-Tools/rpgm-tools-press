@@ -40,6 +40,8 @@ export interface Props {
   ogImage?: string;
   /** Alt text for ogImage. */
   ogImageAlt?: string;
+  /** Show the header's search field (default true). A list page puts its ListFilter in the "search" slot. */
+  search?: boolean;
 }
 
 const {
@@ -58,6 +60,7 @@ const {
   ogType = "website",
   ogImage,
   ogImageAlt,
+  search = true,
 } = Astro.props;
 
 const canonical = canonicalURL ?? (Astro.site ? new URL(Astro.url.pathname, Astro.site) : undefined);
@@ -134,7 +137,9 @@ const pageTitle = title.includes(siteTitle) ? title : `${title} | ${siteTitle}`;
     }
   </head>
   <body>
-    <Header siteTitle={siteTitle} tagline={tagline} logoSrc={logoSrc} links={navLinks} />
+    <Header siteTitle={siteTitle} tagline={tagline} logoSrc={logoSrc} links={navLinks} search={search} hasPageSearch={Astro.slots.has("search")}>
+      <slot name="search" slot="search" />
+    </Header>
     <main class="rpgm-main" data-pagefind-body>
       <slot />
     </main>

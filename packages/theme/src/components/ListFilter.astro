@@ -267,6 +267,20 @@ const { targetSelector, placeholder = "Search every entry..." } = Astro.props;
       if (section) rememberInitialHidden(section);
     }
 
+    // Brings the first visible result up to just under the pinned header, so a search from anywhere on the page shows its results from the top.
+    function revealResults(): void {
+      const first = lists
+        .map((list) => list.closest<HTMLElement>("section") ?? list)
+        .find((element) => !element.hidden && element.getClientRects().length > 0);
+      if (!first) return;
+      const headerBottom = document.querySelector(".rpgm-header")?.getBoundingClientRect().bottom ?? 0;
+      const offset = headerBottom + 16;
+      const top = first.getBoundingClientRect().top;
+      if (Math.abs(top - offset) < 2) return;
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      window.scrollTo({ top: Math.max(0, window.scrollY + top - offset), behavior: reduceMotion ? "auto" : "smooth" });
+    }
+
     function updateStatus(message = ""): void {
       if (!status) return;
       status.textContent = message;
@@ -310,6 +324,7 @@ const { targetSelector, placeholder = "Search every entry..." } = Astro.props;
           setHiddenReason(section, SECTION_REASON, term.length > 0 && !hasVisibleItem);
         }
       }
+      if (term.length > 0) revealResults();
       return totalVisible;
     }
 
@@ -459,6 +474,13 @@ const { targetSelector, placeholder = "Search every entry..." } = Astro.props;
 
     if (window.location.hash === "#entry-search") {
       window.requestAnimationFrame(() => input.focus());
+    }
+
+    // The header field on pages without a list searches from here as /?q=term.
+    const initialQuery = new URLSearchParams(window.location.search).get("q")?.trim();
+    if (initialQuery) {
+      input.value = initialQuery;
+      input.dispatchEvent(new Event("input"));
     }
   });
 </script>

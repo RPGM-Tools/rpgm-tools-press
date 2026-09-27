@@ -41,7 +41,7 @@ const years = Array.from(byYear.keys()).sort((a, b) => b - a);
 
   <p class="rpgm-eyebrow">Archive</p>
   <h1>Every entry</h1>
-  <ListFilter targetSelector=".post-list" placeholder="Search every entry, including its full text..." />
+  <ListFilter slot="search" targetSelector=".post-list" placeholder="Search every post" />
 
   {
     years.map((year) => (

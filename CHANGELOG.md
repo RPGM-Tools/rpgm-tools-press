@@ -43,7 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
-- [Visible] [UI] The header's Search button no longer appears on pages that have their own search field. The / shortcut still jumps to that field.
+- [Visible] [UI] The search field moved into the header and stays visible in the slim bar while you scroll. Typing on the blog or The Ledger filters the list where you are and jumps to the first match. From a post or release page, pressing Enter opens the homepage with that search. Press / to focus the field.
 - [Visible] [Search] The search hint below the field is shorter and less
   technical: "Searches for exact matches first, then approximate matches."
 

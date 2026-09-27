@@ -40,7 +40,7 @@ const { tag, posts } = Astro.props;
 
   <p class="rpgm-eyebrow">Tag</p>
   <h1>{tag}</h1>
-  <ListFilter targetSelector=".post-list" placeholder="Search the full text of these entries..." />
+  <ListFilter slot="search" targetSelector=".post-list" placeholder="Search these posts" />
 
   <ul class="post-list">
     {

@@ -51,7 +51,7 @@ const syncedAt = new Date().toLocaleDateString("en-US", {
   <p class="ledger-receipt">
     {releases.length} entries across {repos.length} repositories - last synchronized {syncedAt}.
   </p>
-  <ListFilter targetSelector=".ledger-register" placeholder="Search every release, including its full notes..." />
+  <ListFilter slot="search" targetSelector=".ledger-register" placeholder="Search every release" />
 
   {
     months.map((month) => (

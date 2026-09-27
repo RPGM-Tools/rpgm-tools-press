@@ -9,9 +9,13 @@ interface Props {
   links: NavLink[];
   /** This site's own logo image. Falls back to the generic SealGlyph ornament when omitted. */
   logoSrc?: string;
+  /** Show a search field. A page's own ListFilter goes in the "search" slot; without one, the field searches from the homepage. */
+  search?: boolean;
+  /** Whether the page filled the "search" slot. Layout passes this through. */
+  hasPageSearch?: boolean;
 }
 
-const { siteTitle, tagline, links, logoSrc } = Astro.props;
+const { siteTitle, tagline, links, logoSrc, search = true, hasPageSearch = false } = Astro.props;
 ---
 
 <header class="rpgm-header">
@@ -28,16 +32,25 @@ const { siteTitle, tagline, links, logoSrc } = Astro.props;
       </span>
     </a>
     <div class="rpgm-header__right">
-      <Nav links={links} />
-      <a href="/#entry-search" class="rpgm-header__search-link" data-rpgm-search-link>
-        <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
-          <circle cx="8.5" cy="8.5" r="6" />
-          <path d="M13 13 L18 18" stroke-linecap="round" />
-        </svg>
-        <span>Search</span>
-        <kbd aria-hidden="true">/</kbd>
-      </a>
-      <ThemeToggle />
+      <div class="rpgm-header__links"><Nav links={links} /></div>
+      {
+        search && (
+          <div class="rpgm-header__search">
+            {hasPageSearch ? (
+              <slot name="search" />
+            ) : (
+              <form action="/" method="get" role="search" class="rpgm-list-filter">
+                <svg viewBox="0 0 20 20" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+                  <circle cx="8.5" cy="8.5" r="6" />
+                  <path d="M13 13 L18 18" stroke-linecap="round" />
+                </svg>
+                <input id="site-search" type="search" name="q" class="rpgm-list-filter__input" placeholder="Search" aria-label="Search this site" autocomplete="off" spellcheck="false" />
+              </form>
+            )}
+          </div>
+        )
+      }
+      <div class="rpgm-header__toggle"><ThemeToggle /></div>
     </div>
   </div>
 </header>
@@ -67,27 +80,15 @@ const { siteTitle, tagline, links, logoSrc } = Astro.props;
     publishHeight();
   }
 
-  document.querySelectorAll<HTMLAnchorElement>("[data-rpgm-search-link]").forEach((link) => {
-    function focusLocalSearch(): boolean {
-      const input = document.querySelector<HTMLInputElement>("#entry-search");
-      if (!input) return false;
-      input.focus();
-      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      input.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
-      return true;
-    }
-
-    link.addEventListener("click", (event) => {
-      if (focusLocalSearch()) event.preventDefault();
-    });
-
-    document.addEventListener("keydown", (event) => {
-      if (event.key !== "/" || event.ctrlKey || event.metaKey || event.altKey) return;
-      const target = event.target as HTMLElement | null;
-      if (target?.tagName === "INPUT" || target?.tagName === "TEXTAREA" || target?.isContentEditable) return;
-      event.preventDefault();
-      if (!focusLocalSearch()) window.location.assign(link.href);
-    });
+  // Pressing / anywhere outside a text field focuses the header's search.
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "/" || event.ctrlKey || event.metaKey || event.altKey) return;
+    const target = event.target as HTMLElement | null;
+    if (target?.tagName === "INPUT" || target?.tagName === "TEXTAREA" || target?.isContentEditable) return;
+    const input = document.querySelector<HTMLInputElement>(".rpgm-header__search input");
+    if (!input) return;
+    event.preventDefault();
+    input.focus();
   });
 </script>
 
@@ -128,16 +129,20 @@ const { siteTitle, tagline, links, logoSrc } = Astro.props;
     display: none;
   }
 
-  /* Under 48em the nav wraps to a second row about 80px tall, so a condensed header drops it unless data-reveal is set. */
+  /* Under 48em the nav wraps to a second row about 80px tall, so a condensed header drops it and the theme toggle unless data-reveal is set. The search row stays. */
   @media (max-width: 48em) {
-    .rpgm-header[data-condensed]:not([data-reveal]) .rpgm-header__right {
+    .rpgm-header[data-condensed]:not([data-reveal]) :is(.rpgm-header__links, .rpgm-header__toggle) {
       display: none;
     }
-  }
 
-  /* A page with its own search field needs no button that only jumps to it. The / shortcut still works. */
-  :global(body:has(#entry-search)) .rpgm-header__search-link {
-    display: none;
+    .rpgm-header .rpgm-header__right {
+      flex: 1 1 100%;
+    }
+
+    .rpgm-header .rpgm-header__search {
+      order: 3;
+      flex: 1 1 100%;
+    }
   }
 
   .rpgm-header__inner {
@@ -197,44 +202,80 @@ const { siteTitle, tagline, links, logoSrc } = Astro.props;
   .rpgm-header__right {
     display: flex;
     align-items: center;
-    gap: var(--rpgm-space-4);
+    gap: var(--rpgm-space-3);
     flex-wrap: wrap;
   }
 
-  .rpgm-header__search-link {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--rpgm-space-2);
+  .rpgm-header__search {
+    position: relative;
+    flex: 0 1 12rem;
+    min-width: 10rem;
     color: var(--rpgm-text-muted);
-    border: 1px solid var(--rpgm-border);
-    border-radius: var(--rpgm-radius-full);
-    padding: 0.4em 0.9em;
-    font-size: var(--rpgm-text-sm);
-    line-height: 1;
-    text-decoration: none;
-    white-space: nowrap;
-    transition: border-color var(--rpgm-transition-fast), color var(--rpgm-transition-fast), box-shadow var(--rpgm-transition-glow);
   }
 
-  .rpgm-header__search-link:hover,
-  .rpgm-header__search-link:focus-visible {
-    color: var(--rpgm-accent);
+  .rpgm-header__search :global(.rpgm-list-filter) {
+    position: relative;
+    margin: 0;
+  }
+
+  .rpgm-header .rpgm-header__search :global(svg) {
+    position: absolute;
+    left: var(--rpgm-space-3);
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+
+  .rpgm-header__search :global(.rpgm-list-filter__input) {
+    width: 100%;
+    background: var(--rpgm-surface);
+    border: 1px solid var(--rpgm-border);
+    border-radius: var(--rpgm-radius-full);
+    color: var(--rpgm-text);
+    font-family: var(--rpgm-font-body);
+    font-size: var(--rpgm-text-sm);
+    padding: 0.45em 1em 0.45em 2.4em;
+    transition: border-color var(--rpgm-transition-fast), box-shadow var(--rpgm-transition-glow);
+  }
+
+  .rpgm-header__search :global(.rpgm-list-filter__input::placeholder) {
+    color: var(--rpgm-text-muted);
+  }
+
+  .rpgm-header__search :global(.rpgm-list-filter__input:focus) {
+    outline: none;
     border-color: var(--rpgm-border-strong);
     box-shadow: var(--rpgm-shadow-candle);
   }
 
-  .rpgm-header__search-link kbd {
-    font-family: var(--rpgm-font-mono);
-    font-size: 0.7em;
-    color: var(--rpgm-text-muted);
-    background: var(--rpgm-bg);
+  /* The list filter's status shows as a chip under the field, so a search doesn't make the header taller. */
+  .rpgm-header__search :global(.rpgm-list-filter__status) {
+    position: absolute;
+    top: calc(100% + var(--rpgm-space-2));
+    right: 0;
+    margin: 0;
+    padding: 0.3em 0.8em;
+    white-space: nowrap;
+    font-size: var(--rpgm-text-xs);
+    color: var(--rpgm-text);
+    background: var(--rpgm-bg-elevated);
     border: 1px solid var(--rpgm-border);
-    border-radius: var(--rpgm-radius-sm);
-    padding: 0.15em 0.4em;
+    border-radius: var(--rpgm-radius-full);
+    box-shadow: var(--rpgm-shadow-elevated);
+  }
+
+  /* Kept for screen readers through aria-describedby, but too long to show in the header. */
+  .rpgm-header__search :global(.rpgm-list-filter__hint) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 
   /* Never the one that gets squeezed onto its own line - it's the smallest, most-used control in the row. */
-  .rpgm-header__right :global([data-rpgm-theme-toggle]) {
+  .rpgm-header__toggle {
     flex-shrink: 0;
   }
 </style>
