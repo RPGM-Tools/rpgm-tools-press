@@ -32,6 +32,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - [Visible] [Search] The search hint below the field is shorter and less
   technical: "Searches for exact matches first, then approximate matches."
 
+### Removed
+
+- [Visible] [Content] The blog's three placeholder posts are gone, so the home page lists no entries until the first real post goes up.
+
 ### Fixed
 
 - [Visible] [Content-Sync] A repo read from its tags no longer loses versions
