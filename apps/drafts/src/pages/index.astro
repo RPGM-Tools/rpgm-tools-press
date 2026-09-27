@@ -5,7 +5,9 @@ import EntryCard from "@rpgm/tools-press-theme/components/EntryCard.astro";
 import Flourish from "@rpgm/tools-press-theme/ornaments/Flourish.astro";
 import SiteHead from "../../../blog/src/components/SiteHead.astro";
 import { SITE_LOGO } from "../../../blog/src/consts";
-import { sidecar } from "../lib/sidecar";
+import { sidecar, stats } from "../lib/sidecar";
+
+const s = stats();
 
 const queue = (await getCollection("drafts"))
   .map((d) => ({ d, ...sidecar(d.id) }))
@@ -27,6 +29,16 @@ const queue = (await getCollection("drafts"))
 
   <p class="rpgm-eyebrow">{queue.length} waiting</p>
   <Flourish size={16} color="var(--rpgm-border-strong)" />
+  {
+    s.published > 0 && (
+      <dl class="stats">
+        <div><dt>Published</dt><dd>{s.published}</dd></div>
+        <div><dt>Approved without notes</dt><dd>{s.noNotes}</dd></div>
+        <div><dt>Notes per published post</dt><dd>{s.notesPerPost.toFixed(1)}</dd></div>
+        <div><dt>Killed</dt><dd>{s.killed}</dd></div>
+      </dl>
+    )
+  }
 
   {queue.length === 0 && <p class="empty">No drafts are waiting. New ones show up here as they're written.</p>}
 
@@ -56,5 +68,18 @@ const queue = (await getCollection("drafts"))
   }
   .empty {
     color: var(--rpgm-text-muted);
+  }
+  .stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--rpgm-space-4);
+    margin: 0 0 var(--rpgm-space-4);
+    color: var(--rpgm-text-muted);
+    font-size: var(--rpgm-text-sm);
+  }
+  .stats dd {
+    margin: 0;
+    font-size: var(--rpgm-text-lg, 1.25rem);
+    color: var(--rpgm-text);
   }
 </style>

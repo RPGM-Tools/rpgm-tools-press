@@ -15,7 +15,8 @@ export async function getStaticPaths() {
 
 const { draft } = Astro.props;
 const { Content } = await render(draft);
-const { state, meta, claims } = sidecar(draft.id);
+const { state, meta, claims, cover } = sidecar(draft.id);
+const share = (meta.share ?? []) as { platform: string; fit: number; blurb: string }[];
 const categoryMeta = draft.data.category ? CATEGORY_META[draft.data.category] : undefined;
 const categoryLabel = categoryMeta?.label ?? draft.data.category;
 ---
@@ -57,13 +58,14 @@ const categoryLabel = categoryMeta?.label ?? draft.data.category;
       )
     }
     <p class="post-description">{draft.data.description}</p>
+    {cover && <img class="post-cover" src={`/d/${draft.id}/${cover}`} alt={String(meta.cover_alt ?? "")} width="1200" height="630" />}
     <Flourish size={16} color="var(--rpgm-border-strong)" />
     <Prose>
       <Content />
     </Prose>
   </article>
 
-  <ReviewPanel slug={draft.id} revision={state.revision} changes={state.changes} claims={claims} meta={meta} />
+  <ReviewPanel slug={draft.id} revision={state.revision} changes={state.changes} claims={claims} meta={meta} hasCover={Boolean(cover)} share={share} />
 </Layout>
 
 <style>
@@ -106,6 +108,14 @@ const categoryLabel = categoryMeta?.label ?? draft.data.category;
     border: 1px solid color-mix(in srgb, var(--rpgm-entry-category-color) 55%, transparent);
     border-radius: var(--rpgm-radius-full);
     padding: 0.15em 0.7em;
+  }
+  .post-cover {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1200 / 630;
+    object-fit: cover;
+    border-radius: 8px;
+    margin: 0 0 var(--rpgm-space-4);
   }
   /* Only on the drafts site: the description is the search snippet, so it gets reviewed too. */
   .post-description {

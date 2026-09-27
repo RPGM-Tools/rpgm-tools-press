@@ -18,7 +18,7 @@ interface Env {
   ALLOW_NO_ACCESS?: string;
 }
 
-const ACTIONS = new Set(["revise", "approve", "kill", "park"]);
+const ACTIONS = new Set(["revise", "approve", "kill", "park", "cover"]);
 const SLUG = /^[a-z0-9][a-z0-9-]{0,99}$/;
 const MAX_BODY_BYTES = 64 * 1024;
 

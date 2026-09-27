@@ -7,9 +7,13 @@ interface Props {
   changes: string[];
   claims: Claim[];
   meta: Record<string, unknown>;
+  hasCover: boolean;
+  share: { platform: string; fit: number; blurb: string }[];
 }
 
-const { slug, revision, changes, claims, meta } = Astro.props;
+const { slug, revision, changes, claims, meta, hasCover, share } = Astro.props;
+const FIT = ["Weak fit", "Fits", "Strong fit"];
+const shareSorted = [...share].sort((a, b) => b.fit - a.fit);
 const gates = (meta.gates ?? {}) as Record<string, string>;
 const KILL_REASONS = ["Wrong topic", "Boring", "Sounds like AI", "Too private", "Inaccurate", "Other"];
 ---
@@ -57,6 +61,7 @@ const KILL_REASONS = ["Wrong topic", "Boring", "Sounds like AI", "Too private", 
     <button type="button" class="review__btn" data-action="revise">Send notes</button>
     <button type="button" class="review__btn" data-action="park">Park</button>
     <button type="button" class="review__btn review__btn--danger" data-action="kill">Kill</button>
+    {!hasCover && <button type="button" class="review__btn" data-action="cover">Make a cover</button>}
   </div>
 
   <div class="review__next" data-next hidden>
@@ -77,6 +82,27 @@ const KILL_REASONS = ["Wrong topic", "Boring", "Sounds like AI", "Too private", 
     }
     <button type="button" class="review__btn review__btn--danger" data-confirm-kill>Kill this draft</button>
   </fieldset>
+
+  {
+    shareSorted.length > 0 && (
+      <details class="review__block">
+        <summary>Where to share it ({shareSorted.filter((s) => s.fit > 0).length} good fits)</summary>
+        <ul class="review__share">
+          {shareSorted.map((s) => (
+            <li>
+              <p class="review__claim">
+                {s.platform} <span class="review__fit">{FIT[s.fit] ?? ""}</span>
+              </p>
+              <blockquote>{s.blurb}</blockquote>
+              <button type="button" class="review__btn review__btn--small" data-copy={s.blurb}>
+                Copy
+              </button>
+            </li>
+          ))}
+        </ul>
+      </details>
+    )
+  }
 
   {
     claims.length > 0 && (
@@ -265,6 +291,7 @@ const KILL_REASONS = ["Wrong topic", "Boring", "Sounds like AI", "Too private", 
     send("revise");
   });
   panel.querySelector('[data-action="park"]')!.addEventListener("click", () => send("park"));
+  panel.querySelector('[data-action="cover"]')?.addEventListener("click", () => send("cover"));
   panel.querySelector('[data-action="kill"]')!.addEventListener("click", () => {
     panel.querySelector<HTMLElement>("[data-kill]")!.hidden = false;
   });
@@ -288,7 +315,23 @@ const KILL_REASONS = ["Wrong topic", "Boring", "Sounds like AI", "Too private", 
     },
     park: { toast: "Parked.", title: "Parked", body: "It's off the queue. Tell the Blog chat when you want it back." },
     kill: { toast: "Killed.", title: "Killed", body: "It's off the queue, and your reasons are saved so ideas like it rank lower." },
+    cover: {
+      toast: "Sent.",
+      title: "Cover requested",
+      body: "Cover art is made in the browser, not on a schedule, so this can take a while. It shows up above the post here when it's done.",
+    },
   };
+
+  panel.querySelectorAll<HTMLButtonElement>("[data-copy]").forEach((b) =>
+    b.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(b.dataset.copy ?? "");
+        toast("Copied.");
+      } catch {
+        toast("Could not copy. Select the text and copy it by hand.");
+      }
+    }),
+  );
 
   const toastEl = document.querySelector<HTMLElement>("[data-toast]")!;
   const nextEl = panel.querySelector<HTMLElement>("[data-next]")!;
@@ -331,7 +374,9 @@ const KILL_REASONS = ["Wrong topic", "Boring", "Sounds like AI", "Too private", 
     if (!n) return;
     panel.querySelector("[data-next-title]")!.textContent = n.title;
     panel.querySelector("[data-next-body]")!.textContent = n.body;
-    buttons.forEach((b) => (b.disabled = b !== reloadBtn));
+    // A cover request runs alongside the review, so it only locks its own button.
+    if (action === "cover") buttons.forEach((b) => (b.disabled = b.dataset.action === "cover"));
+    else buttons.forEach((b) => (b.disabled = b !== reloadBtn));
     nextEl.hidden = false;
     setStage(action, status, since, result);
     if (scroll) nextEl.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -547,6 +592,19 @@ const KILL_REASONS = ["Wrong topic", "Boring", "Sounds like AI", "Too private", 
   .review__claim {
     margin: 0 0 var(--rpgm-space-1, 4px);
     font-weight: 600;
+  }
+  .review__share {
+    list-style: none;
+    padding: 0;
+  }
+  .review__share li {
+    margin-bottom: var(--rpgm-space-3);
+  }
+  .review__fit {
+    font-weight: 400;
+    font-size: var(--rpgm-text-xs);
+    color: var(--rpgm-text-muted);
+    margin-left: var(--rpgm-space-2);
   }
   .review__gates dt {
     font-weight: 600;
