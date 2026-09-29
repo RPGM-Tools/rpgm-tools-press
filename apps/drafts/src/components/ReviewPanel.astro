@@ -1,5 +1,5 @@
 ---
-import type { Claim } from "../lib/sidecar";
+import type { Claim, Lookalike, QueueEntry } from "../lib/sidecar";
 
 interface Props {
   slug: string;
@@ -9,9 +9,15 @@ interface Props {
   meta: Record<string, unknown>;
   hasCover: boolean;
   share: { platform: string; fit: number; blurb: string }[];
+  queueSlot?: QueueEntry;
+  total: number;
+  overlap?: { novelty: number; lookalikes: Lookalike[] };
 }
 
-const { slug, revision, changes, claims, meta, hasCover, share } = Astro.props;
+const { slug, revision, changes, claims, meta, hasCover, share, queueSlot, total, overlap } = Astro.props;
+const where = (l: Lookalike) =>
+  l.status === "published" ? `published ${l.days_since ?? 0} days ago` : l.status === "waiting" ? "waiting in the queue" : l.status;
+const close = (overlap?.lookalikes ?? []).filter((l) => l.penalty >= 0.05);
 const FIT = ["Weak fit", "Fits", "Strong fit"];
 const shareSorted = [...share].sort((a, b) => b.fit - a.fit);
 const gates = (meta.gates ?? {}) as Record<string, string>;
@@ -117,6 +123,40 @@ const KILL_REASONS = ["Wrong topic", "Boring", "Sounds like AI", "Too private", 
             </li>
           ))}
         </ol>
+      </details>
+    )
+  }
+
+  {
+    (queueSlot || overlap) && (
+      <details class="review__block" open>
+        <summary>Where this fits</summary>
+        {queueSlot && (
+          <>
+            <p>Suggested publishing slot: {queueSlot.position} of {total}.</p>
+            {queueSlot.notes.length > 0 && (
+              <ul>
+                {queueSlot.notes.map((n) => (
+                  <li>{n}</li>
+                ))}
+              </ul>
+            )}
+          </>
+        )}
+        {overlap && (
+          <>
+            <p>Overlap with the rest of the blog: novelty {overlap.novelty.toFixed(2)}, where 1.00 means nothing similar exists.</p>
+            {close.length > 0 && (
+              <ul>
+                {close.map((l) => (
+                  <li>
+                    {l.title}, {where(l)}. Topic {l.topic.toFixed(2)}, content {l.content.toFixed(2)}.
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
+        )}
       </details>
     )
   }

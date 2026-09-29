@@ -67,6 +67,38 @@ export function stats() {
   };
 }
 
+export interface QueueEntry {
+  position: number;
+  slug: string;
+  title: string;
+  value: number;
+  quality: number;
+  readiness: number;
+  novelty_at_slot: number;
+  notes: string[];
+}
+
+export interface Lookalike {
+  slug: string;
+  title: string;
+  status: string;
+  topic: number;
+  content: number;
+  penalty: number;
+  days_since?: number;
+  posts_since?: number;
+}
+
+/** The recommended publishing order (queue.json, written beside the drafts folder by queue_order.py). */
+export function queueOrder(): QueueEntry[] {
+  try {
+    const q = JSON.parse(fs.readFileSync(path.join(DRAFTS_DIR, "..", "queue.json"), "utf-8")) as { order?: QueueEntry[] };
+    return q.order ?? [];
+  } catch {
+    return [];
+  }
+}
+
 export function sidecar(slug: string) {
   return {
     cover: coverFile(slug),

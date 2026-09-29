@@ -5,14 +5,16 @@ import EntryCard from "@rpgm/tools-press-theme/components/EntryCard.astro";
 import Flourish from "@rpgm/tools-press-theme/ornaments/Flourish.astro";
 import SiteHead from "../../../blog/src/components/SiteHead.astro";
 import { SITE_LOGO } from "../../../blog/src/consts";
-import { sidecar, stats } from "../lib/sidecar";
+import { queueOrder, sidecar, stats } from "../lib/sidecar";
 
 const s = stats();
 
+// Recommended publishing order first; a draft the ranking has not seen yet goes after, newest first.
+const slot = new Map(queueOrder().map((e) => [e.slug, e.position]));
 const queue = (await getCollection("drafts"))
-  .map((d) => ({ d, ...sidecar(d.id) }))
+  .map((d) => ({ d, ...sidecar(d.id), slot: slot.get(d.id) }))
   .filter(({ state }) => state.status === "waiting")
-  .sort((a, b) => (b.state.updated ?? "").localeCompare(a.state.updated ?? ""));
+  .sort((a, b) => (a.slot ?? 1e9) - (b.slot ?? 1e9) || (b.state.updated ?? "").localeCompare(a.state.updated ?? ""));
 ---
 
 <Layout
@@ -45,13 +47,13 @@ const queue = (await getCollection("drafts"))
 
   <ul class="post-list">
     {
-      queue.map(({ d, state }) => (
+      queue.map(({ d, state, slot }) => (
         <li>
           <EntryCard
             title={d.data.title}
             href={`/d/${d.id}/`}
             description={d.data.description}
-            tags={[state.revision > 1 ? `revision ${state.revision}` : "new", ...d.data.tags]}
+            tags={[...(slot ? [`Publish #${slot}`] : []), state.revision > 1 ? `revision ${state.revision}` : "new", ...d.data.tags]}
           />
         </li>
       ))

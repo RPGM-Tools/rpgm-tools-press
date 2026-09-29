@@ -6,7 +6,7 @@ import Flourish from "@rpgm/tools-press-theme/ornaments/Flourish.astro";
 import SiteHead from "../../../../blog/src/components/SiteHead.astro";
 import { AUTHOR_NAME, AUTHOR_AVATAR, CATEGORY_META, SITE_LOGO } from "../../../../blog/src/consts";
 import ReviewPanel from "../../components/ReviewPanel.astro";
-import { sidecar } from "../../lib/sidecar";
+import { queueOrder, sidecar, type Lookalike } from "../../lib/sidecar";
 
 export async function getStaticPaths() {
   const drafts = await getCollection("drafts");
@@ -17,6 +17,9 @@ const { draft } = Astro.props;
 const { Content } = await render(draft);
 const { state, meta, claims, cover } = sidecar(draft.id);
 const share = (meta.share ?? []) as { platform: string; fit: number; blurb: string }[];
+const order = queueOrder();
+const slot = order.find((e) => e.slug === draft.id);
+const overlap = (meta.novelty as { draft_stage?: { novelty: number; lookalikes: Lookalike[] } } | undefined)?.draft_stage;
 const categoryMeta = draft.data.category ? CATEGORY_META[draft.data.category] : undefined;
 const categoryLabel = categoryMeta?.label ?? draft.data.category;
 ---
@@ -66,7 +69,7 @@ const categoryLabel = categoryMeta?.label ?? draft.data.category;
     </Prose>
   </article>
 
-  <ReviewPanel slug={draft.id} revision={state.revision} changes={state.changes} claims={claims} meta={meta} hasCover={Boolean(cover)} share={share} />
+  <ReviewPanel slug={draft.id} revision={state.revision} changes={state.changes} claims={claims} meta={meta} hasCover={Boolean(cover)} share={share} queueSlot={slot} total={order.length} overlap={overlap} />
 </Layout>
 
 <style>
