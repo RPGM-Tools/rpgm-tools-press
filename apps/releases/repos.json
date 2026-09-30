@@ -13,6 +13,7 @@
   { "owner": "neostryder", "repo": "augur", "displayName": "Augur", "family": "other-projects", "status": "enrolled", "enrolledAt": "2026-09-27T21:30:00Z", "kind": "tool", "releaseSource": "releases", "emoji": "🔮", "color": "#7e57c2" },
   { "owner": "neostryder", "repo": "mercury", "displayName": "Mercury", "family": "other-projects", "status": "enrolled", "enrolledAt": "2026-09-27T21:30:00Z", "kind": "tool", "releaseSource": "releases", "emoji": "📨", "color": "#546e7a" },
   { "owner": "neostryder", "repo": "squire-telemetry", "displayName": "Neo Angband: Squire Telemetry", "family": "neo-angband", "status": "enrolled", "enrolledAt": "2026-09-28T15:01:29Z", "kind": "tool", "releaseSource": "tags", "emoji": "🗡️", "color": "#8b1a1a" },
+  { "owner": "neostryder", "repo": "ark-overseer", "displayName": "Ark Overseer", "family": "other-projects", "status": "enrolled", "enrolledAt": "2026-09-30T01:27:43Z", "kind": "tool", "releaseSource": "releases", "emoji": "📦", "color": "#546e7a" },
   { "owner": "neostryder", "repo": "Evielution", "status": "declined" },
   { "owner": "neostryder", "repo": "hermes-agent", "status": "declined" },
   { "owner": "neostryder", "repo": "hermes-openai-proxy", "status": "declined" },
