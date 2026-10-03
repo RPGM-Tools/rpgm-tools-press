@@ -18,6 +18,8 @@ import { basename } from "node:path";
 const POSTS_DIR = "apps/blog/src/content/posts/";
 const SITE = "https://blog.rpgm.tools";
 const BLOG_NEWS_ROLE_ID = "1553725178150785065";
+// #info holds the bot's panel of buttons that add and drop the News roles.
+const INFO_CHANNEL_ID = "1390491367146524682";
 // The topic categories reuse the closest existing #blog forum tag until the
 // forum gets tags of its own for them.
 const FORUM_TAGS = {
@@ -162,7 +164,9 @@ async function announce({ path, data }) {
     allowed_mentions: { parse: [] },
   });
   await send(`${webhook}?thread_id=${thread.channel_id ?? thread.id}`, {
-    content: `<@&${BLOG_NEWS_ROLE_ID}> New post: **${data.title}**`,
+    content: `<@&${BLOG_NEWS_ROLE_ID}> New post: **${data.title}**
+
+You get this ping because you hold the News role. To stop, press its button in <#${INFO_CHANNEL_ID}>.`,
     allowed_mentions: { roles: [BLOG_NEWS_ROLE_ID] },
   });
   console.log(`Announced "${data.title}" (${link})`);

@@ -40,6 +40,8 @@ const CONTENT_ROOT = path.join(APP_ROOT, "src", "content", "releases");
 const ANNOUNCED_PATH = path.join(APP_ROOT, "announced.json");
 // Discord message flag 1 << 12: no push or desktop notification for anyone.
 const SUPPRESS_NOTIFICATIONS = 1 << 12;
+// #info holds the bot's panel of buttons that add and drop the News roles.
+const INFO_CHANNEL_ID = "1390491367146524682";
 const SITE = "https://releases.rpgm.tools";
 const MAX_AGE_DAYS = 7;
 const EMBED_DESCRIPTION_LIMIT = 4096;
@@ -162,7 +164,9 @@ export function fitToLimit(body, maxChars, fullUrl) {
  */
 export function buildRolePing(roleId, payload) {
   return {
-    content: `<@&${roleId}> ${payload.thread_name} has shipped!`,
+    content: `<@&${roleId}> ${payload.thread_name} has shipped!
+
+You get this ping because you hold the News role. To stop, press its button in <#${INFO_CHANNEL_ID}>.`,
     allowed_mentions: { roles: [roleId] },
   };
 }
