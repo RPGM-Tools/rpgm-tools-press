@@ -10,7 +10,8 @@
  * Env, per family (NEO_ANGBAND, RPGM_TOOLS, OTHER_PROJECTS):
  *   DISCORD_WEBHOOK_<F>          the forum's webhook URL (secret)
  *   DISCORD_<F>_RELEASE_TAG_ID   forum tag applied to the new thread
- *   DISCORD_<F>_ROLE_ID          role mentioned in the post
+ *   DISCORD_<F>_ROLE_ID          opt-in News role, mentioned in a reply after the
+ *                                silent first post so only its members are notified
  *   DISCORD_<F>_MODE             "live" or "dry-run"; neo-angband defaults to
  *                                dry-run while the per-repo announcers still
  *                                post, the other families default to live
@@ -37,6 +38,8 @@ const REPO_ROOT = path.resolve(__dirname, "..", "..");
 const APP_ROOT = path.join(REPO_ROOT, "apps", "releases");
 const CONTENT_ROOT = path.join(APP_ROOT, "src", "content", "releases");
 const ANNOUNCED_PATH = path.join(APP_ROOT, "announced.json");
+// Discord message flag 1 << 12: no push or desktop notification for anyone.
+const SUPPRESS_NOTIFICATIONS = 1 << 12;
 const SITE = "https://releases.rpgm.tools";
 const MAX_AGE_DAYS = 7;
 const EMBED_DESCRIPTION_LIMIT = 4096;
@@ -153,6 +156,18 @@ export function fitToLimit(body, maxChars, fullUrl) {
 }
 
 /**
+ * The opt-in News role gets its own reply in the new thread. The thread's first message is sent silent, which blocks every push and desktop notification including role pings, so only members holding the role (or following the thread) are notified by this reply.
+ * @param {string} roleId
+ * @param {{thread_name: string}} payload
+ */
+export function buildRolePing(roleId, payload) {
+  return {
+    content: `<@&${roleId}> ${payload.thread_name} has shipped!`,
+    allowed_mentions: { roles: [roleId] },
+  };
+}
+
+/**
  * @param {{displayName: string, kind?: string, emoji?: string, color?: string}} tracked
  * @param {{username: string, avatarUrl: string, namePrefix: string, footer: Record<string, string>}} look
  * @param {{version: string, url: string}} data
@@ -173,8 +188,9 @@ export function buildPayload(tracked, look, data, body, ledgerUrl, ids) {
     avatar_url: look.avatarUrl,
     thread_name: `${emoji}${title} v${version}`,
     ...(ids.tagId ? { applied_tags: [ids.tagId] } : {}),
-    content: ids.roleId ? `<@&${ids.roleId}> ${headline}` : headline,
-    allowed_mentions: { roles: ids.roleId ? [ids.roleId] : [] },
+    content: headline,
+    flags: SUPPRESS_NOTIFICATIONS,
+    allowed_mentions: { parse: [] },
     embeds: [
       {
         title: `v${version}`,
@@ -272,6 +288,19 @@ async function main() {
       console.log(`[posted] ${tracked.family}: ${payload.thread_name}`);
       handled.add(entry.id);
       counts.posted += 1;
+      const roleId = process.env[`DISCORD_${key}_ROLE_ID`];
+      if (roleId) {
+        const posted = await res.json().catch(() => null);
+        const threadId = posted?.channel_id ?? posted?.id;
+        const ping = threadId
+          ? await fetch(`${webhook}?thread_id=${threadId}`, {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify(buildRolePing(roleId, payload)),
+            })
+          : null;
+        if (!ping?.ok) console.log(`::warning::News role ping failed for ${payload.thread_name}: ${ping ? ping.status : "no thread id"}`);
+      }
     } else {
       console.log(`::warning::Discord returned ${res.status} for ${payload.thread_name}: ${(await res.text()).slice(0, 200)}`);
       counts.failed += 1;
