@@ -16,6 +16,7 @@
   { "owner": "neostryder", "repo": "squire-link", "displayName": "Neo Angband: Squire Link", "family": "neo-angband", "status": "enrolled", "enrolledAt": "2026-09-30T01:45:25Z", "kind": "tool", "releaseSource": "tags", "emoji": "🔗", "color": "#a67c00" },
   { "owner": "neostryder", "repo": "ark-overseer", "displayName": "ARK Overseer", "family": "other-projects", "status": "enrolled", "enrolledAt": "2026-09-30T01:27:43Z", "kind": "tool", "releaseSource": "releases", "emoji": "🦖", "color": "#c96a2b" },
   { "owner": "neostryder", "repo": "scout", "displayName": "Scout", "family": "other-projects", "status": "enrolled", "enrolledAt": "2026-10-09T23:43:27Z", "kind": "tool", "releaseSource": "tags", "emoji": "📦", "color": "#546e7a" },
+  { "owner": "neostryder", "repo": "juhandu", "displayName": "Juhandu", "family": "other-projects", "status": "enrolled", "enrolledAt": "2026-10-10T15:36:56Z", "kind": "tool", "releaseSource": "releases", "emoji": "📦", "color": "#546e7a" },
   { "owner": "neostryder", "repo": "Evielution", "status": "declined" },
   { "owner": "neostryder", "repo": "hermes-agent", "status": "declined" },
   { "owner": "neostryder", "repo": "hermes-openai-proxy", "status": "declined" },
