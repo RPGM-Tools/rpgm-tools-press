@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-10
+
 ### Added
 
 - [Visible] [UI] Each project family has its own page and RSS feed on The Ledger. A row of links above the release list switches between all releases, Neo Angband, RPGM Tools and Other Projects, and the Repositories page groups repos the same way.

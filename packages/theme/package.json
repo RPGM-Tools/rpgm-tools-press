@@ -1,7 +1,7 @@
 {
   "name": "@rpgm/tools-press-theme",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "description": "Shared dark-fantasy-grimoire Astro/CSS theme for RPGM Tools Press sites (blog, releases, etc).",
   "exports": {
