@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- [Visible] [Discord] Every Discord post about a new blog post now opens with "Relics & Reckonings": the forum thread name, the first post, and the News role ping. Nobody has to open a link to learn which project the post belongs to.
+
 ## [0.2.0] - 2026-10-10
 
 ### Added

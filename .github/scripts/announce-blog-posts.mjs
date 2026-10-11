@@ -17,6 +17,8 @@ import { basename } from "node:path";
 
 const POSTS_DIR = "apps/blog/src/content/posts/";
 const SITE = "https://blog.rpgm.tools";
+// Every Discord message opens with the name of the project it belongs to.
+const BLOG_NAME = "Relics & Reckonings";
 const BLOG_NEWS_ROLE_ID = "1553725178150785065";
 // #info holds the bot's panel of buttons that add and drop the News roles.
 const INFO_CHANNEL_ID = "1390491367146524682";
@@ -157,14 +159,14 @@ async function announce({ path, data }) {
   const tag = FORUM_TAGS[/** @type {keyof typeof FORUM_TAGS} */ (data.category)];
 
   const thread = await send(`${webhook}?wait=true`, {
-    thread_name: data.title.slice(0, 100),
-    content: [data.description, link].filter(Boolean).join("\n\n"),
+    thread_name: `${BLOG_NAME}: ${data.title}`.slice(0, 100),
+    content: `**${BLOG_NAME}:** ${[data.description, link].filter(Boolean).join("\n\n")}`,
     applied_tags: tag ? [tag] : [],
     flags: SUPPRESS_NOTIFICATIONS,
     allowed_mentions: { parse: [] },
   });
   await send(`${webhook}?thread_id=${thread.channel_id ?? thread.id}`, {
-    content: `<@&${BLOG_NEWS_ROLE_ID}> New post: **${data.title}**
+    content: `**${BLOG_NAME}:** <@&${BLOG_NEWS_ROLE_ID}> New post: **${data.title}**
 
 You get this ping because you hold the News role. To stop, press its button in <#${INFO_CHANNEL_ID}>.`,
     allowed_mentions: { roles: [BLOG_NEWS_ROLE_ID] },
