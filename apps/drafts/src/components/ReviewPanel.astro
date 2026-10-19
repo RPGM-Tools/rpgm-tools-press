@@ -65,7 +65,7 @@ const KILL_REASONS = ["Wrong topic", "Boring", "Sounds like AI", "Too private", 
 
   <div class="review__actions">
     <button type="button" class="review__btn review__btn--primary" data-action="approve">Approve and publish</button>
-    <button type="button" class="review__btn" data-action="revise">Send notes</button>
+    <button type="button" class="review__btn" data-action="revise">Send back</button>
     <button type="button" class="review__btn" data-action="park">Park</button>
     <button type="button" class="review__btn review__btn--danger" data-action="kill">Kill</button>
   </div>
@@ -87,8 +87,11 @@ const KILL_REASONS = ["Wrong topic", "Boring", "Sounds like AI", "Too private", 
         </ul>
       )
     }
+    <label class="review__chip">
+      <input type="checkbox" data-want-images /> {hasCover ? "Change the images" : "Add images"} when I send this back
+    </label>
     <textarea id="review-images" data-image-notes rows="3" placeholder="Optional. Say what you want, such as a real screenshot of a particular screen, a different cover, or no cover at all. Leave it empty and I will pick what fits."></textarea>
-    <button type="button" class="review__btn" data-action="cover">{hasCover ? "Change images" : "Request images"}</button>
+    <p class="review__hint">Send back covers everything: text notes and comments, images, or both. With only images ticked, the text stays as it is.</p>
   </div>
 
   <div class="review__next" data-next hidden>
@@ -312,7 +315,8 @@ const KILL_REASONS = ["Wrong topic", "Boring", "Sounds like AI", "Too private", 
     const notes = panel.querySelector<HTMLTextAreaElement>("[data-notes]")!.value.trim();
     const ratingRaw = panel.querySelector<HTMLSelectElement>("[data-rating]")!.value;
     const image_notes = panel.querySelector<HTMLTextAreaElement>("[data-image-notes]")!.value.trim();
-    return { notes, inline, rating: ratingRaw === "" ? null : Number(ratingRaw), image_notes };
+    const images = panel.querySelector<HTMLInputElement>("[data-want-images]")!.checked || image_notes !== "";
+    return { notes, inline, rating: ratingRaw === "" ? null : Number(ratingRaw), image_notes, images };
   }
 
   const buttons = [...panel.querySelectorAll<HTMLButtonElement>("button")];
@@ -345,15 +349,16 @@ const KILL_REASONS = ["Wrong topic", "Boring", "Sounds like AI", "Too private", 
     if (confirm("Publish this post to blog.rpgm.tools now?")) send("approve");
   });
   panel.querySelector('[data-action="revise"]')!.addEventListener("click", () => {
-    const { notes, inline } = collect();
-    if (!notes && !inline.some((c) => c.note)) {
-      showStatus("Add a note or a comment on a passage first.", "error");
+    const { notes, inline, images } = collect();
+    const text = Boolean(notes) || inline.some((c) => c.note);
+    if (!text && !images) {
+      showStatus("Add a note, a comment on a passage, or an image request first.", "error");
       return;
     }
-    send("revise");
+    // Images alone leave the text untouched, so that goes to the cover queue; anything with text is a revision that carries the image request along.
+    send(text ? "revise" : "cover");
   });
   panel.querySelector('[data-action="park"]')!.addEventListener("click", () => send("park"));
-  panel.querySelector('[data-action="cover"]')?.addEventListener("click", () => send("cover"));
   panel.querySelector('[data-action="kill"]')!.addEventListener("click", () => {
     panel.querySelector<HTMLElement>("[data-kill]")!.hidden = false;
   });
@@ -368,7 +373,7 @@ const KILL_REASONS = ["Wrong topic", "Boring", "Sounds like AI", "Too private", 
     revise: {
       toast: "Notes received.",
       title: "Notes received",
-      body: "The drafter looks for new notes every couple of minutes. Once it has yours, the rewrite takes about 5 to 10 minutes, and the new version replaces this page.",
+      body: "The drafter looks for new notes every couple of minutes. Once it has yours, the rewrite takes about 5 to 10 minutes, and the new version replaces this page. If you asked for images too, they are made after the rewrite and show up in the post when they are done.",
     },
     approve: {
       toast: "Approved.",
@@ -436,8 +441,8 @@ const KILL_REASONS = ["Wrong topic", "Boring", "Sounds like AI", "Too private", 
     if (!n) return;
     panel.querySelector("[data-next-title]")!.textContent = n.title;
     panel.querySelector("[data-next-body]")!.textContent = n.body;
-    // A cover request runs alongside the review, so it only locks its own button.
-    if (action === "cover") buttons.forEach((b) => (b.disabled = b.dataset.action === "cover"));
+    // An image request leaves the text alone, so the review stays open while the images are made.
+    if (action === "cover") buttons.forEach((b) => (b.disabled = false));
     else buttons.forEach((b) => (b.disabled = b !== reloadBtn));
     nextEl.hidden = false;
     setStage(action, status, since, result);

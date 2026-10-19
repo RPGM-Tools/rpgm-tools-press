@@ -60,6 +60,7 @@ async function review(request: Request, env: Env): Promise<Response> {
     inline: Array.isArray(body.inline) ? body.inline : [],
     rating: typeof body.rating === "number" ? body.rating : null,
     reasons: Array.isArray(body.reasons) ? body.reasons : [],
+    images: body.images === true,
     image_notes: typeof body.image_notes === "string" ? body.image_notes.slice(0, 4000) : "",
     by: request.headers.get("Cf-Access-Authenticated-User-Email") ?? null,
   };
