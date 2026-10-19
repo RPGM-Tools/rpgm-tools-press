@@ -21,6 +21,7 @@ const close = (overlap?.lookalikes ?? []).filter((l) => l.penalty >= 0.05);
 const FIT = ["Weak fit", "Fits", "Strong fit"];
 const shareSorted = [...share].sort((a, b) => b.fit - a.fit);
 const gates = (meta.gates ?? {}) as Record<string, string>;
+const planned = (Array.isArray(meta.images) ? meta.images : []) as { kind?: string; what?: string; caption?: string }[];
 const KILL_REASONS = ["Wrong topic", "Boring", "Sounds like AI", "Too private", "Inaccurate", "Other"];
 ---
 
@@ -67,7 +68,27 @@ const KILL_REASONS = ["Wrong topic", "Boring", "Sounds like AI", "Too private", 
     <button type="button" class="review__btn" data-action="revise">Send notes</button>
     <button type="button" class="review__btn" data-action="park">Park</button>
     <button type="button" class="review__btn review__btn--danger" data-action="kill">Kill</button>
-    {!hasCover && <button type="button" class="review__btn" data-action="cover">Make a cover</button>}
+  </div>
+
+  <div class="review__block review__images">
+    <label for="review-images"><h3>Images</h3></label>
+    <p class="review__hint">
+      {hasCover ? "This draft has a cover." : "This draft has no cover yet."}
+      {planned.length > 0 ? " Planned for the post:" : " Nothing else is planned."}
+    </p>
+    {
+      planned.length > 0 && (
+        <ul class="review__planned">
+          {planned.map((i) => (
+            <li>
+              <strong>{i.kind ?? "image"}</strong>: {i.what ?? i.caption ?? ""}
+            </li>
+          ))}
+        </ul>
+      )
+    }
+    <textarea id="review-images" data-image-notes rows="3" placeholder="Optional. Say what you want, such as a real screenshot of a particular screen, a different cover, or no cover at all. Leave it empty and I will pick what fits."></textarea>
+    <button type="button" class="review__btn" data-action="cover">{hasCover ? "Change images" : "Request images"}</button>
   </div>
 
   <div class="review__next" data-next hidden>
@@ -290,7 +311,8 @@ const KILL_REASONS = ["Wrong topic", "Boring", "Sounds like AI", "Too private", 
       .filter((c) => c.quote);
     const notes = panel.querySelector<HTMLTextAreaElement>("[data-notes]")!.value.trim();
     const ratingRaw = panel.querySelector<HTMLSelectElement>("[data-rating]")!.value;
-    return { notes, inline, rating: ratingRaw === "" ? null : Number(ratingRaw) };
+    const image_notes = panel.querySelector<HTMLTextAreaElement>("[data-image-notes]")!.value.trim();
+    return { notes, inline, rating: ratingRaw === "" ? null : Number(ratingRaw), image_notes };
   }
 
   const buttons = [...panel.querySelectorAll<HTMLButtonElement>("button")];
@@ -357,8 +379,8 @@ const KILL_REASONS = ["Wrong topic", "Boring", "Sounds like AI", "Too private", 
     kill: { toast: "Killed.", title: "Killed", body: "It's off the queue, and your reasons are saved so ideas like it rank lower." },
     cover: {
       toast: "Sent.",
-      title: "Cover requested",
-      body: "Cover art is made in the browser, not on a schedule, so this can take a while. It shows up above the post here when it's done.",
+      title: "Images requested",
+      body: "Images are made in a live session (real screenshots, or generated art), not on a schedule, so this can take a while. They show up in the post here when they're done, and your notes are used as written.",
     },
   };
 
@@ -484,6 +506,13 @@ const KILL_REASONS = ["Wrong topic", "Boring", "Sounds like AI", "Too private", 
     border: 1px solid var(--rpgm-border);
     border-radius: 6px;
     padding: var(--rpgm-space-2);
+  }
+  .review__planned {
+    margin: 0 0 var(--rpgm-space-2);
+    padding-left: 1.2em;
+  }
+  .review__images .review__btn {
+    margin-top: var(--rpgm-space-2);
   }
   .review__row {
     display: flex;
