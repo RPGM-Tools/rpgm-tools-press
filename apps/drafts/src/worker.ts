@@ -64,8 +64,13 @@ async function review(request: Request, env: Env): Promise<Response> {
     image_notes: typeof body.image_notes === "string" ? body.image_notes.slice(0, 4000) : "",
     by: request.headers.get("Cf-Access-Authenticated-User-Email") ?? null,
   };
+  // A send-back needs text notes, an inline comment, or an image request. Images alone never touch the text, so they are a cover action.
+  const hasText = payload.notes.trim() !== "" || payload.inline.some((c) => typeof c === "object" && c !== null && String((c as Record<string, unknown>).note ?? "").trim() !== "");
+  const wantsImages = payload.images || payload.image_notes.trim() !== "";
+  if (action === "revise" && !hasText && !wantsImages) return json({ error: "Add a note, a comment on a passage, or an image request first." }, 400);
+  const finalAction = action === "revise" && !hasText ? "cover" : action;
   const row = await env.DB.prepare("INSERT INTO actions (slug, revision, action, payload) VALUES (?, ?, ?, ?) RETURNING id")
-    .bind(slug, revision, action, JSON.stringify(payload))
+    .bind(slug, revision, finalAction, JSON.stringify(payload))
     .first<{ id: number }>();
   return json({ id: row?.id }, 201);
 }
