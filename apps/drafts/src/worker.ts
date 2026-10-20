@@ -44,6 +44,9 @@ async function readBody(request: Request): Promise<Record<string, unknown> | Res
   }
 }
 
+// A note that is only a request for images ("images", "No images?", "add images") is not text feedback.
+const IMAGE_WORD = /^(please )?(add |need |needs |more |no |where are the |where are my )?(the |some )?images?\s*[?!.]*$/i;
+
 async function review(request: Request, env: Env): Promise<Response> {
   const origin = request.headers.get("Origin");
   if (origin && origin !== new URL(request.url).origin) return json({ error: "Cross-origin requests are not allowed" }, 403);
@@ -65,7 +68,7 @@ async function review(request: Request, env: Env): Promise<Response> {
     by: request.headers.get("Cf-Access-Authenticated-User-Email") ?? null,
   };
   // A send-back needs text notes, an inline comment, or an image request. Images alone never touch the text, so they are a cover action.
-  const hasText = payload.notes.trim() !== "" || payload.inline.some((c) => typeof c === "object" && c !== null && String((c as Record<string, unknown>).note ?? "").trim() !== "");
+  const hasText = (payload.notes.trim() !== "" && !IMAGE_WORD.test(payload.notes.trim())) || payload.inline.some((c) => typeof c === "object" && c !== null && String((c as Record<string, unknown>).note ?? "").trim() !== "");
   const wantsImages = payload.images || payload.image_notes.trim() !== "";
   if (action === "revise" && !hasText && !wantsImages) return json({ error: "Add a note, a comment on a passage, or an image request first." }, 400);
   const finalAction = action === "revise" && !hasText ? "cover" : action;
