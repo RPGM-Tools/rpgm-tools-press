@@ -133,7 +133,7 @@ flowchart TD
 Each entry in `apps/releases/repos.json` names a repo, its `family` (`neo-angband`, `rpgm-tools` or `other-projects`) and its `status`. Enrolled repos also carry a display name, `kind`, `emoji`, `color`, `releaseSource` and `enrolledAt`, plus an optional `tagPrefix` for version tags shaped like `thunderbird-v1.2.3`. Declined repos stay in the file so discovery never offers them again. A repo's emoji and color mark it in the release list, on `/repos`, and in its Discord announcements. `/families/<family>` and `/rss/<family>.xml` list one family's releases.
 
 A release-listing card's blurb comes from a short AI-synthesized summary of
-that version's changelog section (MiniMax-M3, requires `MINIMAX_API_KEY`),
+that version's changelog section (MiniMax-M3.1-Flash, requires `MINIMAX_API_KEY`),
 generated once when the entry is first synced and stored in its frontmatter
 - a tag's content never changes, so later syncs reuse the stored summary
 rather than paying for a fresh call. Without a key, or if a call fails, a

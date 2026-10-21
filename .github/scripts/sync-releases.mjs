@@ -39,7 +39,7 @@
  * new releases produces zero file changes. Stale files (a tag that no
  * longer qualifies - e.g. it was an edge build) are deleted.
  *
- * Each entry also gets a short AI-synthesized summary (MiniMax-M3, needs
+ * Each entry also gets a short AI-synthesized summary (MiniMax-M3.1-Flash, needs
  * MINIMAX_API_KEY) of its changelog section for list-view cards - generated
  * once and cached in frontmatter, since a tag's own content never changes.
  * Missing key or a failed call just skips the field; the page falls back to
@@ -198,9 +198,9 @@ async function summarizeWithAI(changelogBody, { repoDisplayName, version }) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "MiniMax-M3",
+        model: "MiniMax-M3.1-Flash",
         messages: [{ role: "user", content: prompt }],
-        // Generous headroom: MiniMax-M3 is a reasoning model that spends
+        // Generous headroom: MiniMax-M3.1-Flash is a reasoning model that spends
         // part of this budget on its own <think> trace before the answer,
         // and a long changelog section needs more of it to reason through.
         max_completion_tokens: 900,
