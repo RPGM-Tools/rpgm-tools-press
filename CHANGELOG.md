@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Removed
+
+- [Visible] [Content-Sync] Squire Telemetry is no longer tracked on The Ledger. It is a Cloudflare Worker with nothing to install or version, and Squire's changelog covers its player-visible changes.
+
 ## [0.2.0] - 2026-10-10
 
 ### Added
