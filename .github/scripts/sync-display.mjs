@@ -42,9 +42,18 @@ async function main() {
   }
 
   const res = await fetch(DISPLAY_URL, {
-    headers: { "CF-Access-Client-Id": clientId, "CF-Access-Client-Secret": clientSecret, Accept: "application/json" },
+    headers: {
+      "CF-Access-Client-Id": clientId,
+      "CF-Access-Client-Secret": clientSecret,
+      Accept: "application/json",
+      // Cloudflare's edge blocks requests with a bare or library-default User-Agent.
+      "User-Agent": "rpgm-tools-press/1.0",
+    },
   });
-  if (!res.ok) throw new Error(`Stuff returned ${res.status} ${res.statusText} for ${DISPLAY_URL}`);
+  if (!res.ok) {
+    const detail = (await res.text().catch(() => "")).replace(/\s+/g, " ").slice(0, 160);
+    throw new Error(`Stuff returned ${res.status} ${res.statusText} (cf-ray ${res.headers.get("cf-ray") ?? "none"}) for ${DISPLAY_URL}: ${detail}`);
+  }
   const items = itemsOf(await res.json());
 
   /** @type {Map<string, {emoji?: string, color?: string}>} */
