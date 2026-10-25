@@ -244,7 +244,7 @@ async function main() {
   const seeding = announced === null;
   const handled = announced ?? new Set();
   const cutoff = Date.now() - MAX_AGE_DAYS * 24 * 60 * 60 * 1000;
-  const counts = { posted: 0, dryRun: 0, tooOld: 0, noWebhook: 0, failed: 0 };
+  const counts = { posted: 0, dryRun: 0, tooOld: 0, paused: 0, noWebhook: 0, failed: 0 };
 
   for (const entry of entries) {
     if (handled.has(entry.id)) continue;
@@ -252,6 +252,13 @@ async function main() {
     if (!tracked) continue;
     if (seeding) {
       handled.add(entry.id);
+      continue;
+    }
+    // A paused repo stays on the Ledger without posts. Its releases are recorded as
+    // handled, so resuming announcements never posts what shipped during the pause.
+    if (tracked.paused) {
+      handled.add(entry.id);
+      counts.paused += 1;
       continue;
     }
 
@@ -315,7 +322,7 @@ async function main() {
   console.log(
     seeding
       ? `=== announce-releases: seeded ${handled.size} existing release(s), nothing posted ===`
-      : `=== announce-releases: posted ${counts.posted}, dry-run ${counts.dryRun}, too old ${counts.tooOld}, waiting on a webhook ${counts.noWebhook}, failed ${counts.failed} ===`,
+      : `=== announce-releases: posted ${counts.posted}, dry-run ${counts.dryRun}, too old ${counts.tooOld}, paused ${counts.paused}, waiting on a webhook ${counts.noWebhook}, failed ${counts.failed} ===`,
   );
 }
 

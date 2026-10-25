@@ -130,7 +130,7 @@ flowchart TD
 
 `.github/scripts/sync-releases.mjs` fills `apps/releases/src/content/releases` on a schedule and on push. It is not a live read at request time, so a new release can take up to the sync interval to appear. Only a strict `vX.Y.Z` tag is synced, after the repo's `tagPrefix` if it has one, and each repo's `releaseSource` says whether that list comes from its GitHub Releases or its tags. GitHub's own `prerelease` flag is not used as the filter, because it also marks every pre-1.0 version, and that history is real. The notes shown are that version's section of `CHANGELOG.md` at that tag. When that section is missing or empty, the sync uses the GitHub Release's body instead. The sync only reads the source repos. Sort order uses each entry's real publish or commit time rather than the changelog heading's date, so two releases on the same day still appear in the order they shipped.
 
-Each entry in `apps/releases/repos.json` names a repo, its `family` (`neo-angband`, `rpgm-tools` or `other-projects`) and its `status`. Enrolled repos also carry a display name, `kind`, `emoji`, `color`, `releaseSource` and `enrolledAt`, plus an optional `tagPrefix` for version tags shaped like `thunderbird-v1.2.3`. Declined repos stay in the file so discovery never offers them again. A repo's emoji and color mark it in the release list, on `/repos`, and in its Discord announcements. `/families/<family>` and `/rss/<family>.xml` list one family's releases.
+Each entry in `apps/releases/repos.json` names a repo, its `family` (`neo-angband`, `rpgm-tools` or `other-projects`) and its `status`. Enrolled repos also carry a display name, `kind`, `emoji`, `color`, `releaseSource` and `enrolledAt`, plus an optional `tagPrefix` for version tags shaped like `thunderbird-v1.2.3`. Declined and removed repos stay in the file so discovery never offers them again. A repo's emoji and color mark it in the release list, on `/repos`, and in its Discord announcements. Each sync copies the emoji and color of every project the Stuff registry lists into `repos.json` through `sync-display.mjs`, so edit those two fields for a listed project in Stuff, not here. A project Stuff does not list keeps the values in the file. `/families/<family>` and `/rss/<family>.xml` list one family's releases.
 
 A release-listing card's blurb comes from a short AI-synthesized summary of
 that version's changelog section (MiniMax-M3.1-Flash, requires `MINIMAX_API_KEY`),
@@ -153,21 +153,27 @@ flowchart TD
   F --> C["public/enrollment.json<br/>The candidate has a suggestedFamily"]
   C --> BOT["The Discord bot asks the maintainer"]
   BOT --> W["enroll-repo.yml dispatches enroll-repo.mjs"]
-  W --> DEC{"Is the decision enroll?"}
-  DEC -->|"Yes"| EN["repos.json stores enrolled<br/>displayName, kind, emoji, color<br/>family, releaseSource and enrolledAt"]
-  DEC -->|"No"| NO["repos.json stores declined"]
+  W --> DEC{"What is the decision?"}
+  DEC -->|"enroll"| EN["repos.json stores enrolled<br/>displayName, kind, emoji, color<br/>family, releaseSource and enrolledAt"]
+  DEC -->|"pause"| PA["repos.json keeps the entry and sets paused"]
+  DEC -->|"remove"| RM["repos.json stores removed"]
+  DEC -->|"decline"| NO["repos.json stores declined"]
   EN --> CLEAN["The script removes the candidate from enrollment.json"]
+  PA --> CLEAN
+  RM --> CLEAN
   NO --> CLEAN
   CLEAN --> BUILD["The workflow dispatches deploy-releases.yml"]
   EN --> OLD["The announcer records releases before enrolledAt without posting"]
+  PA --> HOLD["The announcer records new releases without posting"]
+  RM -.-> SKIP
   NO -.-> SKIP
 ```
 
-*Source of truth: `.github/scripts/discover-repos.mjs`, `.github/scripts/enroll-repo.mjs`, and `.github/scripts/announce-releases.mjs`.*
+*Source of truth: `.github/scripts/discover-repos.mjs`, `.github/scripts/enroll-repo.mjs`, `.github/scripts/sync-display.mjs`, and `.github/scripts/announce-releases.mjs`.*
 
-Every sync also runs `discover-repos.mjs`. It lists the public repos in neostryder and RPGM-Tools, skips archived repos and forks, and writes the ones with no decision to `apps/releases/public/enrollment.json`, served at `/enrollment.json`, with a suggested family. An RPGM-Tools repo named `rpgm-*` only shows up once it reaches v1.0.0. The Discord bot asks about each candidate and dispatches `enroll-repo.yml` with the answer, which updates `repos.json` and rebuilds the site. The starter entry uses the family's default emoji and color, so give it its own by editing `repos.json` afterwards.
+Every sync also runs `discover-repos.mjs`. It lists the public repos in neostryder and RPGM-Tools, skips archived repos and forks, and writes the ones with no decision to `apps/releases/public/enrollment.json`, served at `/enrollment.json`, with a suggested family. An RPGM-Tools repo named `rpgm-*` only shows up once it reaches v1.0.0. The Discord bot asks about each candidate and dispatches `enroll-repo.yml` with the answer, which updates `repos.json` and rebuilds the site. Pausing keeps an enrolled repo on the Ledger without Discord announcements, and enrolling it again resumes them. Removing takes a repo off the Ledger and deletes its synced releases. `family` only matters when a repo is first enrolled or moved. The starter entry uses the family's default emoji and color until Stuff lists the project or `repos.json` is edited.
 
-After each deploy, `announce-releases.mjs` posts new releases to the family's Discord forum through the `DISCORD_WEBHOOK_<FAMILY>` secret. It tags the thread with `DISCORD_<FAMILY>_RELEASE_TAG_ID` and mentions `DISCORD_<FAMILY>_ROLE_ID`, both repo variables. `apps/releases/announced.json` lists every release already handled. A release published before its repo's `enrolledAt`, or more than seven days ago, is recorded without a post, and a family with no webhook is skipped until one is set. Neo Angband defaults to dry-run, which logs the post without sending it, until `DISCORD_NEO_ANGBAND_MODE` is `live`. The webhook's name, avatar and footer text come from `apps/releases/discord-families.json`.
+After each deploy, `announce-releases.mjs` posts new releases to the family's Discord forum through the `DISCORD_WEBHOOK_<FAMILY>` secret. It tags the thread with `DISCORD_<FAMILY>_RELEASE_TAG_ID` and mentions `DISCORD_<FAMILY>_ROLE_ID`, both repo variables. `apps/releases/announced.json` lists every release already handled. A release published before its repo's `enrolledAt`, more than seven days ago, or while the repo is paused is recorded without a post, and a family with no webhook is skipped until one is set. Neo Angband defaults to dry-run, which logs the post without sending it, until `DISCORD_NEO_ANGBAND_MODE` is `live`. The webhook's name, avatar and footer text come from `apps/releases/discord-families.json`.
 
 ## Structure
 

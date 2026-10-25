@@ -5,7 +5,7 @@
  * drops it from apps/releases/public/enrollment.json. Run by enroll-repo.yml,
  * which the Discord bot dispatches with the maintainer's answer.
  *
- * Usage: node .github/scripts/enroll-repo.mjs <owner/name> <enroll|decline> <family>
+ * Usage: node .github/scripts/enroll-repo.mjs <owner/name> <enroll|pause|remove|decline> <family>
  * Env: GITHUB_TOKEN (optional, raises the rate limit).
  *
  * Enrolling writes a starter entry: a display name built from the repo name,
@@ -14,13 +14,22 @@
  * the announcer never posts a release older than the enrollment. Edit the entry
  * in repos.json afterwards to set a better name, emoji or color.
  *
- * A decision can be changed by running it again: declining an enrolled repo
- * takes it off the site, and enrolling a declined one puts it on.
+ * The four decisions:
+ *   enroll   puts the repo on the Ledger and announces its releases. Enrolling a
+ *            paused repo resumes announcements.
+ *   pause    keeps an enrolled repo on the Ledger but skips its Discord
+ *            announcements (`paused: true`). It fails for a repo that is not enrolled.
+ *   remove   takes the repo off the Ledger and stops its announcements. It is
+ *            recorded as `removed`, and discovery does not offer it again.
+ *   decline  records that the repo is never wanted on the Ledger.
+ * `family` only matters when a repo is first enrolled or moved; the other
+ * decisions ignore it. Any decision can be changed by running another one.
  */
 
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { formatRepos } from "./lib/repos-file.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "..", "..");
@@ -33,6 +42,7 @@ const FAMILY_DEFAULTS = {
   "rpgm-tools": { prefix: "RPGM Tools: ", emoji: "🎲", color: "#6c3fa8" },
   "other-projects": { prefix: "", emoji: "📦", color: "#546e7a" },
 };
+const DECISIONS = ["enroll", "pause", "remove", "decline"];
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 
 function ghHeaders() {
@@ -70,21 +80,10 @@ function kindFor(name) {
   return "tool";
 }
 
-/** Same layout as the hand-edited file: one entry per line. @param {object[]} entries */
-function formatRepos(entries) {
-  const line = (e) =>
-    "  { " +
-    Object.entries(e)
-      .map(([k, v]) => `${JSON.stringify(k)}: ${JSON.stringify(v)}`)
-      .join(", ") +
-    " }";
-  return `[\n${entries.map(line).join(",\n")}\n]\n`;
-}
-
 async function main() {
   const [fullNameArg, decision, family] = process.argv.slice(2);
-  if (!/^[\w.-]+\/[\w.-]+$/.test(fullNameArg?.trim() ?? "") || !["enroll", "decline"].includes(decision ?? "") || !(family in FAMILY_DEFAULTS)) {
-    throw new Error("usage: enroll-repo.mjs <owner/name> <enroll|decline> <neo-angband|rpgm-tools|other-projects>");
+  if (!/^[\w.-]+\/[\w.-]+$/.test(fullNameArg?.trim() ?? "") || !DECISIONS.includes(decision ?? "") || !(family in FAMILY_DEFAULTS)) {
+    throw new Error("usage: enroll-repo.mjs <owner/name> <enroll|pause|remove|decline> <neo-angband|rpgm-tools|other-projects>");
   }
 
   const info = await getJson(`https://api.github.com/repos/${fullNameArg.trim()}`);
@@ -101,8 +100,14 @@ async function main() {
   let next;
   if (decision === "decline") {
     next = { owner, repo, status: "declined" };
+  } else if (decision === "remove") {
+    next = { owner, repo, status: "removed" };
+  } else if (decision === "pause") {
+    if (existing?.status !== "enrolled") throw new Error(`${info.full_name} is not enrolled, so there is nothing to pause`);
+    next = { ...existing, paused: true };
   } else if (existing?.status === "enrolled") {
-    next = { ...existing, family };
+    const { paused: _paused, ...rest } = existing;
+    next = { ...rest, family };
   } else {
     const defaults = FAMILY_DEFAULTS[/** @type {keyof typeof FAMILY_DEFAULTS} */ (family)];
     const releases = await getJson(`https://api.github.com/repos/${info.full_name}/releases?per_page=1`);
@@ -136,7 +141,8 @@ async function main() {
     // No candidate file yet; nothing to drop.
   }
 
-  console.log(`${info.full_name}: ${decision === "decline" ? "declined" : `enrolled as ${family}`}`);
+  const outcome = { decline: "declined", remove: "removed", pause: "paused" }[/** @type {"decline" | "remove" | "pause"} */ (decision)];
+  console.log(`${info.full_name}: ${outcome ?? `enrolled as ${family}`}`);
 }
 
 main().catch((err) => {

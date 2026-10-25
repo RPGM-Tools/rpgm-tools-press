@@ -10,6 +10,8 @@ on:
       - "apps/releases/**"
       - "packages/theme/**"
       - ".github/scripts/sync-releases.mjs"
+      - ".github/scripts/sync-display.mjs"
+      - ".github/scripts/lib/**"
       - ".github/scripts/discover-repos.mjs"
       - ".github/scripts/announce-releases.mjs"
       - ".github/scripts/generate-search-embeddings.mjs"
@@ -39,7 +41,12 @@ jobs:
           MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
           CLOUDFLARE_ACCOUNT_ID: bb37de82a8d1040e9945ead5a03bab8d
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          STUFF_API_ACCESS_CLIENT_ID: ${{ secrets.STUFF_API_ACCESS_CLIENT_ID }}
+          STUFF_API_ACCESS_CLIENT_SECRET: ${{ secrets.STUFF_API_ACCESS_CLIENT_SECRET }}
         run: |
+          # Non-fatal by design: it keeps the emoji and colors already in repos.json
+          # when Stuff is unreachable or the service token is not set.
+          node .github/scripts/sync-display.mjs
           node .github/scripts/sync-releases.mjs
           # Non-fatal: a failed discovery pass only delays the next enrollment ask.
           node .github/scripts/discover-repos.mjs \
@@ -51,7 +58,7 @@ jobs:
           # run failing outright until someone notices and fixes it.
           node .github/scripts/generate-search-embeddings.mjs releases \
             || echo "::warning::generate-search-embeddings.mjs failed - continuing with existing embeddings"
-          if [ -n "$(git status --porcelain apps/releases/src/content/releases apps/releases/public/search-embeddings.json apps/releases/public/enrollment.json)" ]; then
+          if [ -n "$(git status --porcelain apps/releases/repos.json apps/releases/src/content/releases apps/releases/public/search-embeddings.json apps/releases/public/enrollment.json)" ]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
           else
             echo "changed=false" >> "$GITHUB_OUTPUT"
@@ -64,7 +71,7 @@ jobs:
         run: |
           git config user.name "rpgm-press-bot"
           git config user.email "press-bot@users.noreply.github.com"
-          git add apps/releases/src/content/releases apps/releases/public/search-embeddings.json apps/releases/public/enrollment.json
+          git add apps/releases/repos.json apps/releases/src/content/releases apps/releases/public/search-embeddings.json apps/releases/public/enrollment.json
           git commit -m "chore: sync release notes"
           git push
 

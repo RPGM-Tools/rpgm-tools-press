@@ -1,7 +1,8 @@
 name: Enroll repo
 
-# Records the maintainer's answer to an enrollment ask. The Discord bot
-# dispatches this after asking about a candidate listed in enrollment.json.
+# Records the maintainer's answer to an enrollment ask, or a later change to it.
+# The Discord bot dispatches this after asking about a candidate listed in
+# enrollment.json, and Stuff dispatches it to pause or remove a project.
 
 on:
   workflow_dispatch:
@@ -11,12 +12,12 @@ on:
         required: true
         type: string
       decision:
-        description: Put the repo on the Ledger, or never offer it again
+        description: enroll lists the repo and announces releases, pause keeps it listed without announcements, remove takes it off the Ledger, decline never offers it again
         required: true
         type: choice
-        options: [enroll, decline]
+        options: [enroll, pause, remove, decline]
       family:
-        description: Family the repo belongs to
+        description: Family the repo belongs to (ignored by pause, remove and decline)
         required: true
         type: choice
         options: [neo-angband, rpgm-tools, other-projects]

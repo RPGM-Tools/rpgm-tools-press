@@ -15,6 +15,8 @@ export interface TrackedRepo {
   family: FamilyId;
   status: "enrolled";
   enrolledAt: string;
+  /** Stays listed on the Ledger, but its releases are not announced on Discord. */
+  paused?: boolean;
   kind?: "core" | "mod" | "tool";
   releaseSource?: "releases" | "tags";
   tagPrefix?: string;
@@ -22,7 +24,7 @@ export interface TrackedRepo {
   color?: string;
 }
 
-/** repos.json also records declined repos so discovery never offers them again; only enrolled ones appear on the site. */
+/** repos.json also records declined and removed repos so discovery never offers them again; only enrolled ones appear on the site. */
 export const enrolledRepos = (repos as { status: string }[]).filter((r) => r.status === "enrolled") as TrackedRepo[];
 
 const familyByRepo = new Map(enrolledRepos.map((r) => [`${r.owner}/${r.repo}`.toLowerCase(), r.family]));

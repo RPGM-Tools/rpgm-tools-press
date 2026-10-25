@@ -46,7 +46,7 @@
  * a plain truncation at render time (see apps/releases/src/lib/summarize.ts).
  */
 
-import { mkdir, readdir, readFile, unlink, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, rm, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -343,7 +343,14 @@ async function buildEntryForTag(tracked, tag, { fallbackBody, fallbackPublishedA
 async function main() {
   const reposRaw = await readFile(REPOS_JSON_PATH, "utf8");
   /** @type {{owner: string, repo: string, displayName: string, status: string, tagPrefix?: string, kind?: string, emoji?: string}[]} */
-  const repos = JSON.parse(reposRaw).filter((r) => r.status === "enrolled");
+  const allRepos = JSON.parse(reposRaw);
+  const repos = allRepos.filter((r) => r.status === "enrolled");
+
+  // A repo that was removed or declined after it had releases on the Ledger leaves
+  // its synced folder behind, so the folder goes with the decision.
+  for (const left of allRepos.filter((r) => r.status === "removed" || r.status === "declined")) {
+    await rm(path.join(OUTPUT_ROOT, `${left.owner}-${left.repo}`), { recursive: true, force: true });
+  }
 
   const summary = {
     reposChecked: 0,

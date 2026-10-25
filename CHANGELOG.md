@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- [Visible] [Discord] A repo can be paused: it stays on The Ledger, and its new releases are recorded without a Discord announcement. Enrolling it again resumes announcements.
+- [Internal] [Content-Sync] The `enroll-repo` workflow takes four decisions: enroll, pause, remove and decline. Remove takes a repo off The Ledger, deletes its synced releases and keeps discovery from offering it again.
+- [Internal] [Content-Sync] Each sync copies the emoji and color of every project the Stuff registry lists into `repos.json`. It uses the `STUFF_API_ACCESS_CLIENT_ID` and `STUFF_API_ACCESS_CLIENT_SECRET` secrets, and a project Stuff does not list keeps the values in the file.
+
 ### Removed
 
 - [Visible] [Content-Sync] Squire Telemetry is no longer tracked on The Ledger. It is a Cloudflare Worker with nothing to install or version, and Squire's changelog covers its player-visible changes.
