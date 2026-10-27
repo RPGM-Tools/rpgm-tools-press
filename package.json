@@ -2,7 +2,7 @@
   "name": "rpgm-tools-press",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@11.20.0",
+  "packageManager": "pnpm@12.16.1",
   "engines": {
     "node": ">=22"
   },
