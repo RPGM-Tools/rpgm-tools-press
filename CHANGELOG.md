@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- [Internal] [Infra] The theme package's Astro peer range changed from `^5.0.0` to `>=5.0.0`, which drops a stray Astro 5.18.2 install that pulled in vulnerable sharp and zod. A lockfile refresh moved undici to 8.12.4, sharp to 0.35.5, vite to 8.3.6, devalue to 6.0.3, zod to 4.6.7, and fast-uri to 3.1.9. `pnpm audit` now reports no known vulnerabilities.
 - [Visible] [Search] Related results now come from a model hosted on the maintainer's own server, so search text no longer goes to Cloudflare Workers AI. When that server is unreachable, the page shows keyword results only, and a higher minimum match score drops clearly off-topic searches.
 - [Internal] [Infra] The embedding generator and both `/api/search-embedding` Workers now call the Cogitator endpoint using `PRESS_SEARCH_ACCESS_ID`, `PRESS_SEARCH_ACCESS_SECRET`, and `COGITATOR_EMBED_KEY`, the Workers AI binding is removed, and both `search-embeddings.json` files are regenerated with embeddinggemma-2 at 768 dimensions.
 - [Visible] [Search] Off-topic searches, such as a recipe or a sports query, no longer show related results because the minimum match score is higher.
