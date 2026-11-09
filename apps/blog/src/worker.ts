@@ -1,5 +1,10 @@
-const EMBEDDING_MODEL = "@cf/qwen/qwen3-embedding-0.6b";
-const EMBEDDING_DIMENSIONS = 1024;
+const EMBEDDING_MODEL = "embeddinggemma-2";
+const EMBEDDING_DIMENSIONS = 768;
+const EMBEDDING_ENDPOINT = "https://dowser.rpgm.tools/v1/embeddings";
+// embeddinggemma-2 is trained with task prefixes; the generator uses the
+// matching document prefix for the committed vectors.
+const QUERY_PREFIX = "task: search result | query: ";
+const EMBEDDING_TIMEOUT_MS = 8_000;
 const MAX_BODY_BYTES = 1024;
 const MAX_QUERY_LENGTH = 240;
 
@@ -17,6 +22,15 @@ function jsonResponse(body: object, status = 200, extraHeaders: Record<string, s
 function isQueryBody(value: unknown): value is { query: string } {
   if (typeof value !== "object" || value === null || !("query" in value)) return false;
   return typeof value.query === "string";
+}
+
+function readVector(value: unknown): number[] | null {
+  if (typeof value !== "object" || value === null || !("data" in value) || !Array.isArray(value.data)) return null;
+  const first: unknown = value.data[0];
+  if (typeof first !== "object" || first === null || !("embedding" in first)) return null;
+  const vector = first.embedding;
+  if (!Array.isArray(vector) || vector.length !== EMBEDDING_DIMENSIONS) return null;
+  return vector.every((entry): entry is number => typeof entry === "number" && Number.isFinite(entry)) ? vector : null;
 }
 
 export default {
@@ -55,8 +69,8 @@ export default {
     }
 
     // This is a low-traffic site, but the endpoint is unauthenticated and
-    // bills real Workers AI usage per call - a per-IP cap keeps a stray bot
-    // or repeated refresh from running up a real bill. Keyed by
+    // every call reaches Cogitator on a home machine - a per-IP cap keeps a
+    // stray bot or repeated refresh from loading it. Keyed by
     // CF-Connecting-IP (Cloudflare's own trusted client-IP header, not
     // spoofable by the request); requests with no such header (only
     // possible outside Cloudflare's network, e.g. local dev) share one
@@ -67,11 +81,28 @@ export default {
       return jsonResponse({ error: "Too many search requests - please slow down" }, 429, { "Retry-After": "60" });
     }
 
+    // Any failure here (Cogitator down, Access refusing, a timeout, a bad
+    // body) answers 503, and the page then falls back to keyword search.
     try {
-      const result = await env.AI.run(EMBEDDING_MODEL, { queries: [query] });
-      const vector = result.data?.[0];
-      if (!Array.isArray(vector) || vector.length !== EMBEDDING_DIMENSIONS || !vector.every(Number.isFinite)) {
-        console.error(JSON.stringify({ message: "Workers AI returned an invalid search embedding", path: url.pathname }));
+      const upstream = await fetch(EMBEDDING_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "CF-Access-Client-Id": env.PRESS_SEARCH_ACCESS_ID,
+          "CF-Access-Client-Secret": env.PRESS_SEARCH_ACCESS_SECRET,
+          Authorization: `Bearer ${env.COGITATOR_EMBED_KEY}`,
+        },
+        body: JSON.stringify({ model: EMBEDDING_MODEL, input: `${QUERY_PREFIX}${query}` }),
+        signal: AbortSignal.timeout(EMBEDDING_TIMEOUT_MS),
+      });
+      if (upstream.status !== 200) {
+        console.error(JSON.stringify({ message: "Cogitator refused the search embedding", status: upstream.status, path: url.pathname }));
+        return jsonResponse({ error: "Semantic search is temporarily unavailable" }, 503);
+      }
+      const result: unknown = await upstream.json();
+      const vector = readVector(result);
+      if (!vector) {
+        console.error(JSON.stringify({ message: "Cogitator returned an invalid search embedding", path: url.pathname }));
         return jsonResponse({ error: "Semantic search is temporarily unavailable" }, 503);
       }
       return jsonResponse({ model: EMBEDDING_MODEL, vector });

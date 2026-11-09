@@ -39,8 +39,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
-          CLOUDFLARE_ACCOUNT_ID: bb37de82a8d1040e9945ead5a03bab8d
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          PRESS_SEARCH_ACCESS_ID: ${{ secrets.PRESS_SEARCH_ACCESS_ID }}
+          PRESS_SEARCH_ACCESS_SECRET: ${{ secrets.PRESS_SEARCH_ACCESS_SECRET }}
+          COGITATOR_EMBED_KEY: ${{ secrets.COGITATOR_EMBED_KEY }}
           STUFF_API_ACCESS_CLIENT_ID: ${{ secrets.STUFF_API_ACCESS_CLIENT_ID }}
           STUFF_API_ACCESS_CLIENT_SECRET: ${{ secrets.STUFF_API_ACCESS_CLIENT_SECRET }}
         run: |
@@ -51,11 +52,9 @@ jobs:
           # Non-fatal: a failed discovery pass only delays the next enrollment ask.
           node .github/scripts/discover-repos.mjs \
             || echo "::warning::discover-repos.mjs failed - keeping the previous enrollment.json"
-          # Non-fatal on purpose: a Workers AI hiccup (auth, rate limit,
-          # model outage) should never block syncing/deploying real release
-          # content - search falls back to stale-but-present embeddings,
-          # which is a far better failure mode than every scheduled sync
-          # run failing outright until someone notices and fixes it.
+          # Non-fatal so that Cogitator being down or Access refusing the
+          # request never blocks deploying working content. Search falls
+          # back to the embeddings already committed.
           node .github/scripts/generate-search-embeddings.mjs releases \
             || echo "::warning::generate-search-embeddings.mjs failed - continuing with existing embeddings"
           if [ -n "$(git status --porcelain apps/releases/repos.json apps/releases/src/content/releases apps/releases/public/search-embeddings.json apps/releases/public/enrollment.json)" ]; then

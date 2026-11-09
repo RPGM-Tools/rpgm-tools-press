@@ -26,11 +26,7 @@ parts of the release-aggregation tooling. It is not used to decide what a
 blog post says about the maintainer's own work or opinions - AI-drafted
 prose is reviewed and edited before publishing, the same as any other draft.
 
-Site search also uses machine-learning embeddings. Entry vectors are generated
-from published content during content sync/deploy and stored with the site. A
-visitor's search text is sent to Cloudflare Workers AI only after the local
-Pagefind full-text index returns zero matching entries; the returned query
-vector is compared with the static entry vectors in the visitor's browser.
+Site search also uses machine-learning embeddings. Entry vectors are generated from published content during content sync and deploy and stored with the site. A visitor's search text is sent off the page only after the local Pagefind full-text index returns zero matching entries. In that case the site's Worker forwards the text to Cogitator, an embedding server run by the site's maintainer and reached through Cloudflare Access, and the text is no longer sent to Cloudflare Workers AI. Cogitator returns a query vector, and the visitor's browser compares it with the static entry vectors. When a request fails, the Worker logs only the status code and path, never the search text.
 
 ## Licensing and security
 

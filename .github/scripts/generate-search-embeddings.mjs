@@ -3,32 +3,36 @@
 /**
  * Generates the static semantic-search document vectors consumed by
  * ListFilter.astro. Vectors are cached by a hash of the source text, so a
- * normal content sync only calls Workers AI for new or changed entries.
+ * normal content sync only calls Cogitator for new or changed entries.
  *
  * Usage:
  *   node .github/scripts/generate-search-embeddings.mjs [all|blog|releases]
  *   node .github/scripts/generate-search-embeddings.mjs [all|blog|releases] --check
  *
- * Auth: CLOUDFLARE_API_TOKEN, with `wrangler auth token` as a local fallback.
- * CLOUDFLARE_ACCOUNT_ID is required. `--check` is offline and only verifies
- * that the committed artifacts still correspond to their content sources.
+ * Embeddings come from Cogitator's embeddinggemma-2 at dowser.rpgm.tools,
+ * behind Cloudflare Access. Required environment: PRESS_SEARCH_ACCESS_ID and
+ * PRESS_SEARCH_ACCESS_SECRET (the Access service token) and COGITATOR_EMBED_KEY
+ * (Cogitator's own key). `--check` is offline and only verifies that the
+ * committed artifacts still correspond to their content sources.
  */
 
-import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 
-const execFileAsync = promisify(execFile);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "..", "..");
 
-const MODEL = "@cf/qwen/qwen3-embedding-0.6b";
-const DIMENSIONS = 1024;
-// Qwen3 supports 8,192 input tokens. A conservative character cap keeps each
-// chunk within that window without adding a tokenizer dependency. Long
+const MODEL = "embeddinggemma-2";
+const DIMENSIONS = 768;
+const ENDPOINT = "https://dowser.rpgm.tools/v1/embeddings";
+// embeddinggemma-2 is trained with task prefixes; documents use this one and
+// the Workers use the matching query prefix.
+const DOCUMENT_PREFIX = "title: none | text: ";
+const REQUEST_TIMEOUT_MS = 120_000;
+// The model supports 8,192 input tokens. A conservative character cap keeps
+// each chunk within that window without adding a tokenizer dependency. Long
 // entries use every chunk, averaged back into the required one vector.
 const MAX_INPUT_CHARACTERS = 24_000;
 const BATCH_SIZE = 16;
@@ -150,7 +154,7 @@ function contentHash(text) {
 function unitVector(vector) {
   const magnitude = Math.sqrt(vector.reduce((sum, value) => sum + value * value, 0));
   if (!Number.isFinite(magnitude) || magnitude === 0) {
-    throw new Error("Workers AI returned a zero or invalid embedding vector");
+    throw new Error("Cogitator returned a zero or invalid embedding vector");
   }
   return vector.map((value) => Math.round((value / magnitude) * 1_000_000) / 1_000_000);
 }
@@ -171,59 +175,55 @@ async function readExisting(outputPath) {
   }
 }
 
-async function resolveToken() {
-  if (process.env.CLOUDFLARE_API_TOKEN) return process.env.CLOUDFLARE_API_TOKEN;
-
-  try {
-    const command = process.platform === "win32" ? "wrangler.cmd" : "wrangler";
-    const { stdout } = await execFileAsync(command, ["auth", "token"], {
-      windowsHide: true,
-      maxBuffer: 1024 * 1024,
-    });
-    const token = stdout
-      .split(/\r?\n/)
-      .map((line) => line.trim())
-      .findLast((line) => /^[A-Za-z0-9._~-]{40,}$/.test(line));
-    if (token) return token;
-  } catch {
-    // The actionable message below covers both a missing CLI and stale login.
+function requiredEnvironment() {
+  const names = ["PRESS_SEARCH_ACCESS_ID", "PRESS_SEARCH_ACCESS_SECRET", "COGITATOR_EMBED_KEY"];
+  const missing = names.filter((name) => !process.env[name]);
+  if (missing.length > 0) {
+    throw new Error(`Missing environment for embedding generation: ${missing.join(", ")}`);
   }
-
-  throw new Error(
-    "No Cloudflare token available. Set CLOUDFLARE_API_TOKEN or log in with a Wrangler version that supports `wrangler auth token`.",
-  );
+  return {
+    accessId: String(process.env.PRESS_SEARCH_ACCESS_ID),
+    accessSecret: String(process.env.PRESS_SEARCH_ACCESS_SECRET),
+    embedKey: String(process.env.COGITATOR_EMBED_KEY),
+  };
 }
 
 async function embedDocuments(documents) {
-  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
-  if (!accountId) throw new Error("CLOUDFLARE_ACCOUNT_ID is required to generate embeddings");
-  const token = await resolveToken();
-  const endpoint = `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/${MODEL}`;
+  const { accessId, accessSecret, embedKey } = requiredEnvironment();
   async function embedBatch(batch) {
-    const response = await fetch(endpoint, {
+    const response = await fetch(ENDPOINT, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
+        "CF-Access-Client-Id": accessId,
+        "CF-Access-Client-Secret": accessSecret,
+        Authorization: `Bearer ${embedKey}`,
       },
-      body: JSON.stringify({ documents: batch }),
+      body: JSON.stringify({ model: MODEL, input: batch.map((text) => `${DOCUMENT_PREFIX}${text}`) }),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
-    const payload = await response.json();
-    const data = payload?.result?.data ?? payload?.data;
-    if (!response.ok || !Array.isArray(data) || data.length !== batch.length) {
-      const message = payload?.errors?.[0]?.message ?? `${response.status} ${response.statusText}`;
-      if (batch.length > 1 && /input too big/i.test(message)) {
+    const text = await response.text();
+    let payload;
+    try {
+      payload = JSON.parse(text);
+    } catch {
+      payload = null;
+    }
+    const data = Array.isArray(payload?.data)
+      ? [...payload.data].sort((a, b) => (a?.index ?? 0) - (b?.index ?? 0)).map((item) => item?.embedding)
+      : null;
+    if (!response.ok || !data || data.length !== batch.length) {
+      const message = payload?.error?.message ?? payload?.error ?? `${response.status} ${response.statusText}`;
+      if (batch.length > 1 && /too (big|long|large)|exceed|context/i.test(String(message))) {
         const middle = Math.ceil(batch.length / 2);
-        const [left, right] = await Promise.all([
-          embedBatch(batch.slice(0, middle)),
-          embedBatch(batch.slice(middle)),
-        ]);
+        const left = await embedBatch(batch.slice(0, middle));
+        const right = await embedBatch(batch.slice(middle));
         return [...left, ...right];
       }
-      throw new Error(`Workers AI embedding request failed: ${message}`);
+      throw new Error(`Cogitator embedding request failed: ${String(message).slice(0, 200)}`);
     }
     return data.map((vector) => {
-      if (!validVector(vector)) throw new Error(`Workers AI returned an unexpected embedding shape (wanted ${DIMENSIONS})`);
+      if (!validVector(vector)) throw new Error(`Cogitator returned an unexpected embedding shape (wanted ${DIMENSIONS})`);
       return unitVector(vector);
     });
   }

@@ -99,20 +99,18 @@ const { targetSelector, placeholder = "Search every entry..." } = Astro.props;
   const SEMANTIC_ENDPOINT = "/api/search-embedding";
   const SEMANTIC_LIMIT = 10;
   /*
-   * Measured directly against the live qwen3-embedding-0.6b vectors on both
-   * sites: this model's cosine similarity has a real "noise floor" of
-   * roughly 0.15-0.30 between essentially ANY two pieces of text, not just
-   * related ones - pure gibberish against a 78-entry real corpus scored as
-   * high as 0.29, while a genuine but metaphorical match ("wedding" against
-   * a post titled "...After the Honeymoon") scored only 0.229, UNDER the
-   * previous 0.25 floor. A clearly-relevant query, by contrast, scores far
-   * higher (0.45+). There is no single absolute cutoff that cleanly
-   * separates real matches from noise at this corpus size - lowering this
-   * to 0.20 favors not hiding genuine (if modest-scoring) matches over
-   * never showing a low-confidence one; it does not fully eliminate an
-   * occasional false-feeling "related" result for a nonsense query.
+   * Cosine similarity with embeddinggemma-2 runs high for any text. Against
+   * all 245 entries on The Ledger, the median score for every query tested
+   * sits at 0.50 to 0.65. Relevant queries score a best match of 0.68 to
+   * 0.77 ("combat balance changes" 0.68, "new spell system" 0.73, "fix crash
+   * on startup" 0.77), off-topic queries 0.54 to 0.59 ("recipe for banana
+   * bread" 0.54, "wedding" 0.59), and gibberish 0.65 ("xkjqz blorpt wumbo").
+   * No single cutoff separates matches from noise. A floor of 0.55 drops
+   * clearly off-topic queries, and the 0.08 window below the best score
+   * limits how many results show. Nonsense queries can still return a few
+   * low-confidence results.
    */
-  const SEMANTIC_MIN_SCORE = 0.2;
+  const SEMANTIC_MIN_SCORE = 0.55;
   const SEMANTIC_SCORE_WINDOW = 0.08;
   const DEBOUNCE_MS = 300;
 

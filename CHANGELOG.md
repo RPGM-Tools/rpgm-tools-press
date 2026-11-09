@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - [Internal] [Content-Sync] The `enroll-repo` workflow takes four decisions: enroll, pause, remove and decline. Remove takes a repo off The Ledger, deletes its synced releases and keeps discovery from offering it again.
 - [Internal] [Content-Sync] Each sync copies the emoji and color of every project the Stuff registry lists into `repos.json`. It uses the `STUFF_API_ACCESS_CLIENT_ID` and `STUFF_API_ACCESS_CLIENT_SECRET` secrets, and a project Stuff does not list keeps the values in the file.
 
+### Changed
+
+- [Visible] [Search] Related results now come from a model hosted on the maintainer's own server, so search text no longer goes to Cloudflare Workers AI. When that server is unreachable, the page shows keyword results only, and a higher minimum match score drops clearly off-topic searches.
+- [Internal] [Infra] The embedding generator and both `/api/search-embedding` Workers now call the Cogitator endpoint using `PRESS_SEARCH_ACCESS_ID`, `PRESS_SEARCH_ACCESS_SECRET`, and `COGITATOR_EMBED_KEY`, the Workers AI binding is removed, and both `search-embeddings.json` files are regenerated with embeddinggemma-2 at 768 dimensions.
+
 ### Removed
 
 - [Visible] [Content-Sync] Squire Telemetry is no longer tracked on The Ledger. It is a Cloudflare Worker with nothing to install or version, and Squire's changelog covers its player-visible changes.
