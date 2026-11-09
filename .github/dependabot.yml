@@ -8,6 +8,10 @@ updates:
     default-days: 3
   open-pull-requests-limit: 20
   versioning-strategy: increase
+  ignore:
+  - dependency-name: typescript
+    versions:
+    - '>=7.0.0'
   groups:
     minor-and-patch:
       update-types:
