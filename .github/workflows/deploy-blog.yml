@@ -33,14 +33,14 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Refresh semantic-search embeddings
-        # Non-fatal on purpose: a Workers AI hiccup (auth, rate limit, model
-        # outage) should never block deploying otherwise-working code -
-        # search falls back to stale-but-present embeddings, which is a far
-        # better failure mode than the whole site failing to deploy.
+        # Non-fatal so that Cogitator being down or Access refusing the
+        # request never blocks deploying working code. Search falls back to
+        # the embeddings already committed.
         continue-on-error: true
         env:
-          CLOUDFLARE_ACCOUNT_ID: bb37de82a8d1040e9945ead5a03bab8d
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          PRESS_SEARCH_ACCESS_ID: ${{ secrets.PRESS_SEARCH_ACCESS_ID }}
+          PRESS_SEARCH_ACCESS_SECRET: ${{ secrets.PRESS_SEARCH_ACCESS_SECRET }}
+          COGITATOR_EMBED_KEY: ${{ secrets.COGITATOR_EMBED_KEY }}
         run: node .github/scripts/generate-search-embeddings.mjs blog
       - run: pnpm --filter blog build
         env:

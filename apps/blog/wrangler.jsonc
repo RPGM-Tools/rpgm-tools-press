@@ -5,9 +5,8 @@
   "compatibility_date": "2026-08-29",
   "compatibility_flags": ["nodejs_compat"],
   "account_id": "bb37de82a8d1040e9945ead5a03bab8d",
-  "ai": {
-    "binding": "AI",
-    "remote": true
+  "secrets": {
+    "required": ["PRESS_SEARCH_ACCESS_ID", "PRESS_SEARCH_ACCESS_SECRET", "COGITATOR_EMBED_KEY"]
   },
   "ratelimits": [
     {

@@ -60,15 +60,7 @@ text, then maps matching page URLs back to the existing cards/ledger rows.
 Because that index only exists after postbuild, exercise full-text search
 against a real build rather than `astro dev`.
 
-Only when Pagefind finds no entry on the current listing does tier two run.
-One normalized Qwen3 embedding per entry lives in each app's committed
-`public/search-embeddings.json`; the browser sends the novel query text to
-that site's `/api/search-embedding` Worker route, then ranks the in-scope
-static vectors locally by cosine similarity. If Workers AI is unavailable,
-the page stays usable and reports no related results. The stable header
-search field (and `/` shortcut) focuses the local field when one exists or
-navigates from a detail/About page to `/#entry-search`, so it never expands
-or renders a separate results drawer.
+Only when Pagefind finds no entry on the current listing does tier two run. One unit-normalized embeddinggemma-2 embedding (768 dimensions) per entry lives in each app's committed `public/search-embeddings.json`. The browser sends the novel query text to that site's `/api/search-embedding` Worker route, which forwards it to the Cogitator embeddings endpoint behind Cloudflare Access and returns the vector, and the browser then ranks the in-scope static vectors locally by cosine similarity. If Cogitator is down, Access refuses, the request takes longer than 8 seconds, or the reply is malformed, the Worker answers 503 and the page shows keyword results only, with no related results. The stable header search field (and `/` shortcut) focuses the local field when one exists or navigates from a detail/About page to `/#entry-search`, so it never expands or renders a separate results drawer. Regenerating vectors with `.github/scripts/generate-search-embeddings.mjs` needs `PRESS_SEARCH_ACCESS_ID`, `PRESS_SEARCH_ACCESS_SECRET`, and `COGITATOR_EMBED_KEY` in the environment, and `--check` runs offline.
 
 Regenerate vectors after changing content with:
 
