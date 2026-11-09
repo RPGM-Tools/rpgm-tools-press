@@ -99,18 +99,18 @@ const { targetSelector, placeholder = "Search every entry..." } = Astro.props;
   const SEMANTIC_ENDPOINT = "/api/search-embedding";
   const SEMANTIC_LIMIT = 10;
   /*
-   * Cosine similarity with embeddinggemma-2 runs high for any text. Against
-   * all 245 entries on The Ledger, the median score for every query tested
-   * sits at 0.50 to 0.65. Relevant queries score a best match of 0.68 to
-   * 0.77 ("combat balance changes" 0.68, "new spell system" 0.73, "fix crash
-   * on startup" 0.77), off-topic queries 0.54 to 0.59 ("recipe for banana
-   * bread" 0.54, "wedding" 0.59), and gibberish 0.65 ("xkjqz blorpt wumbo").
-   * No single cutoff separates matches from noise. A floor of 0.55 drops
-   * clearly off-topic queries, and the 0.08 window below the best score
-   * limits how many results show. Nonsense queries can still return a few
-   * low-confidence results.
+   * Best cosine score per query with embeddinggemma-2. On The Ledger (245
+   * entries), relevant queries score 0.660 to 0.787, natural-language
+   * off-topic queries top out at 0.614 ("stock market crash" 0.611), and
+   * keyboard gibberish scores 0.648 to 0.653. On the blog (3 posts), queries
+   * on or near its topics score 0.632 to 0.799 and junk 0.541 to 0.625. A
+   * floor of 0.62 hides every natural-language off-topic query tested on
+   * both sites and keeps every relevant one (lowest 0.632). Gibberish can
+   * still pass on The Ledger. The floor is an absolute score because best
+   * minus corpus median overlaps (relevant 0.050 to 0.117, junk 0.036 to
+   * 0.074 on The Ledger), and a z-score separates the groups even less.
    */
-  const SEMANTIC_MIN_SCORE = 0.55;
+  const SEMANTIC_MIN_SCORE = 0.62;
   const SEMANTIC_SCORE_WINDOW = 0.08;
   const DEBOUNCE_MS = 300;
 
