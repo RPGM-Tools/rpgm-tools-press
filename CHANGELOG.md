@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- [Internal] [Infra] Add `apps/search-probe`, a Worker that checks Cogitator and both sites' `/api/search-embedding` routes every 5 minutes and posts a warning event to Cresset when a check fails.
 - [Visible] [Discord] A repo can be paused: it stays on The Ledger, and its new releases are recorded without a Discord announcement. Enrolling it again resumes announcements.
 - [Internal] [Content-Sync] The `enroll-repo` workflow takes four decisions: enroll, pause, remove and decline. Remove takes a repo off The Ledger, deletes its synced releases and keeps discovery from offering it again.
 - [Internal] [Content-Sync] Each sync copies the emoji and color of every project the Stuff registry lists into `repos.json`. It uses the `STUFF_API_ACCESS_CLIENT_ID` and `STUFF_API_ACCESS_CLIENT_SECRET` secrets, and a project Stuff does not list keeps the values in the file.

@@ -1,0 +1,40 @@
+name: Deploy search probe
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/search-probe/**"
+      - ".github/workflows/deploy-search-probe.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-search-probe
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          workingDirectory: apps/search-probe
+          command: deploy
+          secrets: |
+            PRESS_SEARCH_ACCESS_ID
+            PRESS_SEARCH_ACCESS_SECRET
+            COGITATOR_EMBED_KEY
+            CRESSET_PRESS_PROBE_TOKEN
+        env:
+          PRESS_SEARCH_ACCESS_ID: ${{ secrets.PRESS_SEARCH_ACCESS_ID }}
+          PRESS_SEARCH_ACCESS_SECRET: ${{ secrets.PRESS_SEARCH_ACCESS_SECRET }}
+          COGITATOR_EMBED_KEY: ${{ secrets.COGITATOR_EMBED_KEY }}
+          CRESSET_PRESS_PROBE_TOKEN: ${{ secrets.CRESSET_PRESS_PROBE_TOKEN }}

@@ -1,0 +1,18 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "rpgm-press-search-probe",
+  "main": "./src/worker.ts",
+  "compatibility_date": "2026-08-29",
+  "compatibility_flags": ["nodejs_compat"],
+  "account_id": "bb37de82a8d1040e9945ead5a03bab8d",
+  "workers_dev": false,
+  "triggers": {
+    "crons": ["*/5 * * * *"]
+  },
+  "secrets": {
+    "required": ["PRESS_SEARCH_ACCESS_ID", "PRESS_SEARCH_ACCESS_SECRET", "COGITATOR_EMBED_KEY", "CRESSET_PRESS_PROBE_TOKEN"]
+  },
+  "observability": {
+    "enabled": true
+  }
+}
