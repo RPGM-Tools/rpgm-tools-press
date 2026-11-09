@@ -8,6 +8,12 @@
   "secrets": {
     "required": ["PRESS_SEARCH_ACCESS_ID", "PRESS_SEARCH_ACCESS_SECRET", "COGITATOR_EMBED_KEY"]
   },
+  "kv_namespaces": [
+    {
+      "binding": "SEARCH_EMBEDDING_CACHE",
+      "id": "a22f524658a24ab1a15a3f9fad9f9c7f"
+    }
+  ],
   "ratelimits": [
     {
       "name": "SEARCH_EMBEDDING_RATE_LIMITER",
