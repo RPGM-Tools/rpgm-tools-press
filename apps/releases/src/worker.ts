@@ -7,9 +7,6 @@ const QUERY_PREFIX = "task: search result | query: ";
 const EMBEDDING_TIMEOUT_MS = 8_000;
 const MAX_BODY_BYTES = 1024;
 const MAX_QUERY_LENGTH = 240;
-// A query's vector never changes for a given model, so repeat searches are
-// answered from the edge cache for a day.
-const CACHE_TTL_SECONDS = 86_400;
 
 function jsonResponse(body: object, status = 200, extraHeaders: Record<string, string> = {}): Response {
   return Response.json(body, {
@@ -27,27 +24,44 @@ function isQueryBody(value: unknown): value is { query: string } {
   return typeof value.query === "string";
 }
 
-function readVector(value: unknown): number[] | null {
-  if (typeof value !== "object" || value === null || !("data" in value) || !Array.isArray(value.data)) return null;
-  const first: unknown = value.data[0];
-  if (typeof first !== "object" || first === null || !("embedding" in first)) return null;
-  const vector = first.embedding;
+function readNumbers(vector: unknown): number[] | null {
   if (!Array.isArray(vector) || vector.length !== EMBEDDING_DIMENSIONS) return null;
   return vector.every((entry): entry is number => typeof entry === "number" && Number.isFinite(entry)) ? vector : null;
 }
 
-// Workers expose a per-site cache as caches.default, which the DOM typings do
-// not declare.
-function workersCache(): Cache {
-  return (caches as unknown as { default: Cache }).default;
+function readVector(value: unknown): number[] | null {
+  if (typeof value !== "object" || value === null || !("data" in value) || !Array.isArray(value.data)) return null;
+  const first: unknown = value.data[0];
+  if (typeof first !== "object" || first === null || !("embedding" in first)) return null;
+  return readNumbers(first.embedding);
 }
 
-// The cache key holds only a hash of the query text and the model name, so a
-// model change starts a fresh cache.
-async function queryCacheKey(origin: string, query: string): Promise<Request> {
+// A query's vector never changes for a given model, so each one is kept in
+// Workers KV with no expiry. The key holds the model name and a hash of the
+// query text, never the text itself, and a model change starts a fresh set.
+async function queryCacheKey(query: string): Promise<string> {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(query));
   const hash = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
-  return new Request(`${origin}/api/search-embedding/cache/${EMBEDDING_MODEL}/${hash}`);
+  return `${EMBEDDING_MODEL}:${hash}`;
+}
+
+async function readCachedVector(env: Env, key: string): Promise<number[] | null> {
+  try {
+    return readNumbers(await env.SEARCH_EMBEDDING_CACHE.get(key, "json"));
+  } catch (error) {
+    console.error(JSON.stringify({ message: "Search embedding cache read failed", error: error instanceof Error ? error.message : String(error) }));
+    return null;
+  }
+}
+
+// A failed write (the free plan's daily write limit, for one) only means the
+// next identical search asks Cogitator again.
+async function storeVector(env: Env, key: string, vector: number[]): Promise<void> {
+  try {
+    await env.SEARCH_EMBEDDING_CACHE.put(key, JSON.stringify(vector));
+  } catch (error) {
+    console.error(JSON.stringify({ message: "Search embedding cache write failed", error: error instanceof Error ? error.message : String(error) }));
+  }
 }
 
 export default {
@@ -87,14 +101,10 @@ export default {
 
     // A cache hit costs Cogitator nothing, so it is answered before the rate
     // limiter and does not use up the visitor's budget.
-    const cache = workersCache();
-    const cacheKey = await queryCacheKey(url.origin, query);
-    const cached = await cache.match(cacheKey);
-    if (cached) {
-      const stored: unknown = await cached.json();
-      if (typeof stored === "object" && stored !== null) {
-        return jsonResponse(stored, 200, { "X-Search-Cache": "hit" });
-      }
+    const cacheKey = await queryCacheKey(query);
+    const cachedVector = await readCachedVector(env, cacheKey);
+    if (cachedVector) {
+      return jsonResponse({ model: EMBEDDING_MODEL, vector: cachedVector }, 200, { "X-Search-Cache": "hit" });
     }
 
     // This is a low-traffic site, but the endpoint is unauthenticated and
@@ -135,9 +145,7 @@ export default {
         return jsonResponse({ error: "Semantic search is temporarily unavailable" }, 503);
       }
       const payload = { model: EMBEDDING_MODEL, vector };
-      ctx.waitUntil(cache.put(cacheKey, Response.json(payload, {
-        headers: { "Cache-Control": `public, max-age=${CACHE_TTL_SECONDS}` },
-      })));
+      ctx.waitUntil(storeVector(env, cacheKey, vector));
       return jsonResponse(payload, 200, { "X-Search-Cache": "miss" });
     } catch (error) {
       console.error(JSON.stringify({
