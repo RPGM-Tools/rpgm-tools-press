@@ -7,6 +7,9 @@ const QUERY_PREFIX = "task: search result | query: ";
 const EMBEDDING_TIMEOUT_MS = 8_000;
 const MAX_BODY_BYTES = 1024;
 const MAX_QUERY_LENGTH = 240;
+// A query's vector never changes for a given model, so repeat searches are
+// answered from the edge cache for a day.
+const CACHE_TTL_SECONDS = 86_400;
 
 function jsonResponse(body: object, status = 200, extraHeaders: Record<string, string> = {}): Response {
   return Response.json(body, {
@@ -33,8 +36,22 @@ function readVector(value: unknown): number[] | null {
   return vector.every((entry): entry is number => typeof entry === "number" && Number.isFinite(entry)) ? vector : null;
 }
 
+// Workers expose a per-site cache as caches.default, which the DOM typings do
+// not declare.
+function workersCache(): Cache {
+  return (caches as unknown as { default: Cache }).default;
+}
+
+// The cache key holds only a hash of the query text and the model name, so a
+// model change starts a fresh cache.
+async function queryCacheKey(origin: string, query: string): Promise<Request> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(query));
+  const hash = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+  return new Request(`${origin}/api/search-embedding/cache/${EMBEDDING_MODEL}/${hash}`);
+}
+
 export default {
-  async fetch(request, env): Promise<Response> {
+  async fetch(request, env, ctx): Promise<Response> {
     const url = new URL(request.url);
     if (url.pathname !== "/api/search-embedding") return env.ASSETS.fetch(request);
 
@@ -63,9 +80,21 @@ export default {
     }
     if (!isQueryBody(body)) return jsonResponse({ error: "query must be a string" }, 400);
 
-    const query = body.query.trim();
+    const query = body.query.trim().replace(/\s+/g, " ");
     if (query.length < 2 || query.length > MAX_QUERY_LENGTH) {
       return jsonResponse({ error: `query must be between 2 and ${MAX_QUERY_LENGTH} characters` }, 400);
+    }
+
+    // A cache hit costs Cogitator nothing, so it is answered before the rate
+    // limiter and does not use up the visitor's budget.
+    const cache = workersCache();
+    const cacheKey = await queryCacheKey(url.origin, query);
+    const cached = await cache.match(cacheKey);
+    if (cached) {
+      const stored: unknown = await cached.json();
+      if (typeof stored === "object" && stored !== null) {
+        return jsonResponse(stored, 200, { "X-Search-Cache": "hit" });
+      }
     }
 
     // This is a low-traffic site, but the endpoint is unauthenticated and
@@ -105,7 +134,11 @@ export default {
         console.error(JSON.stringify({ message: "Cogitator returned an invalid search embedding", path: url.pathname }));
         return jsonResponse({ error: "Semantic search is temporarily unavailable" }, 503);
       }
-      return jsonResponse({ model: EMBEDDING_MODEL, vector });
+      const payload = { model: EMBEDDING_MODEL, vector };
+      ctx.waitUntil(cache.put(cacheKey, Response.json(payload, {
+        headers: { "Cache-Control": `public, max-age=${CACHE_TTL_SECONDS}` },
+      })));
+      return jsonResponse(payload, 200, { "X-Search-Cache": "miss" });
     } catch (error) {
       console.error(JSON.stringify({
         message: "Search query embedding failed",
