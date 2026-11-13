@@ -6,6 +6,7 @@ const PROBE_QUERY = "search outage probe";
 const CRESSET_EVENTS_URL = "https://cresset.rpgm.tools/v1/events";
 const REQUEST_TIMEOUT_MS = 10_000;
 const EVIDENCE_LIMIT = 1_000;
+const RETRY_DELAYS_MS = [5_000, 15_000];
 
 const SITES = [
   { host: "blog.rpgm.tools", name: "Blog" },
@@ -46,6 +47,16 @@ function hasVector(value: unknown): boolean {
 // reads are mostly answered from KV, so this is the check that notices
 // Cogitator or Access failing.
 async function checkCogitator(env: Env): Promise<CheckResult> {
+  let result = await checkCogitatorOnce(env);
+  for (const delay of RETRY_DELAYS_MS) {
+    if (result.ok) break;
+    await new Promise((resolve) => setTimeout(resolve, delay));
+    result = await checkCogitatorOnce(env);
+  }
+  return result;
+}
+
+async function checkCogitatorOnce(env: Env): Promise<CheckResult> {
   try {
     const response = await fetch(EMBEDDING_ENDPOINT, {
       method: "POST",
