@@ -10,11 +10,11 @@
   },
   "dependencies": {
     "@rpgm/tools-press-theme": "workspace:*",
-    "astro": "^7.4.7"
+    "astro": "^7.4.8"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.12",
     "typescript": "^5.9.3",
-    "wrangler": "^4.158.0"
+    "wrangler": "^4.159.0"
   }
 }
