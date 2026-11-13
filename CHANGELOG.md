@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - [Internal] [Infra] The embedding generator and both `/api/search-embedding` Workers now call the Cogitator endpoint using `PRESS_SEARCH_ACCESS_ID`, `PRESS_SEARCH_ACCESS_SECRET`, and `COGITATOR_EMBED_KEY`, the Workers AI binding is removed, and both `search-embeddings.json` files are regenerated with embeddinggemma-2 at 768 dimensions.
 - [Visible] [Search] Off-topic searches, such as a recipe or a sports query, no longer show related results because the minimum match score is higher.
 - [Visible] [Search] Repeat searches now answer faster: the sites store each search's result and no longer ask the maintainer's server again for the same search, and a search made on one site is already stored for the other.
+- [Internal] [Infra] The search probe Worker (`apps/search-probe`) now retries a failed Cogitator check twice, after 5 seconds and after 15 seconds, before it posts a warning event to Cresset. Previously, a single 502 from a brief tunnel interruption posted a warning immediately, about once a day, even though the next 5-minute check passed.
 
 ### Removed
 
